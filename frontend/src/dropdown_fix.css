@@ -1,0 +1,13 @@
+
+/* Native dropdown lists and date pickers are drawn by the browser. With a transparent select they came out white with light-gray text.
+   They now follow the palette (the app puts the class "dark" on <html> in dark mode). */
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+select option, select optgroup {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+select option:checked, select option:hover {
+  background-color: var(--bg-card);
+  color: var(--text-heading, var(--text-primary));
+}

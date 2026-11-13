@@ -1,0 +1,15 @@
+[
+  {"_note": "Fill 'file' with the path of each PDF you downloaded, and 'effective' (entry into force, YYYY-MM-DD) where it is empty: it is on the first page of the official text. Check each date before importing. Delete the entries you do not have yet. Then: py -m legalrag.builder.from_law_pdf --batch laws_to_add.json   (report only), and again with --install.",
+   "file": "", "number": "2011", "title": "دستور المملكة المغربية", "kind": "constitution", "promulgation": "2011-07-29", "effective": "2011-07-29", "bo_number": "5964 bis", "bo_date": "2011-07-30", "domain": "other", "short_code": "الدستور"},
+  {"file": "", "number": "70.03", "title": "مدونة الأسرة", "kind": "law", "promulgation": "2004-02-03", "effective": "2004-02-05", "bo_number": "5184", "bo_date": "2004-02-05", "domain": "family", "short_code": "70.03"},
+  {"file": "", "number": "65.99", "title": "مدونة الشغل", "kind": "law", "promulgation": "2003-09-11", "effective": "2004-06-08", "bo_number": "5167", "bo_date": "2003-12-08", "domain": "labor", "short_code": "65.99"},
+  {"file": "", "number": "DOC-1913", "title": "قانون الالتزامات والعقود", "kind": "dahir", "effective": "", "domain": "obligations", "short_code": "DOC 1913"},
+  {"file": "", "number": "1.59.413", "title": "القانون الجنائي", "kind": "dahir", "effective": "", "domain": "criminal", "short_code": "القانون الجنائي"},
+  {"file": "", "number": "15.95", "title": "مدونة التجارة", "kind": "law", "effective": "", "domain": "commercial", "short_code": "15.95"},
+  {"file": "", "number": "62.99", "title": "مدونة المحاكم المالية", "kind": "law", "effective": "", "domain": "other", "short_code": "62.99"},
+  {"file": "", "number": "39.08", "title": "مدونة الحقوق العينية", "kind": "law", "effective": "", "domain": "property", "short_code": "39.08"},
+  {"file": "", "number": "31.08", "title": "القانون القاضي بتحديد تدابير لحماية المستهلك", "kind": "law", "effective": "", "domain": "other", "short_code": "31.08"},
+  {"file": "", "number": "09.08", "title": "القانون المتعلق بحماية الأشخاص الذاتيين تجاه معالجة المعطيات ذات الطابع الشخصي", "kind": "law", "effective": "", "domain": "other", "short_code": "09.08"},
+  {"file": "", "number": "52.05", "title": "مدونة السير على الطرق", "kind": "law", "effective": "", "domain": "traffic", "short_code": "52.05"},
+  {"file": "", "number": "17.99", "title": "مدونة التأمينات", "kind": "law", "effective": "", "domain": "commercial", "short_code": "17.99"}
+]

@@ -1,0 +1,6 @@
+{
+  "name": "Sanad",
+  "description": "A calm, editorial AI agent workspace with multi-step reasoning, live web research, interactive artifacts, and customizable organic stone themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

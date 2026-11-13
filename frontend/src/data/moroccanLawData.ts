@@ -1,0 +1,457 @@
+import {
+  BilingualArticle,
+  CitizenSituation,
+  ConcordanceRule,
+  LawStatusMeta,
+} from "../types/agent";
+
+export const MOROCCAN_LAW_STATUSES: Record<string, LawStatusMeta> = {
+  "law-58-25": {
+    lawNumber: "58.25",
+    lawTitle: "Code de Procédure Civile (Nouveau)",
+    titleAr: "قانون المسطرة المدنية الجديد",
+    dahirNumber: "Dahir 1-26-07 du 11 Février 2026",
+    boNumber: "BO 7485",
+    boDate: "2026-02-23",
+    validFrom: "2026-08-24",
+    validTo: null,
+    trustLevel: "verified",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    sourceUrl: "http://www.sgg.gov.ma/bulletinofficiel/bo7485.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "cpc-1974": {
+    lawNumber: "Dahir 1.74.447",
+    lawTitle: "Code de Procédure Civile (1974)",
+    titleAr: "قانون المسطرة المدنية لسنة 1974",
+    dahirNumber: "Dahir portant loi n° 1-74-447 du 28 septembre 1974",
+    boNumber: "BO 3230 bis",
+    boDate: "1974-09-30",
+    validFrom: "1974-10-01",
+    validTo: "2026-08-23",
+    trustLevel: "verified",
+    implementingStatus: "issued",
+    contestedStatus: "repealed",
+    sourceUrl: "http://www.sgg.gov.ma/legislation/cpc1974.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "law-03-23": {
+    lawNumber: "03.23 (amendant 22.01)",
+    lawTitle: "Code de Procédure Pénale (Amendé)",
+    titleAr: "تعديل قانون المسطرة الجنائية",
+    dahirNumber: "Dahir 1-25-54 du 29 Août 2025",
+    boNumber: "BO 7437",
+    boDate: "2025-09-08",
+    validFrom: "2025-12-08",
+    validTo: null,
+    trustLevel: "verified",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    sourceUrl: "http://www.sgg.gov.ma/legislation/cpp0323.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "doc-1913": {
+    lawNumber: "DOC 1913",
+    lawTitle: "Dahir des Obligations et Contrats",
+    titleAr: "ظهير الالتزامات والعقود (ق.ل.ع)",
+    dahirNumber: "Dahir du 9 Ramadan 1331 (12 août 1913)",
+    boNumber: "BO 46",
+    boDate: "1913-09-12",
+    validFrom: "1913-09-12",
+    validTo: null,
+    trustLevel: "verified",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    sourceUrl: "http://www.sgg.gov.ma/legislation/doc1913.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "law-65-99": {
+    lawNumber: "65-99",
+    lawTitle: "Code du Travail",
+    titleAr: "مدونة الشغل",
+    dahirNumber: "Dahir n° 1-03-194 du 11 septembre 2003",
+    boNumber: "BO 5167",
+    boDate: "2003-12-08",
+    validFrom: "2004-06-08",
+    validTo: null,
+    trustLevel: "verified",
+    implementingStatus: "issued",
+    contestedStatus: "active",
+    sourceUrl: "http://www.sgg.gov.ma/legislation/travail.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "law-66-23": {
+    lawNumber: "66.23",
+    lawTitle: "Organisation de la Profession d'Avocat",
+    titleAr: "تنظيم مهنة المحاماة",
+    dahirNumber: "Dahir 1-26-75 du 18 Août 2026",
+    boNumber: "BO 7498",
+    boDate: "2026-08-20",
+    validFrom: "2026-08-20",
+    validTo: null,
+    trustLevel: "derived",
+    implementingStatus: "pending",
+    contestedStatus: "active_contested",
+    sourceUrl: "http://www.sgg.gov.ma/legislation/avocat6623.pdf",
+    packBuildDate: "2026-10-24",
+  },
+  "finance-50-25": {
+    lawNumber: "CGI Art. 133 (Loi 50-25)",
+    lawTitle: "Droit d'enregistrement 2% sur liquidités",
+    titleAr: "واجبات التسجيل 2% على الأداء نقدا",
+    dahirNumber: "Dahir 1-25-67 du 16 Décembre 2025",
+    boNumber: "BO 7465 bis",
+    boDate: "2025-12-16",
+    validFrom: "2026-07-01",
+    validTo: null,
+    trustLevel: "verified",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    sourceUrl: "http://www.dgi.gov.ma/legislation/cgi2026.pdf",
+    packBuildDate: "2026-10-24",
+  },
+};
+
+export const SAMPLE_BILINGUAL_ARTICLES: BilingualArticle[] = [
+  {
+    id: "art-cpc-30-5825",
+    provisionId: "MA_CPC_5825_ART_30",
+    lawNumber: "58.25",
+    lawTitle: "Code de Procédure Civile",
+    titleAr: "قانون المسطرة المدنية",
+    articleNumber: "Article 30",
+    path: "Livre I / Titre II / Chapitre I / Compétence en dernier ressort",
+    validFrom: "2026-08-24",
+    validTo: null,
+    controllingLang: "ar",
+    trustLevel: "verified",
+    dahirNumber: "Dahir 1-26-07",
+    boNumber: "BO 7485",
+    boDate: "2026-02-23",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    textAr:
+      "تبت المحاكم الابتدائية في جميع الطلبات التي لا تتجاوز قيمتها عشرة آلاف (10.000) درهم ابتدائيا وانتهائيا بدون قابلية للاستئناف، مع مراعاة الاختصاصات المخولة لجهات قضائية أخرى بمقتضى نصوص خاصة.\nوتعتبر الطلبات غير محددة القيمة قابلة للاستئناف وجوبا أمام محكمة الاستئناف المختصة.",
+    textFr:
+      "Les tribunaux de première instance statuent en premier et dernier ressort sur toutes les demandes dont le montant n'excède pas dix mille (10.000) dirhams, sans possibilité d'appel, sous réserve des compétences dévolues à d'autres juridictions par des dispositions particulières.\nLes demandes d'un montant indéterminé sont obligatoirement susceptibles d'appel devant la cour d'appel compétente.",
+    transitionalRule:
+      "S'applique aux actions introduites à compter du 24 août 2026. Les jugements rendus avant cette date demeurent régis par l'ancien seuil de 5.000 DH (Dahir 1-74-447).",
+  },
+  {
+    id: "art-doc-230",
+    provisionId: "MA_DOC_1913_ART_230",
+    lawNumber: "DOC",
+    lawTitle: "Dahir des Obligations et Contrats",
+    titleAr: "ظهير الالتزامات والعقود",
+    articleNumber: "الفصل 230 / Art. 230",
+    path: "Livre I / Titre II / Des effets des obligations",
+    validFrom: "1913-09-12",
+    validTo: null,
+    controllingLang: "ar",
+    trustLevel: "verified",
+    dahirNumber: "Dahir du 12 août 1913",
+    boNumber: "BO 46",
+    boDate: "1913-09-12",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    textAr:
+      "الالتزامات التعاقدية المنشأة على وجه صحيح تقوم مقام القانون بالنسبة إلى منشئيها، ولا يجوز إلغاؤها إلا برضاهما معا أو في الحالات التي يقررها القانون.",
+    textFr:
+      "Les obligations contractuelles valablement formées tiennent lieu de loi à ceux qui les ont faites, et ne peuvent être révoquées que de leur consentement mutuel ou dans les cas prévus par la loi.",
+  },
+  {
+    id: "art-labor-53",
+    provisionId: "MA_LABOR_6599_ART_53",
+    lawNumber: "65-99",
+    lawTitle: "Code du Travail",
+    titleAr: "مدونة الشغل",
+    articleNumber: "المادة 53 / Art. 53",
+    path: "Livre I / Titre V / Rupture du contrat de travail / Indemnité de licenciement",
+    validFrom: "2004-06-08",
+    validTo: null,
+    controllingLang: "ar",
+    trustLevel: "verified",
+    dahirNumber: "Dahir 1-03-194",
+    boNumber: "BO 5167",
+    boDate: "2003-12-08",
+    implementingStatus: "issued",
+    contestedStatus: "active",
+    textAr:
+      "يستحق الأجير المرتبط بعقد شغل غير محدد المدة تعويضا عن الفصل بعد قضائه ستة أشهر من الشغل داخل نفس المقاولة بصرف النظر عن طريقة أداء الأجر ودورية صرفه.\nيحدد مبلغ التعويض عن الفصل عن كل سنة أو جزء من السنة من العمل الفعلي وفق التدرج التالي:\n- 96 ساعة من الأجر عن السنوات الخمس الأولى؛\n- 144 ساعة من الأجر عن السنوات من 6 إلى 10؛\n- 192 ساعة من الأجر عن السنوات من 11 إلى 15؛\n- 240 ساعة من الأجر عن السنوات التي تفوق 15 سنة.",
+    textFr:
+      "Le salarié lié par un contrat de travail à durée indéterminée a droit à une indemnité de licenciement après six mois de travail dans la même entreprise, quel que soit le mode de rémunération.\nLe montant de l'indemnité est fixé pour chaque année ou fraction d'année de travail effectif comme suit :\n- 96 heures de salaire pour les 5 premières années ;\n- 144 heures de salaire pour les années de 6 à 10 ;\n- 192 heures de salaire pour les années de 11 à 15 ;\n- 240 heures de salaire pour les années au-delà de la 15ème année.",
+  },
+  {
+    id: "art-cgi-133-2pct",
+    provisionId: "MA_CGI_2026_ART_133",
+    lawNumber: "CGI (Loi 50-25)",
+    lawTitle: "Code Général des Impôts (Loi de Finances 50-25)",
+    titleAr: "المدونة العامة للضرائب - قانون المالية 50-25",
+    articleNumber: "المادة 133 / Art. 133",
+    path: "Livre II / Droits d'enregistrement / Mutations à titre onéreux",
+    validFrom: "2026-07-01",
+    validTo: null,
+    controllingLang: "ar",
+    trustLevel: "verified",
+    dahirNumber: "Dahir 1-25-67",
+    boNumber: "BO 7465 bis",
+    boDate: "2025-12-16",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    textAr:
+      "يطبق رسم إضافي بنسبة 2% على الجزء المؤدى نقدا من ثمن البيع أو القيمة المقدرة في تفويت العقارات والحقوق العينية والأصول التجارية، متى تم الأداء خارج القنوات البنكية والمالية المعتمدة رسميا.\nويعتبر الإيداع النقدي المباشر في الحساب البنكي للموثق أو المحامي المقبول وسيلة إبراء معتمدة معفاة من الرسم الإضافي.",
+    textFr:
+      "Il est institué un droit d'enregistrement supplémentaire de 2% sur la quote-part payée en espèces du prix de vente ou de la valeur estimée lors de mutations immobilières et de fonds de commerce réalisées en dehors des circuits bancaires agréés.\nLe versement d'espèces effectué directement sur le compte bancaire du notaire ou de l'avocat agréé constitue un moyen libératoire reconnu exempté de cette surtaxe de 2%.",
+    transitionalRule:
+      "En vigueur à compter du 1er Juillet 2026. Les actes signés et légalisés avant cette date ne sont pas assujettis aux 2% de pénalité de paiement en espèces.",
+  },
+  {
+    id: "art-moudawana-49",
+    provisionId: "MA_FAMILY_2004_ART_49",
+    lawNumber: "Loi 70.03",
+    lawTitle: "Code de la Famille (Moudawana)",
+    titleAr: "مدونة الأسرة",
+    articleNumber: "المادة 49 / Art. 49",
+    path: "Livre I / Titre II / Des effets du mariage / Des biens acquis pendant le mariage",
+    validFrom: "2004-02-05",
+    validTo: null,
+    controllingLang: "ar",
+    trustLevel: "verified",
+    dahirNumber: "Dahir 1-04-22",
+    boNumber: "BO 5184",
+    boDate: "2004-02-05",
+    implementingStatus: "self_executing",
+    contestedStatus: "active",
+    textAr:
+      "لكل واحد من الزوجين ذمة مالية مستقلة عن ذمة الآخر، غير أنه يجوز لهما في إطار تدبير الأموال التي ستكتسب أثناء قيام الزوجية، الاتفاق على استثمارها وتوزيعها.\nيضمن هذا الاتفاق في وثيقة مستقلة عن عقد الزواج. وإذا لم يكن هناك اتفاق، فيرجع للقواعد العامة للإثبات، مع مراعاة عمل كل واحد من الزوجين وما قدمه من مجهودات وما تحمله من أعباء لتنمية أموال الأسرة.",
+    textFr:
+      "Chacun des deux époux dispose d'un patrimoine distinct de celui de l'autre. Toutefois, les époux peuvent convenir, dans le cadre de la gestion des biens acquis pendant le mariage, de leur investissement et de leur répartition.\nCet accord est consigné dans un document distinct de l'acte de mariage. À défaut d'accord, il est fait recours aux règles générales de preuve, en prenant en considération le travail de chacun des époux, les efforts déployés et les charges assumées pour la valorisation du patrimoine familial.",
+  },
+];
+
+export const CONCORDANCE_RULES: ConcordanceRule[] = [
+  {
+    id: "conc-cpc-1",
+    topic: "Compétence en dernier ressort (Seuil d'appel)",
+    oldLaw: "Dahir 1.74.447 (1974)",
+    oldArticle: "Article 19",
+    newLaw: "Loi 58.25 (2026)",
+    newArticle: "Article 30",
+    effectiveDate: "2026-08-24",
+    keyChange: "Seuil d'inappellabilité augmenté de 5.000 DH à 10.000 DH.",
+    oldSummary:
+      "Les jugements de première instance portant sur des litiges jusqu'à 5.000 DH sont rendus en premier et dernier ressort (sans appel possible).",
+    newSummary:
+      "Le seuil de premier et dernier ressort passe à 10.000 DH. En dessous de 10.000 DH, aucun appel n'est recevable.",
+    transitionalRuleText:
+      "Règle transitoire : Les jugements prononcés avant le 24 août 2026 restent soumis aux anciennes règles de recevabilité de l'appel.",
+  },
+  {
+    id: "conc-cpc-2",
+    topic: "Notification électronique et plateformes numériques",
+    oldLaw: "Dahir 1.74.447 (1974)",
+    oldArticle: "Articles 37-39",
+    newLaw: "Loi 58.25 (2026)",
+    newArticle: "Articles 42-45",
+    effectiveDate: "2026-08-24",
+    keyChange:
+      "Consécration légale de la notification dématérialisée par adresse électronique professionnelle vérifiée.",
+    oldSummary:
+      "Notification par huissier de justice, agent du greffe ou voie postale recommandée avec AR.",
+    newSummary:
+      "Notification numérique officielle par plateforme du ministère de la Justice et adresse électronique sécurisée des avocats et administrations.",
+    transitionalRuleText:
+      "Les notifications engagées sous pli postal ou huissier avant le 24 août 2026 continuent jusqu'à remise régulière.",
+  },
+  {
+    id: "conc-cpp-1",
+    topic: "Garde à vue et présence de l'avocat dès la première heure",
+    oldLaw: "Loi 22.01 (2002)",
+    oldArticle: "Article 66",
+    newLaw: "Loi 03.23 (amendant 22.01)",
+    newArticle: "Article 66 & 66 bis",
+    effectiveDate: "2025-12-08",
+    keyChange:
+      "Enregistrement audiovisuel obligatoire des interrogatoires et entretien avec l'avocat dès la première heure de garde à vue.",
+    oldSummary:
+      "Entretien avec l'avocat autorisé seulement après la première prolongation de la garde à vue (après 24h ou 48h).",
+    newSummary:
+      "Droit de conférer avec l'avocat dès la première heure de placement en garde à vue, avec procès-verbal d'enregistrement audiovisuel obligatoire.",
+    transitionalRuleText:
+      "Applicable immédiatement aux procédures de flagrance et enquêtes préliminaires ouvertes à compter du 8 décembre 2025.",
+  },
+];
+
+export const CITIZEN_SITUATIONS: CitizenSituation[] = [
+  {
+    id: "sit-unpaid-wages",
+    title: "Licenciement ou Salaires Impayés",
+    titleAr: "فصل عن العمل أو أجور غير مؤداة",
+    category: "employment",
+    description:
+      "Rupture abusive du contrat de travail, retenue indue de salaire ou non-déclaration CNSS.",
+    typicalQuestions: [
+      "Mon employeur m'a licencié sans préavis, quels sont mes droits ?",
+      "Comment calculer mon indemnité légale de licenciement ?",
+      "Quel est le délai pour saisir l'inspecteur du travail ou le tribunal ?",
+    ],
+    keyArticles: [
+      {
+        law: "Loi 65-99",
+        article: "Art. 41 & 53",
+        summary: "Indemnité légale de licenciement et dommages-intérêts pour rupture abusive.",
+      },
+      {
+        law: "Loi 65-99",
+        article: "Art. 51",
+        summary: "Délai de préavis obligatoire selon l'ancienneté du salarié.",
+      },
+      {
+        law: "Décret 2.25.983",
+        article: "SMIG 2026",
+        summary: "Taux horaire minimum légal fixé à 17,92 MAD/h dès le 1er janvier 2026.",
+      },
+    ],
+    documentsToBring: [
+      "Contrat de travail initial ou lettre d'engagement",
+      "Bulletins de paie des 12 derniers mois",
+      "Attestation d'affiliation et relevé de carrière CNSS",
+      "Lettre de notification de licenciement ou lettre de mise en demeure",
+      "Relevés bancaires attestant les virements de salaire",
+    ],
+    practicalNextSteps: [
+      "1. Tenter une conciliation préalable devant l'Inspecteur du Travail territorialement compétent.",
+      "2. Établir le calcul exact du reliquat de congés payés, préavis et indemnité de licenciement.",
+      "3. Conserver toute preuve d'exécution du travail (emails, badges, ordres de mission).",
+      "4. Consulter un avocat inscrit au Barreau avant l'expiration du délai de forclusion de 90 jours (Art. 65).",
+    ],
+  },
+  {
+    id: "sit-rental-eviction",
+    title: "Litige Locatif & Expulsion (Bail d'habitation)",
+    titleAr: "نزاعات الكراء والإفراغ السكني",
+    category: "housing",
+    description:
+      "Loyer impayé, résiliation du bail, congé pour reprise ou demande de révision de loyer.",
+    typicalQuestions: [
+      "Mon propriétaire veut m'expulser pour habiter le logement, que dit la loi 67.12 ?",
+      "Quel délai m'est accordé après mise en demeure de payer les loyers ?",
+      "Quand peut-on demander une augmentation légale de loyer ?",
+    ],
+    keyArticles: [
+      {
+        law: "Loi 67-12",
+        article: "Art. 45 à 47",
+        summary: "Conditions strictes du congé pour reprise personnelle ou réfection.",
+      },
+      {
+        law: "Loi 67-12",
+        article: "Art. 25 & 26",
+        summary: "Délai de mise en demeure (15 jours) avant action en validation d'expulsion.",
+      },
+      {
+        law: "Loi 07-03",
+        article: "Art. 4",
+        summary: "Plafond légal de révision des loyers (8% pour l'habitation tous les 3 ans).",
+      },
+    ],
+    documentsToBring: [
+      "Contrat de bail écrit et légalisé",
+      "Dernières quittances de loyer signées",
+      "Copie de la mise en demeure reçue par huissier ou lettre recommandée",
+      "Reçus de paiement de la taxe des services communaux (TSC)",
+    ],
+    practicalNextSteps: [
+      "1. Vérifier la régularité de la mise en demeure reçue par huissier de justice.",
+      "2. Si loyer en souffrance, consigner les montants contestés à la caisse du tribunal sous 15 jours.",
+      "3. Rassembler les justificatifs des charges locatives payées.",
+    ],
+  },
+  {
+    id: "sit-divorce-nafaka",
+    title: "Divorce & Pension Alimentaire (Nafaka)",
+    titleAr: "الطلاق والنفقة وحضانة الأطفال",
+    category: "family",
+    description:
+      "Procédure de divorce Chiqaq, fixation de la pension alimentaire, garde des enfants et don de consolation (Mout'â).",
+    typicalQuestions: [
+      "Comment le juge fixe-t-il le montant de la pension alimentaire des enfants ?",
+      "Qu'est-ce que la pension de subsistance (Nafaka) et le don de consolation (Mout'â) ?",
+      "Quels biens acquis pendant le mariage sont partagés (Art. 49 Moudawana) ?",
+    ],
+    keyArticles: [
+      {
+        law: "Loi 70.03",
+        article: "Art. 94 à 97",
+        summary: "Procédure de divorce pour discorde (Chiqaq) et tentative obligatoire de réconciliation.",
+      },
+      {
+        law: "Loi 70.03",
+        article: "Art. 189 à 191",
+        summary: "Évaluation de la pension alimentaire selon les revenus et le coût de la vie.",
+      },
+      {
+        law: "Loi 70.03",
+        article: "Art. 49",
+        summary: "Gestion et partage des biens acquis pendant la vie conjugale.",
+      },
+    ],
+    documentsToBring: [
+      "Acte de mariage officiel légalisé (Adoul)",
+      "Livret de famille et actes de naissance des enfants",
+      "Justificatifs de revenus des conjoints (salaires, bilans, déclarations fiscales)",
+      "Factures de scolarité, soins médicaux et charges du foyer pour les enfants",
+    ],
+    practicalNextSteps: [
+      "1. Inventorier précisément les dépenses directes mensuelles liées aux enfants.",
+      "2. Préparer les preuves de contribution financière ou matérielle aux biens communs.",
+      "3. Se faire assister par un avocat dès la première séance de tentative de conciliation.",
+    ],
+  },
+  {
+    id: "sit-cheque-unpaid",
+    title: "Chèque sans Provision ou Impayé",
+    titleAr: "شيك بدون مؤونة أو شيك ضمان",
+    category: "commercial",
+    description:
+      "Rejet de chèque pour défaut de provision, certificat de refus de paiement et sanctions pénales.",
+    typicalQuestions: [
+      "Quelle est la procédure légale lorsqu'un chèque revient impayé ?",
+      "L'émission d'un chèque de garantie est-elle punie par la loi ?",
+      "Comment régulariser un incident de paiement auprès de Bank Al-Maghrib ?",
+    ],
+    keyArticles: [
+      {
+        law: "Loi 15-95 (Code de Commerce)",
+        article: "Art. 316 à 318",
+        summary: "Sanction pénale de l'émission de chèque sans provision et interdiction d'émettre.",
+      },
+      {
+        law: "Loi 15-95",
+        article: "Art. 313",
+        summary: "Délivrance obligatoire du certificat de refus de paiement par la banque.",
+      },
+    ],
+    documentsToBring: [
+      "Original du chèque impayé",
+      "Certificat officiel de refus de paiement délivré par la banque tirée",
+      "Copie de la mise en demeure adressée au tireur",
+    ],
+    practicalNextSteps: [
+      "1. Exiger de votre agence bancaire le certificat de refus de paiement sous 20 jours.",
+      "2. Mettre en demeure le débiteur par huissier de régulariser la provision sous 30 jours.",
+      "3. Déposer plainte pénale auprès du Procureur du Roi ou engager une injonction de payer.",
+    ],
+  },
+];
+
+export const MOROCCAN_BAR_ASSOCIATIONS = [
+  { city: "Casablanca", court: "Cour d'Appel de Casablanca", address: "Boulevard des FAR, Casablanca" },
+  { city: "Rabat", court: "Cour d'Appel de Rabat", address: "Avenue John Kennedy, Rabat" },
+  { city: "Marrakech", court: "Cour d'Appel de Marrakech", address: "Sidi Youssef Ben Ali, Marrakech" },
+  { city: "Fès", court: "Cour d'Appel de Fès", address: "Avenue Allal Ben Abdellah, Fès" },
+  { city: "Tanger", court: "Cour d'Appel de Tanger", address: "Boulevard Mohammed V, Tanger" },
+  { city: "Agadir", court: "Cour d'Appel d'Agadir", address: "Avenue Hassan II, Agadir" },
+  { city: "Oujda", court: "Cour d'Appel d'Oujda", address: "Place de la Gare, Oujda" },
+];

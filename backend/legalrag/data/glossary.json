@@ -1,0 +1,726 @@
+[
+ {
+  "id": "dismissal",
+  "domain": "labor",
+  "ar": [
+   "الطرد",
+   "التسريح",
+   "الفصل عن العمل",
+   "الطرد التعسفي"
+  ],
+  "fr": [
+   "licenciement",
+   "licencie",
+   "licencié",
+   "renvoi"
+  ],
+  "en": [
+   "dismissal",
+   "fired",
+   "termination of employment",
+   "unfair dismissal"
+  ],
+  "darija": [
+   "طردوني",
+   "طرداتني",
+   "خرجوني من الخدمة"
+  ]
+ },
+ {
+  "id": "severance",
+  "domain": "labor",
+  "ar": [
+   "تعويض عن الفصل",
+   "التعويض عن الفصل"
+  ],
+  "fr": [
+   "indemnité de licenciement",
+   "indemnite de licenciement"
+  ],
+  "en": [
+   "severance",
+   "severance pay"
+  ],
+  "darija": []
+ },
+ {
+  "id": "notice",
+  "domain": "labor",
+  "ar": [
+   "مهلة الاخطار",
+   "الإخطار"
+  ],
+  "fr": [
+   "préavis",
+   "preavis"
+  ],
+  "en": [
+   "notice period",
+   "notice"
+  ],
+  "darija": []
+ },
+ {
+  "id": "strike",
+  "domain": "labor",
+  "ar": [
+   "الاضراب",
+   "إضراب"
+  ],
+  "fr": [
+   "grève",
+   "greve"
+  ],
+  "en": [
+   "strike"
+  ],
+  "darija": []
+ },
+ {
+  "id": "wage",
+  "domain": "labor",
+  "ar": [
+   "الاجر",
+   "الأجر",
+   "الاجرة",
+   "الراتب"
+  ],
+  "fr": [
+   "salaire",
+   "rémunération"
+  ],
+  "en": [
+   "wage",
+   "salary",
+   "pay"
+  ],
+  "darija": [
+   "الخلاص",
+   "الشهرية"
+  ]
+ },
+ {
+  "id": "min_wage",
+  "domain": "labor",
+  "ar": [
+   "الحد الادنى للاجور",
+   "الأجر الأدنى"
+  ],
+  "fr": [
+   "smig",
+   "smag",
+   "salaire minimum"
+  ],
+  "en": [
+   "minimum wage"
+  ],
+  "darija": [
+   "السميك"
+  ]
+ },
+ {
+  "id": "labor_contract",
+  "domain": "labor",
+  "ar": [
+   "عقد الشغل",
+   "عقد العمل"
+  ],
+  "fr": [
+   "contrat de travail",
+   "cdi",
+   "cdd"
+  ],
+  "en": [
+   "employment contract"
+  ],
+  "darija": []
+ },
+ {
+  "id": "leave",
+  "domain": "labor",
+  "ar": [
+   "العطلة السنوية",
+   "العطلة"
+  ],
+  "fr": [
+   "congé",
+   "conge"
+  ],
+  "en": [
+   "leave",
+   "annual leave"
+  ],
+  "darija": []
+ },
+ {
+  "id": "appeal",
+  "domain": "civil_procedure",
+  "ar": [
+   "الاستئناف",
+   "استئناف"
+  ],
+  "fr": [
+   "appel",
+   "faire appel"
+  ],
+  "en": [
+   "appeal"
+  ],
+  "darija": []
+ },
+ {
+  "id": "deadline",
+  "domain": "civil_procedure",
+  "ar": [
+   "الاجل",
+   "الأجل",
+   "اجل الطعن",
+   "الآجال"
+  ],
+  "fr": [
+   "délai",
+   "delai",
+   "délais"
+  ],
+  "en": [
+   "deadline",
+   "time limit"
+  ],
+  "darija": []
+ },
+ {
+  "id": "summons",
+  "domain": "civil_procedure",
+  "ar": [
+   "الاستدعاء",
+   "استدعاء"
+  ],
+  "fr": [
+   "convocation",
+   "assignation"
+  ],
+  "en": [
+   "summons",
+   "subpoena"
+  ],
+  "darija": []
+ },
+ {
+  "id": "judgment",
+  "domain": "civil_procedure",
+  "ar": [
+   "الحكم",
+   "حكم",
+   "القرار"
+  ],
+  "fr": [
+   "jugement",
+   "décision",
+   "arrêt"
+  ],
+  "en": [
+   "judgment",
+   "ruling"
+  ],
+  "darija": []
+ },
+ {
+  "id": "cassation",
+  "domain": "civil_procedure",
+  "ar": [
+   "النقض",
+   "الطعن بالنقض"
+  ],
+  "fr": [
+   "cassation",
+   "pourvoi"
+  ],
+  "en": [
+   "cassation"
+  ],
+  "darija": []
+ },
+ {
+  "id": "lawsuit",
+  "domain": "civil_procedure",
+  "ar": [
+   "الدعوى",
+   "دعوى",
+   "المقال"
+  ],
+  "fr": [
+   "action en justice",
+   "requête",
+   "requete"
+  ],
+  "en": [
+   "lawsuit",
+   "claim",
+   "petition"
+  ],
+  "darija": []
+ },
+ {
+  "id": "divorce",
+  "domain": "family",
+  "ar": [
+   "الطلاق",
+   "التطليق",
+   "الشقاق",
+   "الخلع",
+   "التمليك",
+   "الصلح",
+   "الإذن بالإشهاد على الطلاق",
+   "الطلاق الاتفاقي",
+   "حل ميثاق الزوجية",
+   "إنهاء العلاقة الزوجية",
+   "فك الرابطة الزوجية"
+  ],
+  "fr": [
+   "divorce",
+   "répudiation",
+   "divorce par consentement mutuel",
+   "divorce pour discorde",
+   "khol",
+   "khôl",
+   "dissolution du mariage",
+   "tatliq"
+  ],
+  "en": [
+   "divorce",
+   "divorce by mutual consent",
+   "divorce for discord",
+   "khul",
+   "dissolution of marriage",
+   "end a marriage",
+   "file for divorce"
+  ],
+  "darija": [
+   "الطلاق",
+   "الطلاق",
+   "طلاق",
+   "نطلق",
+   "نطلب الطلاق",
+   "الخلع",
+   "التطليق",
+   "باغية نطلق",
+   "باغي نطلق",
+   "الشقاق",
+   "نفترق",
+   "نفارق مرتي",
+   "نفارق راجلي",
+   "تفرق"
+  ]
+ },
+ {
+  "id": "custody",
+  "domain": "family",
+  "ar": [
+   "الحضانة",
+   "حضانة"
+  ],
+  "fr": [
+   "garde",
+   "garde des enfants"
+  ],
+  "en": [
+   "custody",
+   "child custody"
+  ],
+  "darija": []
+ },
+ {
+  "id": "alimony",
+  "domain": "family",
+  "ar": [
+   "النفقة",
+   "نفقة"
+  ],
+  "fr": [
+   "pension alimentaire",
+   "nafaqa"
+  ],
+  "en": [
+   "alimony",
+   "child support",
+   "maintenance"
+  ],
+  "darija": []
+ },
+ {
+  "id": "marriage",
+  "domain": "family",
+  "ar": [
+   "الزواج",
+   "عقد الزواج"
+  ],
+  "fr": [
+   "mariage"
+  ],
+  "en": [
+   "marriage"
+  ],
+  "darija": []
+ },
+ {
+  "id": "inheritance",
+  "domain": "family",
+  "ar": [
+   "الارث",
+   "الإرث",
+   "التركة"
+  ],
+  "fr": [
+   "succession",
+   "héritage",
+   "heritage"
+  ],
+  "en": [
+   "inheritance",
+   "estate"
+  ],
+  "darija": [
+   "الميراث"
+  ]
+ },
+ {
+  "id": "lease",
+  "domain": "property",
+  "ar": [
+   "الكراء",
+   "كراء",
+   "عقد الكراء"
+  ],
+  "fr": [
+   "bail",
+   "location",
+   "loyer"
+  ],
+  "en": [
+   "lease",
+   "rent",
+   "rental"
+  ],
+  "darija": [
+   "الكرية"
+  ]
+ },
+ {
+  "id": "eviction",
+  "domain": "property",
+  "ar": [
+   "الافراغ",
+   "الإفراغ"
+  ],
+  "fr": [
+   "expulsion",
+   "éviction",
+   "eviction"
+  ],
+  "en": [
+   "eviction"
+  ],
+  "darija": []
+ },
+ {
+  "id": "sale",
+  "domain": "property",
+  "ar": [
+   "البيع",
+   "عقد البيع"
+  ],
+  "fr": [
+   "vente"
+  ],
+  "en": [
+   "sale",
+   "purchase"
+  ],
+  "darija": []
+ },
+ {
+  "id": "land_registration",
+  "domain": "property",
+  "ar": [
+   "التحفيظ",
+   "التحفيظ العقاري"
+  ],
+  "fr": [
+   "immatriculation",
+   "conservation foncière"
+  ],
+  "en": [
+   "land registration",
+   "land title"
+  ],
+  "darija": []
+ },
+ {
+  "id": "neighbour",
+  "domain": "property",
+  "ar": [
+   "الجوار",
+   "الارتفاقات"
+  ],
+  "fr": [
+   "voisinage",
+   "servitude"
+  ],
+  "en": [
+   "neighbour",
+   "easement"
+  ],
+  "darija": []
+ },
+ {
+  "id": "contract",
+  "domain": "obligations",
+  "ar": [
+   "العقد",
+   "عقد",
+   "الالتزامات"
+  ],
+  "fr": [
+   "contrat",
+   "obligation",
+   "obligations"
+  ],
+  "en": [
+   "contract"
+  ],
+  "darija": []
+ },
+ {
+  "id": "damages",
+  "domain": "obligations",
+  "ar": [
+   "التعويض",
+   "الضرر"
+  ],
+  "fr": [
+   "dommages-intérêts",
+   "dommages",
+   "préjudice"
+  ],
+  "en": [
+   "damages",
+   "compensation"
+  ],
+  "darija": []
+ },
+ {
+  "id": "limitation",
+  "domain": "obligations",
+  "ar": [
+   "التقادم"
+  ],
+  "fr": [
+   "prescription"
+  ],
+  "en": [
+   "limitation period",
+   "statute of limitations"
+  ],
+  "darija": []
+ },
+ {
+  "id": "cheque",
+  "domain": "commercial",
+  "ar": [
+   "الشيك",
+   "شيك بدون رصيد"
+  ],
+  "fr": [
+   "chèque",
+   "cheque",
+   "chèque sans provision"
+  ],
+  "en": [
+   "cheque",
+   "bounced cheque"
+  ],
+  "darija": []
+ },
+ {
+  "id": "company",
+  "domain": "commercial",
+  "ar": [
+   "الشركة",
+   "شركة"
+  ],
+  "fr": [
+   "société",
+   "societe"
+  ],
+  "en": [
+   "company"
+  ],
+  "darija": []
+ },
+ {
+  "id": "complaint",
+  "domain": "criminal",
+  "ar": [
+   "الشكاية",
+   "شكاية"
+  ],
+  "fr": [
+   "plainte"
+  ],
+  "en": [
+   "complaint"
+  ],
+  "darija": []
+ },
+ {
+  "id": "police_custody",
+  "domain": "criminal",
+  "ar": [
+   "الحراسة النظرية"
+  ],
+  "fr": [
+   "garde à vue",
+   "garde a vue"
+  ],
+  "en": [
+   "police custody"
+  ],
+  "darija": []
+ },
+ {
+  "id": "offence",
+  "domain": "criminal",
+  "ar": [
+   "الجنحة",
+   "جنحة",
+   "الجريمة",
+   "جريمة"
+  ],
+  "fr": [
+   "délit",
+   "delit",
+   "infraction",
+   "crime"
+  ],
+  "en": [
+   "offence",
+   "offense",
+   "crime"
+  ],
+  "darija": []
+ },
+ {
+  "id": "vat",
+  "domain": "tax",
+  "ar": [
+   "الضريبة على القيمة المضافة"
+  ],
+  "fr": [
+   "tva",
+   "taxe sur la valeur ajoutée"
+  ],
+  "en": [
+   "vat",
+   "value added tax"
+  ],
+  "darija": []
+ },
+ {
+  "id": "registration_duty",
+  "domain": "tax",
+  "ar": [
+   "رسوم التسجيل",
+   "واجبات التسجيل"
+  ],
+  "fr": [
+   "droits d'enregistrement",
+   "droits d enregistrement",
+   "enregistrement"
+  ],
+  "en": [
+   "registration duty",
+   "registration fee"
+  ],
+  "darija": []
+ },
+ {
+  "id": "income_tax",
+  "domain": "tax",
+  "ar": [
+   "الضريبة على الدخل"
+  ],
+  "fr": [
+   "impôt sur le revenu",
+   "impot sur le revenu",
+   "ir"
+  ],
+  "en": [
+   "income tax"
+  ],
+  "darija": []
+ },
+ {
+  "id": "corporate_tax",
+  "domain": "tax",
+  "ar": [
+   "الضريبة على الشركات"
+  ],
+  "fr": [
+   "impôt sur les sociétés",
+   "impot sur les societes"
+  ],
+  "en": [
+   "corporate tax"
+  ],
+  "darija": []
+ },
+ {
+  "id": "traffic",
+  "domain": "traffic",
+  "ar": [
+   "مخالفة السير",
+   "مدونة السير"
+  ],
+  "fr": [
+   "amende",
+   "code de la route",
+   "contravention"
+  ],
+  "en": [
+   "traffic fine",
+   "traffic violation"
+  ],
+  "darija": []
+ },
+ {
+  "id": "working_hours",
+  "domain": "labor",
+  "ar": [
+   "ساعات العمل",
+   "ساعات الشغل",
+   "مدة الشغل",
+   "مدة العمل",
+   "الساعات الاضافية",
+   "ساعات اضافية",
+   "الشغل الليلي"
+  ],
+  "fr": [
+   "heures de travail",
+   "durée du travail",
+   "duree du travail",
+   "heures supplémentaires",
+   "heures supplementaires"
+  ],
+  "en": [
+   "working hours",
+   "hours of work",
+   "overtime",
+   "working time"
+  ],
+  "darija": [
+   "ساعات الخدمة",
+   "الساعات الزايدة",
+   "وقت الخدمة"
+  ]
+ }
+]

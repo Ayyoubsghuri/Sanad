@@ -1,0 +1,26 @@
+# environments, models, generated data
+env/
+.venv/
+models/
+index/
+chunks/
+sources.json
+ingest_report.json
+info*.txt
+blueprint/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.db
+reports/
+backend/tools/MoroccoRegQA*
+backend/tools/moroccanregdoc.json
+*.zip
+
+# frontend
+node_modules/
+dist/
+.env*

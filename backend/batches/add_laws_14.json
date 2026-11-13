@@ -1,0 +1,32 @@
+[
+ {
+  "file": "data/laws/1_72_184_2025.md",
+  "number": "1.72.184",
+  "title": "الظهير الشريف بمثابة قانون المتعلق بنظام الضمان الاجتماعي (صيغة محينة 2025)",
+  "kind": "dahir",
+  "promulgation": "1972-07-27",
+  "effective": "2025-03-03",
+  "domain": "labor",
+  "short_code": "1.72.184",
+  "source_kind": "other",
+  "article_word": "الفصل",
+  "if_absent": false,
+  "consolidated_on": "2025-03-03",
+  "id_suffix": "2025"
+ },
+ {
+  "file": "data/laws/2_25_266.md",
+  "number": "2.25.266",
+  "title": "مرسوم بتطبيق بعض أحكام الظهير الشريف بمثابة قانون رقم 1.72.184 المتعلق بنظام الضمان الاجتماعي",
+  "kind": "decree",
+  "promulgation": "2025-04-24",
+  "effective": "2025-04-28",
+  "domain": "labor",
+  "short_code": "2.25.266",
+  "source_kind": "other",
+  "article_word": "المادة",
+  "if_absent": true,
+  "bo_number": "7399",
+  "bo_date": "2025-04-28"
+ }
+]

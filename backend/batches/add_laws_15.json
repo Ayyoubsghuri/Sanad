@@ -1,0 +1,19 @@
+[
+ {
+  "file": "data/laws/22_01_2025.md",
+  "number": "22.01",
+  "title": "القانون المتعلق بالمسطرة الجنائية (صيغة محينة 2025 بعد القانون 03.23)",
+  "kind": "law",
+  "promulgation": "2002-10-03",
+  "effective": "2025-12-08",
+  "domain": "criminal",
+  "short_code": "22.01",
+  "source_kind": "other",
+  "article_word": "المادة",
+  "if_absent": false,
+  "bo_number": "5078",
+  "bo_date": "2003-01-30",
+  "consolidated_on": "2025-09-08",
+  "id_suffix": "2025"
+ }
+]

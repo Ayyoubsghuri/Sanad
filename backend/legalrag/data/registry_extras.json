@@ -1,0 +1,59 @@
+{
+ "rates": [
+  {
+   "key": "SMIG_HOURLY",
+   "value": 17.1,
+   "unit": "MAD/hour",
+   "valid_from": "2025-01-01",
+   "valid_to": "2026-01-01",
+   "source_decree": "MA_DECREE_2_24_1122",
+   "note": "2025 rate"
+  },
+  {
+   "key": "SMIG_HOURLY",
+   "value": 17.92,
+   "unit": "MAD/hour",
+   "valid_from": "2026-01-01",
+   "valid_to": null,
+   "source_decree": "MA_DECREE_2_25_983",
+   "note": "BO 7469, 2025-12-29"
+  },
+  {
+   "key": "SMAG_DAILY",
+   "value": 93.0,
+   "unit": "MAD/day",
+   "valid_from": "2025-01-01",
+   "valid_to": "2026-04-01",
+   "source_decree": "MA_DECREE_2_24_1122",
+   "note": "2025 rate"
+  },
+  {
+   "key": "SMAG_DAILY",
+   "value": 97.44,
+   "unit": "MAD/day",
+   "valid_from": "2026-04-01",
+   "valid_to": null,
+   "source_decree": "MA_DECREE_2_25_983",
+   "note": "From 2026-04-01 (verify start date in the BO)"
+  },
+  {
+   "key": "REG_EXTRA_CASH_PCT",
+   "value": 2.0,
+   "unit": "percent",
+   "valid_from": "2026-07-01",
+   "valid_to": null,
+   "source_decree": "MA_FINANCE_LAW_50_25",
+   "note": "Extra registration duty on the cash portion of real-estate / business transfers (CGI art. 133 paragraph added by Finance Law 50-25)"
+  }
+ ],
+ "pending_bills": [
+  {
+   "bill_no": "FAMILY_CODE_REFORM",
+   "title": "Reform of the Family Code (Moudawana)",
+   "stage": "not adopted at last check (Jan-Feb 2026 reports); October 2026 position unconfirmed",
+   "last_checked": "2026-02-01",
+   "instrument_id": "MA_FAMILY_CODE_2004",
+   "note": "Manual status check required"
+  }
+ ]
+}

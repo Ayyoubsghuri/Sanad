@@ -1,0 +1,34 @@
+[
+ {
+  "file": "data/laws/doc_2024.md",
+  "number": "DOC-1913",
+  "title": "ظهير 9 رمضان 1331 (12 أغسطس 1913) بمثابة قانون الالتزامات والعقود (صيغة محينة 2024)",
+  "kind": "dahir",
+  "promulgation": "1913-08-12",
+  "effective": "2024-08-22",
+  "domain": "obligations",
+  "short_code": "قانون الالتزامات والعقود",
+  "source_kind": "other",
+  "article_word": "الفصل",
+  "if_absent": false,
+  "consolidated_on": "2024-08-22",
+  "id_suffix": "2024"
+ },
+ {
+  "file": "data/laws/pc_2024.md",
+  "number": "1.59.413",
+  "title": "مجموعة القانون الجنائي (صيغة محينة 2024)",
+  "kind": "dahir",
+  "promulgation": "1962-11-26",
+  "effective": "2025-08-22",
+  "domain": "criminal",
+  "short_code": "القانون الجنائي",
+  "source_kind": "other",
+  "article_word": "الفصل",
+  "if_absent": false,
+  "bo_number": "2640 مكرر",
+  "bo_date": "1963-06-05",
+  "consolidated_on": "2024-08-22",
+  "id_suffix": "2024"
+ }
+]

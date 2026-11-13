@@ -1,0 +1,129 @@
+[
+ {
+  "instrument_id": "MA_DAHIR_LAW_1_74_447",
+  "kind": "dahir_law",
+  "number": "1-74-447",
+  "title_fr": "Dahir portant loi n° 1-74-447 approuvant le texte du Code de procédure civile (1974)",
+  "domain": "civil_procedure",
+  "status_note": "Replaced by Law 58.25 from 2026-08-24, subject to transitional rules."
+ },
+ {
+  "instrument_id": "MA_LAW_58_25",
+  "kind": "law",
+  "number": "58.25",
+  "title_fr": "Loi n° 58.25 formant Code de procédure civile",
+  "bo_number": "7485",
+  "bo_date": "2026-02-23",
+  "promulgation_date": "2026-02-11",
+  "effective_date": "2026-08-24",
+  "domain": "civil_procedure",
+  "status_note": "Dahir 1-26-07 of 2026-02-11. Ingest only the BO 7485 text, never earlier drafts: an earlier version was partly struck down by the Constitutional Court (Aug 2025). Appeal rules are not retroactive.",
+  "edges": [
+   [
+    "replaces",
+    "MA_DAHIR_LAW_1_74_447"
+   ]
+  ]
+ },
+ {
+  "instrument_id": "MA_LAW_22_01",
+  "kind": "law",
+  "number": "22.01",
+  "title_fr": "Loi n° 22.01 formant Code de procédure pénale",
+  "domain": "criminal"
+ },
+ {
+  "instrument_id": "MA_LAW_03_23",
+  "kind": "law",
+  "number": "03.23",
+  "title_fr": "Loi n° 03.23 modifiant et complétant la loi n° 22.01 formant Code de procédure pénale",
+  "bo_number": "7437",
+  "bo_date": "2025-09-08",
+  "effective_date": "2025-12-08",
+  "domain": "criminal",
+  "status_note": "Amends Law 22.01 (does not replace it). Keep pre-2025-12-08 article versions.",
+  "edges": [
+   [
+    "amends",
+    "MA_LAW_22_01"
+   ]
+  ]
+ },
+ {
+  "instrument_id": "MA_ORG_LAW_97_15",
+  "kind": "organic_law",
+  "number": "97.15",
+  "title_fr": "Loi organique n° 97.15 relative aux conditions et modalités d'exercice du droit de grève",
+  "bo_date": "2025-03-24",
+  "effective_date": "2025-09-24",
+  "domain": "labor",
+  "status_note": "Published in the Arabic BO of 2025-03-24; in force 2025-09-24."
+ },
+ {
+  "instrument_id": "MA_DECREE_2_24_1122",
+  "kind": "decree",
+  "number": "2.24.1122",
+  "title_fr": "Décret n° 2.24.1122 (salaires minima 2025: SMIG 17.10 MAD/h, SMAG 93 MAD/j)",
+  "domain": "labor"
+ },
+ {
+  "instrument_id": "MA_DECREE_2_25_983",
+  "kind": "decree",
+  "number": "2.25.983",
+  "title_fr": "Décret n° 2.25.983 (salaires minima 2026: SMIG 17.92 MAD/h from 2026-01-01, SMAG 97.44 MAD/j from 2026-04-01)",
+  "bo_number": "7469",
+  "bo_date": "2025-12-29",
+  "effective_date": "2026-01-01",
+  "domain": "labor",
+  "status_note": "Check the SMAG start date in the BO; one source suggests January."
+ },
+ {
+  "instrument_id": "MA_LAW_66_23",
+  "kind": "law",
+  "number": "66.23",
+  "title_fr": "Loi n° 66.23 organisant la profession d'avocat",
+  "bo_date": "2026-08-20",
+  "promulgation_date": "2026-08-18",
+  "effective_date": "2026-08-20",
+  "domain": "legal_profession",
+  "implementation_status": "pending",
+  "status_flag": "ACTIVE_CONTESTED",
+  "status_note": "Dahir 1-26-75 of 2026-08-18; in force on publication (art. 146) but some provisions await implementing texts. The bar contests it and reports differ on Constitutional Court review: contested, check for updates. Re-check weekly."
+ },
+ {
+  "instrument_id": "MA_FINANCE_LAW_50_25",
+  "kind": "law",
+  "number": "50-25",
+  "title_fr": "Loi de finances n° 50-25 pour l'année 2026",
+  "bo_number": "7465 bis",
+  "bo_date": "2025-12-16",
+  "effective_date": "2026-01-01",
+  "domain": "tax",
+  "status_note": "Dahir 1-25-67. Adds an extra 2% registration duty (CGI art. 133) on the cash portion of real-estate and business transfers, in force from 2026-07-01."
+ },
+ {
+  "instrument_id": "MA_LAW_65_99",
+  "kind": "law",
+  "number": "65-99",
+  "short_code": "CT",
+  "title_fr": "Loi n° 65-99 formant Code du travail",
+  "domain": "labor"
+ },
+ {
+  "instrument_id": "MA_DOC_1913",
+  "kind": "dahir_law",
+  "number": "1913",
+  "short_code": "DOC",
+  "title_fr": "Dahir formant Code des obligations et des contrats (1913)",
+  "domain": "obligations"
+ },
+ {
+  "instrument_id": "MA_FAMILY_CODE_2004",
+  "kind": "law",
+  "number": "70-03",
+  "short_code": "CF",
+  "title_fr": "Code de la famille (Moudawana, 2004)",
+  "domain": "family",
+  "status_note": "In force. A reform bill is pending (see pending_bill); answer with the 2004 text and state the reform is pending."
+ }
+]

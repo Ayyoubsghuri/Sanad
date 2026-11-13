@@ -1,0 +1,4 @@
+[console_scripts]
+legalrag = legalrag.main:run
+legalrag-build = legalrag.builder.cli:main
+legalrag-eval = legalrag.evalharness.cli:main

@@ -1,0 +1,96 @@
+[
+ {
+  "file": "data/codes/family.md",
+  "number": "70.03",
+  "title": "مدونة الأسرة",
+  "kind": "law",
+  "promulgation": "2004-02-03",
+  "effective": "2004-02-05",
+  "bo_number": "5184",
+  "bo_date": "2004-02-05",
+  "consolidated_on": "2021-07-29",
+  "domain": "family",
+  "short_code": "70.03",
+  "official_articles": 400
+ },
+ {
+  "file": "data/codes/labor.md",
+  "number": "65.99",
+  "title": "مدونة الشغل",
+  "kind": "law",
+  "promulgation": "2003-09-11",
+  "effective": "2004-06-08",
+  "bo_number": "5167",
+  "bo_date": "2003-12-08",
+  "consolidated_on": "2021-02-09",
+  "domain": "labor",
+  "short_code": "65.99",
+  "official_articles": 589
+ },
+ {
+  "file": "data/codes/doc.md",
+  "number": "DOC-1913",
+  "title": "قانون الالتزامات والعقود",
+  "kind": "dahir",
+  "promulgation": "1913-08-12",
+  "effective": "1913-09-12",
+  "consolidated_on": "2024-08-22",
+  "domain": "obligations",
+  "short_code": "DOC 1913"
+ },
+ {
+  "file": "data/codes/penal.md",
+  "number": "1.59.413",
+  "title": "القانون الجنائي",
+  "kind": "dahir",
+  "promulgation": "1962-11-26",
+  "effective": "1963-06-01",
+  "consolidated_on": "2021-06-14",
+  "domain": "criminal",
+  "short_code": "القانون الجنائي"
+ },
+ {
+  "file": "data/codes/commercial.md",
+  "number": "15.95",
+  "title": "مدونة التجارة",
+  "kind": "law",
+  "consolidated_on": "2019-04-22",
+  "domain": "commercial",
+  "short_code": "15.95"
+ },
+ {
+  "file": "data/codes/civproc.md",
+  "number": "1.74.447",
+  "title": "قانون المسطرة المدنية",
+  "kind": "dahir",
+  "consolidated_on": "2021-07-22",
+  "domain": "civil_procedure",
+  "short_code": "المسطرة المدنية"
+ },
+ {
+  "file": "data/codes/cgi.md",
+  "number": "CGI",
+  "title": "المدونة العامة للضرائب",
+  "kind": "code",
+  "consolidated_on": "2024-01-01",
+  "domain": "tax",
+  "short_code": "CGI"
+ },
+ {
+  "_note": "Criminal procedure, Presidency of Public Prosecution edition Oct 2021 (PDF pages 225-484). The PDF text layer was corrupted; data/cpp/cpp_repaired.md is the automatically repaired text (see CPP_REPAIR_REPORT.txt).",
+  "file": "data/cpp/cpp_repaired.md",
+  "source_pdf": "data/cpp/cpp.pdf",
+  "article_word": "المادة",
+  "number": "22.01",
+  "title": "قانون المسطرة الجنائية",
+  "kind": "law",
+  "promulgation": "2002-10-03",
+  "effective": "2003-10-01",
+  "bo_number": "5078",
+  "bo_date": "2003-01-30",
+  "consolidated_on": "2021-10-01",
+  "domain": "criminal",
+  "short_code": "22.01",
+  "official_articles": 756
+ }
+]
