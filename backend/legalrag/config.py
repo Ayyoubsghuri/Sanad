@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     lawpack_public_key_hex: str | None = None  # Ed25519 public key (hex) of the pack publisher
     allow_unsigned_pack: bool = False  # dev only: serve an unsigned pack, flagged on every answer
     pack_max_age_days: int = 45
+    pack_release_url: str = "https://raw.githubusercontent.com/Ayyoubsghuri/Sanad/main/backend/pack_release.json"  # the published pack (checked by "Law pack" in the app)
 
     # ---- operating mode default (user can change at runtime) -------------------
     default_mode: Mode = "hybrid"

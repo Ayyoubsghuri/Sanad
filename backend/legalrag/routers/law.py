@@ -32,6 +32,42 @@ def pack_info(ctx: AppContext = Depends(get_ctx)) -> dict:
     return _pack(ctx)
 
 
+def _pack_updater(ctx: AppContext):
+    from ..pack_update import PackUpdater
+
+    u = getattr(ctx, "pack_updater", None)
+    if u is None:
+        u = ctx.pack_updater = PackUpdater(ctx)  # type: ignore[attr-defined]
+    return u
+
+
+@router.get("/pack/update", tags=["pack"])
+def pack_update_check(ctx: AppContext = Depends(get_ctx)) -> dict:
+    """Installed law pack vs the published one (reads pack_release.json online; downloads nothing)."""
+    return _pack_updater(ctx).check()
+
+
+@router.post("/pack/update", tags=["pack"], status_code=202)
+def pack_update_start(ctx: AppContext = Depends(get_ctx)) -> dict:
+    """Download, verify (SHA-256 + publisher signature) and install the published pack in the background."""
+    from ..store.lawpack import PackError
+
+    try:
+        return _pack_updater(ctx).start()
+    except PackError as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@router.get("/pack/update/progress", tags=["pack"])
+def pack_update_progress(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return {"job": _pack_updater(ctx).job}
+
+
+@router.post("/pack/update/cancel", tags=["pack"])
+def pack_update_cancel(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return {"cancelling": _pack_updater(ctx).cancel()}
+
+
 @router.get("/pack/coverage", tags=["pack"])
 def pack_coverage(ctx: AppContext = Depends(require_pack)) -> dict:
     """Per instrument: SGG consolidated text exists?, official language editions, implementing-text status, article count."""

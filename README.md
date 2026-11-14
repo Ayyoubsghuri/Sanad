@@ -29,7 +29,7 @@ on the device before anything is sent to a language model, and the app can also 
 | **Two operating modes** | Offline (no network calls) and Hybrid (pseudonymised text to the model you choose). |
 | **Legal tools** | Calculators (SMIG/SMAG, severance, deadlines, inheritance…), citizen situation guides, statute browser with the version in force on a given date, concordance tables, contract check. |
 | **Signed law pack** | The laws and their embeddings ship as one signed file. A pack that is not signed by the publisher is refused. |
-| **Stays current** | "Update BO" finds new Official Bulletin issues and adds them to your local pack. |
+| **Stays current** | "Update BO" shows the installed and the published law pack and installs a newer one (checked against the publisher's signature), and finds new Official Bulletin issues and adds them to your local pack. |
 
 ## Screenshots
 

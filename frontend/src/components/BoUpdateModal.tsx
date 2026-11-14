@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { tr } from "../i18n";
 import { AlertTriangle, CheckCircle2, CircleDashed, Loader2, MinusCircle, RefreshCw, X, XCircle, DownloadCloud } from "lucide-react";
 import { BoJob, BoStatus, BoStep, cancelBoUpdate, getBoJob, getBoStatus, startBoUpdate } from "../api/bo";
+import { PackUpdatePanel } from "./PackUpdatePanel";
 
 interface BoUpdateModalProps {
   isOpen: boolean;
@@ -121,6 +122,9 @@ export function BoUpdateModal({ isOpen, onClose, onInstalled }: BoUpdateModalPro
         </div>
 
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
+          <PackUpdatePanel onInstalled={onInstalled} busy={running} />
+
+          <div className="text-sm font-medium pt-1" style={{ color: "var(--text-heading)" }}>{tr("Mise à jour du Bulletin Officiel")}</div>
           {problems.length > 0 && !running && (
             <div className="rounded-xl border p-3 text-xs space-y-1.5" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-card)", color: "var(--text-heading)" }}>
               <div className="flex items-center gap-2 font-medium">
