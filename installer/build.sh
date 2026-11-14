@@ -27,7 +27,7 @@ echo "== Sanad.exe (the launcher the shortcuts start)"
 v4="$(echo "$version" | sed 's/[^0-9.].*//' | awk -F. '{printf "%d,%d,%d,0", $1, $2, $3}')"
 sed -e "s/0,1,0,0/$v4/g" -e "s/\"0\.1\.0\"/\"$version\"/g" "$here/launcher/sanad.rc" > "$here/launcher/sanad.gen.rc"
 x86_64-w64-mingw32-windres -I "$here/launcher" "$here/launcher/sanad.gen.rc" -O coff -o "$here/launcher/sanad.res"
-x86_64-w64-mingw32-gcc -municode -mwindows -O2 -s "$here/launcher/sanad.c" "$here/launcher/sanad.res" -o "$stage/Sanad.exe"
+x86_64-w64-mingw32-gcc -municode -mwindows -O2 -s -DSANAD_VERSION="L\"$version\"" "$here/launcher/sanad.c" "$here/launcher/sanad.res" -o "$stage/Sanad.exe" -lshell32 -ladvapi32
 rm -f "$here/launcher/sanad.gen.rc" "$here/launcher/sanad.res"
 
 echo "== uv $uv_version (installs Python and the packages on the user's machine)"

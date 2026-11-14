@@ -4,9 +4,11 @@
  *   - everything is installed   -> starts  <runtime>\venv\Scripts\pythonw.exe -m legalrag.desktop --app-dir <this folder>
  *   - first start, or --setup   -> runs Start-Sanad.ps1 in a hidden PowerShell, which shows the setup window and then starts the app
  *
+ * After an update it also asks Windows once to refresh its icon cache, so the desktop shortcut shows the new icon.
  * <runtime> is %LOCALAPPDATA%\Sanad.   Build:  x86_64-w64-mingw32-gcc -municode -mwindows -O2 sanad.c sanad.res -o Sanad.exe
  */
 #include <windows.h>
+#include <shlobj.h>
 #include <wchar.h>
 
 #define BUF 2048
@@ -27,10 +29,28 @@ static BOOL run(wchar_t *cmd, const wchar_t *cwd, DWORD flags) {
     return TRUE;
 }
 
+#ifndef SANAD_VERSION
+#define SANAD_VERSION L"dev"
+#endif
+
+/* Windows keeps showing a shortcut's old icon after an update (it caches icons by path): refresh once per version. */
+static void refresh_icons_once(void) {
+    HKEY k;
+    wchar_t seen[64] = L"";
+    DWORD size = sizeof seen, type = 0;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Sanad", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &k, NULL) != ERROR_SUCCESS) return;
+    if (RegQueryValueExW(k, L"IconsRefreshedFor", NULL, &type, (BYTE *)seen, &size) != ERROR_SUCCESS || type != REG_SZ || wcscmp(seen, SANAD_VERSION) != 0) {
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT, NULL, NULL);
+        RegSetValueExW(k, L"IconsRefreshedFor", 0, REG_SZ, (const BYTE *)SANAD_VERSION, (DWORD)((wcslen(SANAD_VERSION) + 1) * sizeof(wchar_t)));
+    }
+    RegCloseKey(k);
+}
+
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, PWSTR args, int show) {
     wchar_t app[BUF], runtime[BUF], py[BUF], done[BUF], cmd[BUF * 3], windir[BUF];
     BOOL setup = args && wcsstr(args, L"--setup") != NULL;
     (void)inst; (void)prev; (void)show;
+    refresh_icons_once();
 
     if (!setup) { /* already open: bring it to the front */
         HWND w = FindWindowW(NULL, L"Sanad");
