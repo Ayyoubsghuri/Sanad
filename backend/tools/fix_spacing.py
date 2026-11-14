@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import re
 import shutil
 import sqlite3
 import sys
@@ -20,9 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-WORD = re.compile(r"[ء-ي]+")
-STOP = {"و", "في", "من", "أو", "او", "لا", "ما", "أن", "ان", "إن", "عن", "على", "علي", "ثم", "قد", "لم", "لن", "هو", "هي", "أي", "اي", "إلى", "الى",
-        "مع", "كل", "بين", "حتى", "إذا", "اذا", "التي", "الذي", "هذا", "هذه", "ذلك", "تلك", "غير", "بعد", "قبل", "عند", "أما", "كما", "بل"}
+from legalrag.text.repair import WORD, fixer  # noqa: E402
 
 
 def build_vocab(rows) -> collections.Counter:
@@ -30,37 +27,6 @@ def build_vocab(rows) -> collections.Counter:
     for (t,) in rows:
         v.update(WORD.findall(t or ""))
     return v
-
-
-def fixer(vocab: collections.Counter):
-    tok = re.compile(r"[\u0621-\u064A]+|[^\u0621-\u064A]+")
-
-    def ok(a: str, b: str) -> bool:
-        ab = a + b
-        if a in STOP or b in STOP or len(ab) < 3 or (len(a) == 1 and len(b) == 1) or len(a) > 6 or len(b) > 12:
-            return False
-        pieces = max((vocab[x] for x in (a, b) if len(x) >= 2), default=0)
-        # the joined word must be common, and clearly more common than any piece of two letters or more: then the space is a PDF error
-        return vocab[ab] >= 8 and vocab[ab] >= 3 * pieces
-
-    def fix(text: str) -> tuple[str, list[str]]:
-        done: list[str] = []
-        parts = tok.findall(text or "")
-        out: list[str] = []
-        i = 0
-        while i < len(parts):
-            p = parts[i]
-            # word, one plain space, word: every neighbouring pair is looked at (a join can be followed by another: «ا لفا تورة»)
-            if out and p == " " and i + 1 < len(parts) and WORD.fullmatch(out[-1]) and WORD.fullmatch(parts[i + 1]) and ok(out[-1], parts[i + 1]):
-                done.append(f"{out[-1]} {parts[i + 1]} -> {out[-1] + parts[i + 1]}")
-                out[-1] = out[-1] + parts[i + 1]
-                i += 2
-                continue
-            out.append(p)
-            i += 1
-        return "".join(out), done
-
-    return fix
 
 
 def main(argv: list[str] | None = None) -> int:

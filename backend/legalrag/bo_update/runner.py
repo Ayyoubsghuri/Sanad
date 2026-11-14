@@ -22,7 +22,7 @@ from ..builder.pipeline_import import PipelineImportError, load_pipeline_chunks
 from ..state import AppContext, install_pack
 from ..store.localkey import effective_public_key, local_private_key, public_from_private
 from ..store.lawpack import PackError
-from . import discover
+from . import cleanup, discover
 
 STEPS = [("check", "Looking for new issues on the SGG site"), ("download", "Downloading"), ("extract", "Reading the PDFs"),
          ("ingest", "Splitting into articles and indexing"), ("install", "Installing the updated law pack")]
@@ -265,9 +265,23 @@ class BoUpdater:
                 if m:
                     job.warnings.append(f"{c.name}: scanned pages without text: {m.group(1)[:80]}")
             st["done"] = i + 1
-        st.update(status="done", detail=f"{len(mds)} of {len(pdfs)} read")
         if not mds:
+            st.update(status="error", detail=f"0 of {len(pdfs)} read")
             raise RuntimeError("no PDF could be read")
+        # 3b. join the words the PDF split with a stray space (see cleanup.py; the letters were repaired by the extractor)
+        st["detail"] = "joining words split by the PDF"
+        try:
+            vocab = cleanup.pack_vocabulary(s.resolved_lawpack_path())
+            for md in mds:
+                self._check_cancel(job)
+                done = cleanup.clean_issue(md, vocab)
+                if done:
+                    job.log.append(f"{md.stem}: {len(done)} split word(s) joined (list: {md.parent / 'raw' / (md.stem + '.changes.txt')})")
+        except Cancelled:
+            raise
+        except Exception as e:  # noqa: BLE001 - the text as extracted is still usable
+            job.warnings.append(f"word clean-up skipped ({e.__class__.__name__}: {e})")
+        st.update(status="done", detail=f"{len(mds)} of {len(pdfs)} read")
 
         # 4. parse (+ chunk and embed with the pipeline's scripts when the pack came from them) -----------------------------------------------------
         st = self._begin(job, "ingest", total=1, detail="splitting into articles")
