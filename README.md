@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/screenshots/logo.png" width="96" alt="Sanad logo">
+<img src="docs/screenshots/logoinvert.png" width="96" alt="Sanad logo">
 
 # Sanad · سند
 
