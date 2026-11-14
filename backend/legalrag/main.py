@@ -66,6 +66,10 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
     async def _cloud(_: Request, e: CloudUnavailable):
         return JSONResponse(status_code=502, content={"code": "cloud_unavailable", "message": str(e)})
 
+    if settings.frontend_dir and (settings.frontend_dir / "index.html").exists():  # mounted last: the API routes above win
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=str(settings.frontend_dir), html=True), name="frontend")
     return app
 
 

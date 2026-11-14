@@ -4,6 +4,10 @@
 !/frontend/
 !/.gitignore
 !/blueprint
+!/installer/
+!/docs/
+!/.github/
+!/README.md
 
 # python
 __pycache__/
@@ -34,3 +38,8 @@ backend/tools/moroccanregdoc.json
 # frontend
 node_modules/
 dist/
+
+# installers are built by installer/build.sh (published as GitHub Release files)
+installer/stage/
+installer/out/
+installer/sanad.wxs
