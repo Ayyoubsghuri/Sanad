@@ -1,11 +1,19 @@
 name: Windows installers
 
 # Builds SanadSetup-<version>.exe and Sanad-<version>.msi.
-#   - run it by hand (Actions > Windows installers > Run workflow): the two files are attached to the run as an artifact
-#   - push a tag like v0.1.0: the two files are also published as a GitHub Release
+#   - a change of installer/VERSION on main (or a pushed tag like v0.1.0) builds them and publishes the GitHub Release v<version>
+#   - run by hand (Actions > Windows installers > Run workflow): the two files are attached to the run as an artifact;
+#     tick "publish" to also publish the release
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Also publish the GitHub Release v<installer/VERSION>"
+        type: boolean
+        default: false
   push:
+    branches: [main]
+    paths: ["installer/VERSION"]
     tags: ["v*"]
 
 permissions:
@@ -21,16 +29,30 @@ jobs:
           node-version: 22
       - name: Install NSIS, wixl and the Windows cross-compiler
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends nsis wixl gcc-mingw-w64-x86-64
-      - name: Build the installers
+      - name: Version
+        id: version
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then installer/build.sh "${GITHUB_REF_NAME#v}"; else installer/build.sh; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then v="${GITHUB_REF_NAME#v}"; else v="$(tr -d '[:space:]' < installer/VERSION)"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Build the installers
+        run: installer/build.sh "${{ steps.version.outputs.version }}"
       - uses: actions/upload-artifact@v4
         with:
           name: sanad-windows-installers
           path: installer/out/*
       - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' || inputs.publish
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Sanad ${{ steps.version.outputs.version }}
           files: installer/out/*
           generate_release_notes: true
+          body: |
+            Windows installers for Sanad. Both install the same application; pick either.
+
+            - `SanadSetup-${{ steps.version.outputs.version }}.exe`: setup wizard
+            - `Sanad-${{ steps.version.outputs.version }}.msi`: Windows Installer package
+
+            The first start downloads the law pack and the local models (about 7 GB).

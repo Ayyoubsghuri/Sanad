@@ -96,8 +96,9 @@ sudo apt-get install -y nsis wixl gcc-mingw-w64-x86-64
 installer/build.sh
 ```
 
-The files are written to `installer/out/`. To publish them, run the **Windows installers** workflow by hand (the
-files are attached to the run), or push a tag such as `v0.1.0` (the files are published as a GitHub Release).
+The files are written to `installer/out/`. To publish a new version, change the number in
+[`installer/VERSION`](installer/VERSION) on `main`: the workflow builds the two files and publishes them as the GitHub
+Release `v<version>`. Running the **Windows installers** workflow by hand attaches the files to the run instead.
 
 ## Run from source
 
