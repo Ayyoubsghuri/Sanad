@@ -22,7 +22,7 @@ export const DICT: Record<string, [string, string, string]> = {
   "Continue": ["Continue","Continuer","المتابعة"],
   "Interactive Artifact ·": ["Interactive artifact ·","Artefact interactif ·","مخرَج تفاعلي ·"],
   "Open artifact session": ["Open artifact session","Ouvrir la session de l'artefact","فتح جلسة المخرَج"],
-  "Run workflow": ["Run workflow","Lancer le flux","تشغيل مسار العمل"],
+  "Run workflow": ["Ask this question","Poser cette question","اطرح هذا السؤال"],
   "Click to view verified evidence in workbench": ["Click to view verified evidence in workbench","Cliquez pour voir les preuves vérifiées dans l'atelier","انقر لعرض الأدلة الموثَّقة في مساحة العمل"],
   "PDF Document · Evidence Attached": ["PDF document · evidence attached","Document PDF · preuve jointe","مستند PDF · دليل مرفق"],
   "Preparing response...": ["Preparing response...","Préparation de la réponse...","جارٍ تحضير الرد..."],

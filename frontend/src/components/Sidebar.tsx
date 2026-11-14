@@ -154,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       {/* Brand + Collapse */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+      <div className="pywebview-drag-region flex items-center justify-between px-4 pt-4 pb-3">
         <button
           type="button"
           onClick={onNewChat}

@@ -43,6 +43,8 @@ import { ConsultationPrepModal } from "./components/ConsultationPrepModal";
 import {
   INITIAL_PROJECT_DOCS,
   SEED_THREADS,
+  REMOVED_DEMO_THREAD_IDS,
+  REMOVED_DEMO_DOC_IDS,
   STARTER_PROMPTS,
 } from "./data/seedThreads";
 import { type HistoryTurn, prepareQuery, runQuery, getProgress, patchSettings, toBackendMode, listTraces, getTraceDetail, clearHistory, createErrorReport } from "./api/legalrag";
@@ -52,6 +54,7 @@ import { deleteDocument, ingestAttachment, type IngestResult } from "./api/docum
 import { DocumentReviewModal } from "./components/DocumentReviewModal";
 import { answerToMessage } from "./api/answerToMessage";
 import { applyWorkspaceTheme } from "./themes/palettes";
+import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/WindowControls";
 import {
   AgentStep,
   ArtifactItem,
@@ -204,19 +207,8 @@ export function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Synchronize showcase thread with latest verified PDF attachment & formatting
-          const showcaseIdx = parsed.findIndex(
-            (t: ChatThread) => t.id === "thread-pdf-evidence-showcase"
-          );
-          if (showcaseIdx >= 0) {
-            const showcaseFromSeed = SEED_THREADS.find(
-              (t) => t.id === "thread-pdf-evidence-showcase"
-            );
-            if (showcaseFromSeed) {
-              parsed[showcaseIdx] = showcaseFromSeed;
-            }
-          }
-          return parsed;
+          // demo sessions of earlier versions are dropped
+          return parsed.filter((t: ChatThread) => !REMOVED_DEMO_THREAD_IDS.includes(t.id));
         }
       }
     } catch {
@@ -233,7 +225,7 @@ export function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.docs);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return parsed.filter((d: ProjectDoc) => !REMOVED_DEMO_DOC_IDS.includes(d.id));
       }
     } catch {
       // Ignore storage error
@@ -969,7 +961,7 @@ export function App() {
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-clip">
         {/* Clean Contextual Top Bar */}
         <header
-          className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b shrink-0 min-w-0"
+          className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b shrink-0 min-w-0 ${IS_DESKTOP_FRAMELESS ? DRAG_REGION : ""}`}
           style={{
             backgroundColor: "var(--bg-canvas)",
             borderColor: "var(--border-subtle)",
@@ -1023,6 +1015,7 @@ export function App() {
               }
             }}
           />
+          <WindowControls />
         </header>
 
         {/* Home Screen vs Active Thread Conversation */}

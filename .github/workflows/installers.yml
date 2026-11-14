@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install NSIS and wixl
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends nsis wixl
+      - name: Install NSIS, wixl and the Windows cross-compiler
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends nsis wixl gcc-mingw-w64-x86-64
       - name: Build the installers
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then installer/build.sh "${GITHUB_REF_NAME#v}"; else installer/build.sh; fi
