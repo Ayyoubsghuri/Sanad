@@ -1,0 +1,226 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700&display=block" rel="stylesheet">
+<style>
+:root{--lime:#C8F43A;--lime2:#9ED11C;--bg:#070807;--card:#151715;--card2:#1c1f1c;--line:#2a2e29;--txt:#F2F4EE;--mut:#8C9188}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:"Inter Display","Inter",sans-serif;color:var(--txt)}
+.abs{position:absolute}
+#bg{inset:0}
+#glow1,#glow2{border-radius:50%;filter:blur(140px)}
+#glow1{width:1100px;height:900px;background:radial-gradient(circle,#B6E62A 0%,#5d8a10 40%,transparent 70%)}
+#glow2{width:900px;height:800px;background:radial-gradient(circle,#1f6b5a 0%,#0e3a33 45%,transparent 70%)}
+#grain{inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#vign{inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.75) 100%)}
+.scene{position:absolute;inset:0;opacity:0}
+#s2,#s3,#s4,#s5{transform:scale(1.28)}
+/* 1: window */
+#stage{inset:0;perspective:1800px}
+#win{left:50%;top:50%;width:1300px;height:812px;margin:-406px 0 0 -650px;border-radius:22px;overflow:hidden;border:1px solid #333;
+ box-shadow:0 60px 160px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04);transform-style:preserve-3d}
+#win img{width:100%;height:100%;display:block}
+#win .sheen{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(200,244,58,.16) 48%,transparent 62%)}
+/* cards */
+.card{background:linear-gradient(180deg,rgba(32,36,31,.92),rgba(18,20,18,.92));border:1px solid var(--line);border-radius:30px;box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.logo{width:64px;height:64px;border-radius:18px;background:var(--lime);display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.logo .face{width:44px;height:36px;border-radius:15px;background:#0b0b0b;position:relative}
+.logo .face i{position:absolute;top:11px;width:13px;height:13px;border-radius:50%;background:var(--lime)}
+.logo .face i:first-child{left:7px}.logo .face i:last-child{right:7px}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:10px 22px;font-size:26px;font-weight:500}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--lime);box-shadow:0 0 14px var(--lime)}
+#notif{left:50%;top:50%;width:900px;margin:-150px 0 0 -450px;padding:34px 40px}
+#notif .row{display:flex;align-items:center;gap:20px}
+#notif h2{font-size:46px;font-weight:600;letter-spacing:-.5px;margin-top:22px}
+#notif p{font-size:28px;color:var(--mut);margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:8px 16px;background:#232723;border:1px solid #30352f;font-size:22px;color:#cfd4ca;font-family:"JetBrains Mono",monospace}
+/* 3: chips + tiles */
+#chips{left:50%;top:330px;transform:translateX(-50%);display:flex;align-items:center;gap:18px}
+.av{width:78px;height:78px;border-radius:50%;background:#1e221d;border:1px solid #333;display:flex;align-items:center;justify-content:center}
+.ch{position:relative;font-size:34px;font-weight:500;padding:16px 36px;border-radius:999px;background:#262a25;color:#e8ebe4}
+.ch.on{background:var(--lime);color:#0b0b0b}
+#tiles{left:50%;top:470px;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,330px);gap:26px}
+.tile{height:240px;border-radius:28px;padding:30px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .ic{width:76px;height:76px;border-radius:20px;background:var(--lime);display:flex;align-items:center;justify-content:center}
+.tile b{font-size:36px;font-weight:600;letter-spacing:-.4px}
+.tile span{font-size:22px;color:var(--mut);display:block;margin-top:6px}
+/* 4: law pack */
+#pack{left:50%;top:240px;width:1000px;margin-left:-500px;padding:30px 36px;border-radius:30px;
+ background:linear-gradient(180deg,rgba(150,205,25,.55),rgba(70,110,10,.45));border:1px solid rgba(200,244,58,.6);box-shadow:0 0 80px rgba(200,244,58,.25)}
+#pack .top{display:flex;justify-content:space-between;align-items:center;font-size:30px;font-weight:600;color:#effbd0}
+#pack .tags{display:flex;gap:12px;margin-top:22px}
+#pack .tags .chip{background:rgba(0,0,0,.35);border-color:rgba(200,244,58,.4);color:#eaffb8;font-size:24px}
+#rows{left:50%;top:520px;width:1000px;margin-left:-500px}
+.rowc{display:flex;align-items:center;gap:24px;padding:24px 30px;border-radius:24px;background:#141614;border:1px solid #232622;margin-bottom:16px}
+.rowc .n{width:64px;height:64px;border-radius:50%;background:#20241f;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--lime);font-weight:700;font-family:"JetBrains Mono",monospace;flex:none}
+.rowc b{font-size:32px;font-weight:600}.rowc span{display:block;font-size:22px;color:var(--mut);margin-top:4px}
+.rowc .st{margin-left:auto;font-size:22px;color:var(--lime)}
+/* 5: answer */
+#ans{left:50%;top:50%;width:1080px;margin:-330px 0 0 -540px;padding:34px 40px}
+#ans .hd{display:flex;align-items:center;gap:18px}
+#ans .hd b{font-size:34px;font-weight:600}#ans .hd span{display:block;font-size:22px;color:var(--mut)}
+#ans .lbl{font-size:22px;color:var(--mut);margin:26px 0 12px}
+#ans .vs{display:flex;gap:12px}
+#ans .v{border-radius:999px;padding:8px 18px;font-size:22px;background:#1f231e;border:1px solid #2e332d}
+#ans .v.g{background:rgba(200,244,58,.15);border-color:rgba(200,244,58,.5);color:var(--lime)}
+#ans .q{display:flex;gap:16px;align-items:flex-start;margin-top:14px;font-size:24px;color:#d9ddd4;line-height:1.35}
+#ans .q i{font-style:normal;font-family:"JetBrains Mono",monospace;color:var(--lime);font-size:20px;border:1px solid #3a4a12;border-radius:8px;padding:3px 8px;flex:none}
+#composer{display:flex;align-items:center;gap:18px;margin-top:30px}
+#composer .in{flex:1;height:76px;border-radius:22px;background:#0f110f;border:1px solid #2a2e29;display:flex;align-items:center;padding:0 26px;font-size:24px;color:#6f756b}
+#send{width:84px;height:84px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;flex:none}
+/* 6: text */
+.line{left:0;right:0;top:50%;margin-top:-50px;text-align:center;font-size:100px;font-weight:600;letter-spacing:-3px;white-space:nowrap}
+.line .w{display:inline-block;margin:0 .13em}
+.hl{color:var(--lime)}
+/* 7: logo */
+#bigLogo{left:50%;top:50%;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50px;background:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 0 90px rgba(200,244,58,.35)}
+#bigLogo .face{width:132px;height:108px;border-radius:44px;background:#0b0b0b;position:relative}
+#bigLogo .face i{position:absolute;top:34px;width:38px;height:38px;border-radius:50%;background:var(--lime)}
+#bigLogo .face i:first-child{left:22px}#bigLogo .face i:last-child{right:22px}
+#bigLogo .ant{position:absolute;top:-30px;left:50%;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:var(--lime)}
+#word{left:50%;top:50%;margin-top:-62px;height:124px;font-size:118px;font-weight:700;letter-spacing:-3px;overflow:hidden;white-space:nowrap}
+#ar{left:50%;top:50%;margin-top:-6px;font-family:"Alexandria",sans-serif;font-size:44px;font-weight:700;color:var(--lime)}
+#foot{left:0;right:0;bottom:70px;text-align:center;font-size:21px;color:#a3a99d;line-height:1.5}
+</style></head>
+<body>
+<div id="bg" class="abs"><div id="glow2" class="abs"></div><div id="glow1" class="abs"></div></div>
+
+<div id="s1" class="scene"><div id="stage" class="abs"><div id="win" class="abs"><img src="app-dark.png"><div class="sheen"></div></div></div></div>
+
+<div id="s2" class="scene"><div id="notif" class="card abs">
+  <div class="row"><div class="logo"><div class="face"><i></i><i></i></div></div>
+    <div style="font-size:36px;font-weight:700;letter-spacing:.5px">SANAD</div>
+    <div class="pill" style="margin-left:auto;background:#20241f;border:1px solid #30352f;font-size:22px"><span class="dot"></span>VERIFIED</div></div>
+  <h2>Article 53 applies to your case</h2>
+  <p>Labour Code · checked against 3 official texts</p>
+  <div style="display:flex;gap:12px;margin-top:22px"><span class="chip">Art. 41</span><span class="chip">Art. 53</span><span class="chip">Art. 59</span><span class="chip" style="color:var(--lime)">B.O. 5167 ›</span></div>
+</div></div>
+
+<div id="s3" class="scene">
+  <div id="chips" class="abs"><div class="av"><div class="logo" style="width:54px;height:54px;border-radius:16px"><div class="face" style="width:38px;height:30px;border-radius:12px"><i style="top:9px;width:11px;height:11px"></i><i style="top:9px;width:11px;height:11px"></i></div></div></div>
+    <div class="ch" id="c0">offline</div><div class="ch" id="c1">hybrid</div><div class="ch" id="c2">citizen</div></div>
+  <div id="tiles" class="abs">
+    <div class="tile card" id="t0"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0b0b0b" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg></div><div><b>Calculators</b><span>Severance, SMIG, deadlines</span></div></div>
+    <div class="tile card" id="t1"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0b0b0b" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></div><div><b>Situations</b><span>Work, family, housing</span></div></div>
+    <div class="tile card" id="t2"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0b0b0b" stroke-width="2.2" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 1-2-2zM20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 0 2-2z"/></svg></div><div><b>Statutes</b><span>Arabic & French, by date</span></div></div>
+  </div>
+</div>
+
+<div id="s4" class="scene">
+  <div id="pack" class="abs"><div class="top"><span style="display:flex;align-items:center;gap:14px"><span class="dot" style="background:#eaffb8"></span>searching the law pack</span>
+    <span class="pill" style="background:rgba(0,0,0,.35);font-size:24px;color:#eaffb8"><span class="dot"></span>signed · offline</span></div>
+    <div class="tags"><span class="chip">Labour Code</span><span class="chip">Family Code</span><span class="chip">Obligations & Contracts</span><span class="chip">+ Official Bulletin</span></div></div>
+  <div id="rows" class="abs">
+    <div class="rowc" id="r0"><div class="n">53</div><div><b>Labour Code · Article 53</b><span>Notice period before dismissal</span></div><div class="st">in force ✓</div></div>
+    <div class="rowc" id="r1"><div class="n">41</div><div><b>Labour Code · Article 41</b><span>Damages for abusive dismissal</span></div><div class="st">in force ✓</div></div>
+    <div class="rowc" id="r2"><div class="n">168</div><div><b>Family Code · Article 168</b><span>Child maintenance (nafaqa)</span></div><div class="st">in force ✓</div></div>
+  </div>
+</div>
+
+<div id="s5" class="scene"><div id="ans" class="card abs">
+  <div class="hd"><div class="logo"><div class="face"><i></i><i></i></div></div><div><b>Sanad</b><span>answered from the official texts</span></div>
+    <div class="pill" style="margin-left:auto;background:#20241f;border:1px solid #30352f;font-size:22px"><span class="dot"></span>checked</div></div>
+  <div class="lbl">Verification</div>
+  <div class="vs"><span class="v g">✓ 4 claims verified</span><span class="v">3 sources</span><span class="v">names masked on device</span></div>
+  <div class="lbl">Sources</div>
+  <div class="q"><i>Art. 53</i><span>« The employee is entitled to a notice period before dismissal… »</span></div>
+  <div class="q"><i>Art. 41</i><span>« Abusive dismissal gives the right to damages… »</span></div>
+  <div id="composer"><div class="in">Ask about Moroccan law…</div><div id="send"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0b0b0b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+</div></div>
+
+<div id="s6" class="scene">
+  <div class="line abs" id="L1"><span class="w">Moroccan</span><span class="w">law,</span><span class="w">from</span><span class="w">the</span><span class="w hl">official</span><span class="w hl">texts</span></div>
+  <div class="line abs" id="L2"><span class="w">Your</span><span class="w">data</span><span class="w">stays</span><span class="w">on</span><span class="w hl">your</span><span class="w hl">device</span></div>
+  <div class="line abs" id="L3"><span class="w">Every</span><span class="w">answer</span><span class="w hl">cites</span><span class="w">its</span><span class="w">source</span></div>
+</div>
+
+<div id="s7" class="scene">
+  <div id="bigLogo" class="abs"><div class="ant"></div><div class="face"><i></i><i></i></div></div>
+  <div id="word" class="abs">Sanad</div>
+  <div id="ar" class="abs">سند</div>
+  <div id="foot" class="abs">Moroccan law assistant · runs on your own computer<br>A reading aid, not legal advice.</div>
+</div>
+
+<div id="grain" class="abs"></div><div id="vign" class="abs"></div>
+<script>
+const $=id=>document.getElementById(id);
+const cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const seg=(t,a,b)=>cl((t-a)/(b-a));
+const eo=x=>1-Math.pow(1-x,3), eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+function vis(el,o,tr,bl){el.style.opacity=o;if(tr!==undefined)el.style.transform=tr;el.style.filter=bl?`blur(${bl}px)`:'none'}
+function scene(id,t,a,b,fi=.25,fo=.3){const o=Math.min(seg(t,a,a+fi),1-seg(t,b-fo,b));$(id).style.opacity=(t>=a&&t<=b)?o:0;return t>=a&&t<=b}
+let wordW=0;
+window.render=function(t){
+  // background glow drift
+  const g=$('glow1'),g2=$('glow2');
+  g.style.left=(lerp(1050,700,eio(seg(t,0,16)))+Math.sin(t*.7)*40)+'px';g.style.top=(lerp(380,520,eio(seg(t,0,8))))+'px';
+  g.style.opacity=lerp(.15,.85,eo(seg(t,0,1.5)))*(t>8.6&&t<13?.55:1);
+  g2.style.left=(lerp(-200,-60,seg(t,0,16)))+'px';g2.style.top='-260px';g2.style.opacity=.55;
+  // 1: window in 3D
+  if(scene('s1',t,0,2.75,.4,.35)){
+    const a=eo(seg(t,0,1.1)), b=eio(seg(t,1.1,2.1)), c=eio(seg(t,2.05,2.75));
+    const ry=lerp(-62,-16,a)+lerp(0,16,b), rx=lerp(24,9,a)+lerp(0,-9,b), rz=lerp(-14,-4,a)+lerp(0,4,b);
+    const s=lerp(.32,.72,a)*lerp(1,1.08,b)*lerp(1,2.6,c);
+    const tx=lerp(0,-260,c), ty=lerp(60,0,a)+lerp(0,-210,c);
+    vis($('win'),1,`translate(${tx}px,${ty}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s})`,c*10);
+    $('win').querySelector('.sheen').style.transform=`translateX(${lerp(-120,120,seg(t,.3,2.3))}%)`;
+  }
+  // 2: verified card
+  if(scene('s2',t,2.45,4.3,.3,.4)){
+    const a=eo(seg(t,2.45,3.0)), o=eio(seg(t,3.85,4.3));
+    vis($('notif'),1,`translateY(${lerp(40,0,a)+lerp(0,-40,o)}px) scale(${lerp(1.35,1,a)*lerp(1,.94,o)})`,(1-a)*18+o*16);
+  }
+  // 3: modes + tools
+  if(scene('s3',t,4.2,6.15,.25,.35)){
+    const a=eo(seg(t,4.2,4.6));
+    $('chips').style.transform=`translateX(-50%) translateY(${lerp(30,0,a)}px) scale(${lerp(1.15,1,a)})`;
+    $('chips').style.filter=`blur(${(1-a)*10}px)`;
+    const on=t<4.9?0:(t<5.5?1:2);['c0','c1','c2'].forEach((c,i)=>$(c).classList.toggle('on',i===on||(i===2&&t>=5.5)||(i===1&&t>=4.9)));
+    ['t0','t1','t2'].forEach((id,i)=>{const p=back(seg(t,4.5+i*.12,5.0+i*.12)), q=eio(seg(t,5.8,6.15));
+      vis($(id),seg(t,4.5+i*.12,4.75+i*.12),`translateX(${lerp(260,0,p)+lerp(0,-120,q)}px) perspective(900px) rotateY(${lerp(-25,0,p)}deg)`,q*12)});
+  }
+  // 4: law pack search
+  if(scene('s4',t,6.05,7.55,.25,.3)){
+    const a=eo(seg(t,6.05,6.45));
+    vis($('pack'),1,`translateY(${lerp(-30,0,a)}px) scale(${lerp(1.08,1,a)})`,(1-a)*14);
+    ['r0','r1','r2'].forEach((id,i)=>{const p=eo(seg(t,6.35+i*.14,6.8+i*.14)); const up=eio(seg(t,7.1,7.55));
+      vis($(id),p,`translateY(${lerp(90,0,p)+lerp(0,-140,up)}px)`,(1-p)*10+up*14)});
+  }
+  // 5: answer + send (pulse on the drop)
+  if(scene('s5',t,7.5,8.75,.25,.12)){
+    const a=eo(seg(t,7.5,7.9)), z=eio(seg(t,8.05,8.6));
+    // zoom toward the send button (bottom-right of the card)
+    vis($('ans'),1,`translate(${lerp(0,-420,z)}px,${lerp(30,0,a)+lerp(0,-260,z)}px) scale(${lerp(.94,1,a)*lerp(1,2.1,z)})`,(1-a)*10);
+    const pulse=seg(t,8.45,8.75);
+    $('send').style.boxShadow=`0 0 ${lerp(0,70,Math.sin(pulse*Math.PI))}px ${lerp(0,22,Math.sin(pulse*Math.PI))}px rgba(200,244,58,.6)`;
+    $('send').style.transform=`scale(${1+.18*Math.sin(pulse*Math.PI)})`;
+  }
+  // 6: kinetic text, synced to the beat (0.6977 s)
+  if(scene('s6',t,8.75,13.05,.05,.25)){
+    const B=.6977;
+    const L1=$('L1').children, L2=$('L2').children, L3=$('L3').children;
+    const show1=t<10.5, show2=t>=10.5&&t<11.85, show3=t>=11.85;
+    $('L1').style.opacity=show1?1:0;$('L2').style.opacity=show2?1:0;$('L3').style.opacity=show3?1:0;
+    [...L1].forEach((w,i)=>{const p=eo(seg(t,8.78+i*.17,9.0+i*.17));vis(w,p,`translateY(${lerp(26,0,p)}px)`,(1-p)*8)});
+    $('L1').style.transform=`scale(${lerp(.94,1.04,seg(t,8.8,10.5))})`;
+    [...L2].forEach((w,i)=>{const p=back(seg(t,10.5+i*.06,10.85+i*.06));vis(w,cl(p*1.4),`scale(${lerp(.6,1,p)})`,(1-cl(p))*6)});
+    [...L3].forEach((w,i)=>{const p=eo(seg(t,11.85+i*.07,12.25+i*.07));vis(w,p,`translateX(${lerp(-120,0,p)}px)`,(1-p)*22)});
+    $('L3').style.transform=`scale(${lerp(1,1.05,seg(t,12.2,13.05))})`;
+  }
+  // 7: logo reveal
+  if(scene('s7',t,13.0,16.1,.1,.6)){
+    const p=back(seg(t,13.05,13.5)), m=eio(seg(t,13.85,14.4)), w=eo(seg(t,14.0,14.6)), ar=eo(seg(t,14.55,14.95));
+    const W=wordW||420, ar_w=110, gap=34, L=190*.72, total=L+gap+W+18+ar_w, left=-total/2;
+    $('bigLogo').style.transform=`translateX(${lerp(0,left+L/2,m)}px) scale(${lerp(.2,1,p)*lerp(1,.72,m)})`;
+    $('bigLogo').style.opacity=cl(p*2);
+    const x0=left+L+gap;
+    $('word').style.transform=`translateX(${x0+lerp(-40,0,w)}px)`;$('word').style.width=(W*w)+'px';$('word').style.opacity=w;
+    $('ar').style.transform=`translateX(${x0+W+18}px) translateY(${lerp(20,0,ar)}px)`;$('ar').style.opacity=ar;
+    $('foot').style.opacity=eo(seg(t,14.3,15.0))*.9;
+  }
+  document.body.style.opacity=1-seg(t,15.55,16)*1;
+};
+window.ready=document.fonts.ready.then(()=>{const s=document.createElement('span');s.style.cssText='position:absolute;visibility:hidden;font:700 118px "Inter Display";letter-spacing:-3px';s.textContent='Sanad';document.body.appendChild(s);wordW=s.getBoundingClientRect().width+6;s.remove();});
+</script>
+</body></html>

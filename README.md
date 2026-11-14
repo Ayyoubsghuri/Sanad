@@ -10,6 +10,10 @@ Arabic · French · English · Darija
 
 [Download for Windows](#install-on-windows) · [Law pack on Hugging Face](https://huggingface.co/datasets/Xdnh00p/sanad-lawpack) · [Run from source](#run-from-source) · [How it works](#how-it-works)
 
+<a href="docs/video/sanad-promo.mp4"><img src="docs/video/sanad-promo.gif" width="900" alt="Sanad promo video"></a>
+
+<sub>▶ <a href="docs/video/sanad-promo.mp4">Watch the video with sound</a> (16 s)</sub>
+
 <img src="docs/screenshots/home.png" width="900" alt="Sanad home screen">
 
 </div>
