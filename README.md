@@ -57,7 +57,7 @@ Download one of the two installers from the [Releases page](https://github.com/A
 | `Sanad-<version>.msi` | Windows Installer package, for example for `msiexec /i Sanad-<version>.msi` |
 
 Both install for the current user only, without administrator rights, into `%LOCALAPPDATA%\Programs\Sanad`, and add a
-**Sanad** shortcut to the Start menu and the desktop.
+**Sanad** shortcut with the Sanad logo to the Start menu and the desktop.
 
 **The first start downloads everything else** (about 7 GB, so keep the internet connection and the window open):
 
@@ -68,24 +68,28 @@ Both install for the current user only, without administrator rights, into `%LOC
 3. The local models, into `%USERPROFILE%\.moroccan-legal-rag\models`: the reranker `BAAI/bge-reranker-v2-m3` and the
    embedding model the law pack was built with (`BAAI/bge-m3`).
 
-If the download is interrupted, start Sanad again: it continues where it stopped. After the setup, Sanad opens in
-its own window (Microsoft Edge or Chrome in app mode: a normal title bar, no tabs, no address bar). Close the window
-to stop Sanad. Without Edge or Chrome it opens in the default browser at `http://127.0.0.1:8765`. **Sanad - repair setup** in the Start menu
-runs the setup again.
+A setup window shows the progress of that first start; no console window opens. If the download is interrupted,
+start Sanad again: it continues where it stopped. **Sanad - repair setup** in the Start menu runs the setup again.
+
+After the setup, the shortcut starts `Sanad.exe`, which opens Sanad in its own window: no browser, no console and no
+Windows title bar. The window buttons (minimise, maximise, close) are in Sanad's own top bar, which also moves the
+window; the bottom-right corner resizes it.
+
+<img src="docs/screenshots/desktop-window.png" width="820" alt="Sanad desktop window with its own window buttons">
 
 To get answers written by a language model, open **API keys** in the app and add a key (Anthropic or any
 OpenAI-compatible endpoint). Without one, Sanad shows the cited articles only.
 
-Requirements: Windows 10 or 11 (64-bit), about 12 GB of free disk space, 8 GB of RAM (16 GB recommended). A GPU is
+Requirements: Windows 10 or 11 (64-bit) with the WebView2 runtime (part of Windows 11 and of current Windows 10), about 12 GB of free disk space, 8 GB of RAM (16 GB recommended). A GPU is
 optional.
 
 ### Build the installers yourself
 
-The installers are built on Linux by [`installer/build.sh`](installer/build.sh) (needs `node`, `python3`, `makensis`
-and `wixl`), which is also what the [GitHub workflow](.github/workflows/installers.yml) runs:
+The installers are built on Linux by [`installer/build.sh`](installer/build.sh) (needs `node`, `python3`, `makensis`,
+`wixl` and the MinGW cross-compiler), which is also what the [GitHub workflow](.github/workflows/installers.yml) runs:
 
 ```bash
-sudo apt-get install -y nsis wixl
+sudo apt-get install -y nsis wixl gcc-mingw-w64-x86-64
 ```
 
 ```bash
@@ -177,7 +181,7 @@ understand ──► date-aware hybrid retrieval ──► rerank ──► gene
 |---|---|
 | [`backend/`](backend/) | FastAPI backend (`legalrag`): retrieval, verification, pseudonymisation, calculators, pack builder, tests |
 | [`frontend/`](frontend/) | React + Vite interface |
-| [`installer/`](installer/) | Windows installers (`.exe` with NSIS, `.msi` with WiX) and the first-start setup script |
+| [`installer/`](installer/) | Windows installers (`.exe` with NSIS, `.msi` with WiX), the `Sanad.exe` launcher and the first-start setup |
 | [`blueprint/`](blueprint/) | The design document in English, French and Arabic |
 
 ## Limitations

@@ -28,6 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 local-models = ["sentence-transformers>=3.0"]   # BGE-M3 embedder + bge-reranker-v2-m3
+desktop = ["pywebview>=5.3"]   # Sanad in its own window (legalrag.desktop); uses the WebView2 runtime of Windows 10/11
 ner = ["transformers>=4.40", "torch>=2.2"]   # Arabic PII NER (MutazYoune/Arabic-NER-PII)
 ocr = ["pytesseract>=0.3", "pillow>=10"]
 dev = ["pytest>=8", "pytest-timeout>=2.3"]

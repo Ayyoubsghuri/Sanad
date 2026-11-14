@@ -2,7 +2,7 @@
 
     python gen_wxs.py <stage_dir> <version> > sanad.wxs      then:  wixl -a x64 -o Sanad.msi sanad.wxs
 
-Per-user install (no administrator rights) into %LOCALAPPDATA%\\Programs\\Sanad, with Start-menu and desktop shortcuts.
+Per-user install (no administrator rights) into %LOCALAPPDATA%\\Programs\\Sanad, with Start-menu and desktop shortcuts to Sanad.exe.
 The models and the law pack are downloaded on the first start (Setup-Sanad.ps1), not by the .msi itself."""
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ from xml.sax.saxutils import quoteattr
 
 UPGRADE_CODE = "6f0d4a52-3c0e-4c59-9b1c-5a1f0b7e2d11"  # never change: lets a new version replace the old one
 NS = uuid.UUID("b1e0a0c4-7a53-4d0e-8f66-1d2c9a4e7f20")
-PS = "[System64Folder]WindowsPowerShell\\v1.0\\powershell.exe"
 REG = '<RegistryValue Root="HKCU" Key="Software\\Sanad\\Components" Name={n} Type="integer" Value="1" KeyPath="yes"/>'
 
 
@@ -50,10 +49,10 @@ def walk(folder: Path, root: Path, comps: list[str], pad: str) -> list[str]:
     return out
 
 
-def shortcut(sid: str, directory: str, name: str, script: str) -> str:
-    args = quoteattr(f'-NoProfile -ExecutionPolicy Bypass -File "[INSTALLDIR]{script}"')
-    return (f'<Shortcut Id="{sid}" Directory="{directory}" Name="{name}" Target="{PS}" Arguments={args} '
-            f'WorkingDirectory="INSTALLDIR" Icon="SanadIcon"/>')
+def shortcut(sid: str, directory: str, name: str, arguments: str = "") -> str:
+    args = f" Arguments={quoteattr(arguments)}" if arguments else ""
+    return (f'<Shortcut Id="{sid}" Directory="{directory}" Name="{name}" Target="[INSTALLDIR]Sanad.exe"{args} '
+            f'WorkingDirectory="INSTALLDIR" Icon="SanadIcon" Description="Sanad: Moroccan law assistant"/>')
 
 
 def main() -> int:
@@ -91,9 +90,9 @@ def main() -> int:
     <DirectoryRef Id="SanadMenu">
       <Component Id="cShortcuts" Guid="{guid('shortcuts')}">
         {REG.format(n=quoteattr('shortcuts'))}
-        {shortcut('sMenu', 'SanadMenu', 'Sanad', 'Start-Sanad.ps1')}
-        {shortcut('sRepair', 'SanadMenu', 'Sanad - repair setup', 'Setup-Sanad.ps1')}
-        {shortcut('sDesktop', 'DesktopFolder', 'Sanad', 'Start-Sanad.ps1')}
+        {shortcut('sMenu', 'SanadMenu', 'Sanad')}
+        {shortcut('sRepair', 'SanadMenu', 'Sanad - repair setup', '--setup')}
+        {shortcut('sDesktop', 'DesktopFolder', 'Sanad')}
         <RemoveFolder Id="xSanadMenu" On="uninstall"/>
       </Component>
     </DirectoryRef>

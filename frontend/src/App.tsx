@@ -52,6 +52,7 @@ import { deleteDocument, ingestAttachment, type IngestResult } from "./api/docum
 import { DocumentReviewModal } from "./components/DocumentReviewModal";
 import { answerToMessage } from "./api/answerToMessage";
 import { applyWorkspaceTheme } from "./themes/palettes";
+import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/WindowControls";
 import {
   AgentStep,
   ArtifactItem,
@@ -969,7 +970,7 @@ export function App() {
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-clip">
         {/* Clean Contextual Top Bar */}
         <header
-          className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b shrink-0 min-w-0"
+          className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b shrink-0 min-w-0 ${IS_DESKTOP_FRAMELESS ? DRAG_REGION : ""}`}
           style={{
             backgroundColor: "var(--bg-canvas)",
             borderColor: "var(--border-subtle)",
@@ -1023,6 +1024,7 @@ export function App() {
               }
             }}
           />
+          <WindowControls />
         </header>
 
         {/* Home Screen vs Active Thread Conversation */}
