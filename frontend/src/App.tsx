@@ -43,6 +43,8 @@ import { ConsultationPrepModal } from "./components/ConsultationPrepModal";
 import {
   INITIAL_PROJECT_DOCS,
   SEED_THREADS,
+  REMOVED_DEMO_THREAD_IDS,
+  REMOVED_DEMO_DOC_IDS,
   STARTER_PROMPTS,
 } from "./data/seedThreads";
 import { type HistoryTurn, prepareQuery, runQuery, getProgress, patchSettings, toBackendMode, listTraces, getTraceDetail, clearHistory, createErrorReport } from "./api/legalrag";
@@ -205,19 +207,8 @@ export function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Synchronize showcase thread with latest verified PDF attachment & formatting
-          const showcaseIdx = parsed.findIndex(
-            (t: ChatThread) => t.id === "thread-pdf-evidence-showcase"
-          );
-          if (showcaseIdx >= 0) {
-            const showcaseFromSeed = SEED_THREADS.find(
-              (t) => t.id === "thread-pdf-evidence-showcase"
-            );
-            if (showcaseFromSeed) {
-              parsed[showcaseIdx] = showcaseFromSeed;
-            }
-          }
-          return parsed;
+          // demo sessions of earlier versions are dropped
+          return parsed.filter((t: ChatThread) => !REMOVED_DEMO_THREAD_IDS.includes(t.id));
         }
       }
     } catch {
@@ -234,7 +225,7 @@ export function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.docs);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return parsed.filter((d: ProjectDoc) => !REMOVED_DEMO_DOC_IDS.includes(d.id));
       }
     } catch {
       // Ignore storage error
