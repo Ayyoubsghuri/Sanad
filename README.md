@@ -69,7 +69,8 @@ Both install for the current user only, without administrator rights, into `%LOC
    embedding model the law pack was built with (`BAAI/bge-m3`).
 
 If the download is interrupted, start Sanad again: it continues where it stopped. After the setup, Sanad opens in
-your browser at `http://127.0.0.1:8765`. Close the Sanad window to stop it. **Sanad - repair setup** in the Start menu
+its own window (Microsoft Edge or Chrome in app mode: a normal title bar, no tabs, no address bar). Close the window
+to stop Sanad. Without Edge or Chrome it opens in the default browser at `http://127.0.0.1:8765`. **Sanad - repair setup** in the Start menu
 runs the setup again.
 
 To get answers written by a language model, open **API keys** in the app and add a key (Anthropic or any
