@@ -84,7 +84,13 @@ class BoUpdater:
         """Why an update cannot run right now (shown in the UI before the user clicks)."""
         c, s, out = self.ctx, self.ctx.settings, []
         if c.mode == "offline":
-            out.append("The app is in offline mode: switch to hybrid or cloud-assisted mode to let it contact the SGG site.")
+            out.append("The app is in offline mode: switch to hybrid mode to let it contact the SGG site.")
+        import importlib.util
+
+        missing = [pip for mod, pip in (("fontTools", "fonttools"), ("pdfplumber", "pdfplumber"), ("pikepdf", "pikepdf"), ("pypdfium2", "pypdfium2"))
+                   if importlib.util.find_spec(mod) is None]
+        if missing:  # checked before anything is downloaded: the PDF reader needs them
+            out.append(f"Packages needed to read the Bulletin PDFs are missing. Install them:  pip install {' '.join(missing)}")
         if not (s.resolved_bo_pipeline_dir() / "extract_bo_pdf.py").exists():
             out.append(f"extract_bo_pdf.py was not found in {s.resolved_bo_pipeline_dir()} (the bundled scripts are missing).")
         if not c.pack:
