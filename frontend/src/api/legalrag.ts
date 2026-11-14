@@ -243,7 +243,7 @@ export const listInstruments = () => call("/v1/instruments");
 export const getTrace = (id: string) => call(`/v1/traces/${id}`);
 
 // ---- mapping to frontend settings -----------------------------------------------------------------
-export const toBackendMode = (m: string) => m.replace("-", "_");
+export const toBackendMode = (m: string) => (m === "cloud-assisted" ? "hybrid" : m.replace("-", "_")); // cloud-assisted mode is disabled
 
 export interface CalcResult {
   tool: string;

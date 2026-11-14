@@ -74,7 +74,10 @@ def get_settings(ctx: AppContext = Depends(get_ctx)) -> dict:
 
 @router.patch("/settings", tags=["settings"])
 def update_settings(body: SettingsUpdate, ctx: AppContext = Depends(get_ctx)) -> dict:
-    return ctx.db.set_settings(body.model_dump(exclude_unset=True))
+    changes = body.model_dump(exclude_unset=True)
+    if changes.get("mode") == "cloud_assisted":  # disabled in this version
+        changes["mode"] = "hybrid"
+    return ctx.db.set_settings(changes)
 
 
 @router.put("/secrets/{name}", tags=["settings"], status_code=204)
@@ -110,7 +113,7 @@ def run_benchmark(ctx: AppContext = Depends(require_pack)) -> dict:
     rr.score("benchmark", ["passage one about dismissal", "passage two about notice"] * 15)
     t_rr = time.monotonic() - t1
     weak = t_emb > 1.5 or t_rr > 4.0
-    result = {"embed_s_per_query": round(t_emb, 3), "rerank_30_pairs_s": round(t_rr, 3), "weak_device": weak, "suggested_mode": "cloud_assisted" if weak else "hybrid"}
+    result = {"embed_s_per_query": round(t_emb, 3), "rerank_30_pairs_s": round(t_rr, 3), "weak_device": weak, "suggested_mode": "hybrid"}
     ctx.db.set_settings({"benchmark": result, "weak_device": weak})
     return result
 

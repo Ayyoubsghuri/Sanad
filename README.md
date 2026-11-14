@@ -26,7 +26,7 @@ on the device before anything is sent to a language model, and the app can also 
 |---|---|
 | **Answers with sources** | Date-aware hybrid search (dense + keyword + reranker) over the law pack. Each answer cites articles, and unsupported claims are removed or the answer falls back to quoted passages. |
 | **Privacy first** | The backend listens on `127.0.0.1` only. Personal data is pseudonymised locally; you see exactly what would be sent before it leaves. |
-| **Three operating modes** | Offline (no network calls), Hybrid (pseudonymised text to the model you choose), Cloud-assisted. |
+| **Two operating modes** | Offline (no network calls) and Hybrid (pseudonymised text to the model you choose). |
 | **Legal tools** | Calculators (SMIG/SMAG, severance, deadlines, inheritance…), citizen situation guides, statute browser with the version in force on a given date, concordance tables, contract check. |
 | **Signed law pack** | The laws and their embeddings ship as one signed file. A pack that is not signed by the publisher is refused. |
 | **Stays current** | "Update BO" finds new Official Bulletin issues and adds them to your local pack. |
@@ -37,7 +37,7 @@ The screenshots below were taken with the small synthetic test pack (texts marke
 
 | Operating modes | Statute browser |
 |---|---|
-| <img src="docs/screenshots/operating-modes.png" alt="Operating modes: offline, hybrid, cloud-assisted"> | <img src="docs/screenshots/statutes.png" alt="Statute browser with Arabic and French versions"> |
+| <img src="docs/screenshots/operating-modes.png" alt="Operating modes: offline and hybrid"> | <img src="docs/screenshots/statutes.png" alt="Statute browser with Arabic and French versions"> |
 
 | Citizen situation guides | Pseudonymiser |
 |---|---|

@@ -192,6 +192,7 @@ export function App() {
           parsed.theme = ThemeId.Mono;
         }
         if (parsed.theme === "balloura") parsed.theme = ThemeId.Ember; // renamed theme
+        if (parsed.operatingMode === "cloud-assisted") parsed.operatingMode = "hybrid"; // cloud-assisted mode is disabled
         if (parsed.asOfDate === "2026-10-24") parsed.asOfDate = ""; // old built-in demo date: it hid every text published after it
         return { ...DEFAULT_SETTINGS, ...parsed };
       }

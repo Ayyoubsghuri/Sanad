@@ -56,7 +56,8 @@ class AppContext:
 
     @property
     def mode(self) -> str:
-        return self.user_settings().get("mode") or self.settings.default_mode
+        m = self.user_settings().get("mode") or self.settings.default_mode
+        return "hybrid" if m == "cloud_assisted" else m  # cloud-assisted mode is disabled: an older saved choice runs as hybrid
 
     # ---- pack ------------------------------------------------------------------------------------------------
     def pack_usable(self) -> bool:

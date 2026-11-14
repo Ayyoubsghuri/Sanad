@@ -4,7 +4,6 @@ import { getStatus } from "../api/legalrag";
 import {
   Shield,
   WifiOff,
-  CloudLightning,
   Check,
   Lock,
   X,
@@ -91,23 +90,6 @@ export function OperatingModeModal({
         tr("Restauration automatique des vrais noms dans la réponse locale"),
       ],
     },
-    {
-      id: "cloud-assisted",
-      title: tr("Mode Cloud-Assisté"),
-      badge: tr("Recherche Sémantique"),
-      tagline: tr("Capacité d'analyse jurisprudentielle et veille doctrinale maximale"),
-      icon: CloudLightning,
-      privacyLevel: tr("Standard Entreprise Chiffré"),
-      latency: "~1.8 s",
-      cloudCalls: tr("Recherche web & sémantique"),
-      description:
-        tr("Exploite la pleine puissance du modèle et la recherche en ligne pour croiser la jurisprudence récente de la Cour de Cassation et les débats parlementaires."),
-      features: [
-        tr("Analyse comparative approfondie et veille des projets de loi"),
-        tr("Recherche doctrinale et résolutions de cas complexes"),
-        tr("Génération de mémoires et conclusions d'avocat exhaustifs"),
-      ],
-    },
   ];
 
   return (
@@ -174,8 +156,8 @@ export function OperatingModeModal({
 
         {/* Content */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
-          {/* Grid of 3 Modes */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* The two modes (cloud-assisted mode is disabled) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {modes.map((m) => {
               const Icon = m.icon;
               const isSelected = currentMode === m.id;
@@ -356,7 +338,6 @@ export function OperatingModeModal({
                     <th className="p-3 font-medium">{tr("Critère")}</th>
                     <th className="p-3 font-medium">{tr("Hors-Ligne")}</th>
                     <th className="p-3 font-medium">{tr("Hybride (Sanad)")}</th>
-                    <th className="p-3 font-medium">{tr("Cloud-Assisté")}</th>
                   </tr>
                 </thead>
                 <tbody
@@ -376,9 +357,6 @@ export function OperatingModeModal({
                     <td className="p-3 font-semibold" style={{ color: "var(--accent-warm)" }}>
                       {tr("100% Local (Code pur)")}
                     </td>
-                    <td className="p-3" style={{ color: "var(--text-muted)" }}>
-                      {tr("Assisté par outils")}
-                    </td>
                   </tr>
                   <tr>
                     <td className="p-3 font-medium" style={{ color: "var(--text-heading)" }}>
@@ -388,9 +366,6 @@ export function OperatingModeModal({
                       {tr("Zéro transit réseau")}
                     </td>
                     <td className="p-3 font-medium">{tr("Chiffré + Pseudonymisé")}</td>
-                    <td className="p-3" style={{ color: "var(--text-muted)" }}>
-                      {tr("Flux standard")}
-                    </td>
                   </tr>
                   <tr>
                     <td className="p-3 font-medium" style={{ color: "var(--text-heading)" }}>
@@ -398,7 +373,6 @@ export function OperatingModeModal({
                     </td>
                     <td className="p-3">{tr("Exactes (Base locale)")}</td>
                     <td className="p-3">{tr("Exactes + Vérification NLI")}</td>
-                    <td className="p-3">{tr("Générées + Grounding")}</td>
                   </tr>
                   <tr>
                     <td className="p-3 font-medium" style={{ color: "var(--text-heading)" }}>
@@ -406,7 +380,6 @@ export function OperatingModeModal({
                     </td>
                     <td className="p-3">{tr("Concordance locale")}</td>
                     <td className="p-3">{tr("Concordance + Raisonnement temporel")}</td>
-                    <td className="p-3">{tr("Analyse doctrinale complète")}</td>
                   </tr>
                 </tbody>
               </table>
