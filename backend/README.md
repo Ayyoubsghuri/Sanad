@@ -63,3 +63,39 @@ presentation forms, (3) splits each BO issue into legal texts and articles (ال
 `single_source`), (5) adds amends / repeals / implements links read from each text's title, and (6) runs the builder checks.
 Read `ingest_report.json`: texts that were skipped, effective dates that were assumed from the BO date (review them), unresolved links.
 Chunking (7) is done by `build`.
+
+
+## Installing the law pack (needed before the app can search)
+
+The repository holds the engine and the source texts, not the searchable data. The searchable data is a **law pack** (`current.db`, a single signed file
+with the laws and their embeddings), published as a file of a GitHub Release.
+
+```
+py tools\install_pack.py
+```
+
+This downloads the pack named in `pack_release.json`, checks its SHA-256 and the publisher's signature **before** replacing anything, keeps the old
+one as `previous.db` and installs the new one in `~\.moroccan-legal-rag\lawpack`. Then set the publisher's key (printed at the end, also in
+`pack_release.json`) and restart the backend:
+
+```
+setx LEGALRAG_LAWPACK_PUBLIC_KEY_HEX <public_key_hex from pack_release.json>
+```
+
+A pack that is not signed by that key is refused. If you already downloaded the two files by hand:
+`py tools\install_pack.py --db current.db --sig current.db.sig --key <public key hex>`.
+
+The app also accepts a pack through `POST /v1/pack/import` (upload the `.db` and the `.sig`).
+
+### For the publisher
+
+```
+py tools\pack_publish.py --tag pack-2026.11.13 --repo OWNER/REPO
+```
+
+It copies the pack and its signature into `release_out\`, prints the size and the public key and writes `pack_release.json` (commit that file).
+Then on GitHub: Releases > Draft a new release > tag `pack-2026.11.13` > attach `current.db` and `current.db.sig` > Publish.
+A GitHub release file must be under 2 GiB (2,147,483,648 bytes). A bigger pack goes to a free Hugging Face dataset repository instead:
+create a dataset `OWNER/NAME` on huggingface.co, upload `current.db` and `current.db.sig` from `release_out\` (Files > Add file > Upload), and run
+`py tools\pack_publish.py --tag x --host hf --repo OWNER/NAME` so that `pack_release.json` points there.
+The installer resumes an interrupted download, so a slow connection can simply run it again.

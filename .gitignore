@@ -1,26 +1,36 @@
-# environments, models, generated data
-env/
-.venv/
-models/
-index/
-chunks/
-sources.json
-ingest_report.json
-info*.txt
-blueprint/
+# Only backend/ and frontend/ are published. Everything else in this folder stays on your computer.
+/*
+!/backend/
+!/frontend/
+!/.gitignore
+!/blueprint
 
 # python
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
+env/
+
+# secrets and local settings
 .env
+.env.*
+!.env.example
+
+# the law pack and its release copy (published on Hugging Face, not on GitHub)
 *.db
+*.db.sig
+release_out/
 reports/
+
+# third-party dataset used for benchmarking (licence unknown)
 backend/tools/MoroccoRegQA*
 backend/tools/moroccanregdoc.json
+
+# archives and generated files
 *.zip
+*.log
 
 # frontend
 node_modules/
 dist/
-.env*

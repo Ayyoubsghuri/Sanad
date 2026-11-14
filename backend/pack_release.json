@@ -1,0 +1,8 @@
+{
+  "pack_version": "2026.11.08.1455-retire",
+  "sha256": "6b8d461f7222dd749e4b52368abe55e5f2fe5fdfde1bcdd5f6ff155377fcf110",
+  "size_bytes": 2270830592,
+  "public_key_hex": "086dbbbf9cc34d77f65c376b480be3ab83ad25e12194efee5445a4241aded15c",
+  "db_url": "https://huggingface.co/datasets/Xdnh00p/sanad-lawpack/resolve/main/current.db",
+  "sig_url": "https://huggingface.co/datasets/Xdnh00p/sanad-lawpack/resolve/main/current.db.sig"
+}
