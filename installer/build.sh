@@ -5,7 +5,7 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(dirname "$here")"
-version="${1:-$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/backend/pyproject.toml")}"
+version="${1:-$(tr -d "[:space:]" < "$here/VERSION")}"
 uv_version="${UV_VERSION:-latest}"   # pin with UV_VERSION=0.x.y
 stage="$here/stage"
 out="$here/out"
