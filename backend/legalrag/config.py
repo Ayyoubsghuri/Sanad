@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     )
     allowed_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1", "localhost", "testserver"])
     max_upload_mb: int = 25
+    frontend_dir: Path | None = None  # a built frontend (frontend/dist): served at / by the backend itself, so the installed app needs no Node server
 
     # ---- storage --------------------------------------------------------------
     data_dir: Path = Path.home() / ".moroccan-legal-rag"

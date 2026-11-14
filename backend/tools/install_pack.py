@@ -78,6 +78,10 @@ def main() -> int:
             if not info.get("db_url") or "YOUR-" in info["db_url"]:
                 print("pack_release.json has no real download address yet (the publisher has not filled it in)")
                 return 1
+            dest = Settings().resolved_lawpack_path()
+            if info.get("sha256") and dest.exists() and sha256_file(dest) == info["sha256"]:
+                print(f"already installed: {dest} (pack {info.get('pack_version', '?')})")
+                return 0
             db, sig = tmp / "current.db", tmp / "current.db.sig"
             for attempt in (1, 2):
                 fetch(info["db_url"], db)
