@@ -112,6 +112,7 @@ class Settings(BaseSettings):
     bo_dir: Path | None = None  # work folder for downloaded PDFs / extracted md (default: <data_dir>/bo)
     bo_url_template: str = "https://www.sgg.gov.ma/BO/AR/3111/{year}/BO_{num}_Ar.pdf"  # {num} = 7498 or 7498-bis; check against the SGG site
     bo_listing_urls: list[str] = Field(default_factory=list)  # optional SGG listing pages to read links from (any page that links BO_<n>_Ar.pdf files)
+    bo_text_cleanup: bool = True  # BO update: repair words the PDF damaged (split words, backwards lam-alef) before indexing
     bo_probe_ahead: int = 12  # how many numbers after the newest one we already have to try
     bo_download_timeout_s: float = 120.0
     bo_max_pdf_mb: int = 400

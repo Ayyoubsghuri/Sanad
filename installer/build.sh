@@ -21,7 +21,7 @@ echo "== backend"
 cp -r "$root/backend/legalrag" "$root/backend/tools" "$stage/backend/"
 cp "$root/backend/pyproject.toml" "$root/backend/README.md" "$root/backend/pack_release.json" "$stage/backend/"
 find "$stage" -name __pycache__ -type d -prune -exec rm -rf {} +
-cp "$here/Start-Sanad.ps1" "$here/Setup-Sanad.ps1" "$here/sanad.ico" "$stage/"
+cp "$here/Start-Sanad.ps1" "$here/Setup-Sanad.ps1" "$here/app.ico" "$stage/"
 
 echo "== Sanad.exe (the launcher the shortcuts start)"
 v4="$(echo "$version" | sed 's/[^0-9.].*//' | awk -F. '{printf "%d,%d,%d,0", $1, $2, $3}')"

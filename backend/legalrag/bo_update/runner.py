@@ -22,7 +22,8 @@ from ..builder.pipeline_import import PipelineImportError, load_pipeline_chunks
 from ..state import AppContext, install_pack
 from ..store.localkey import effective_public_key, local_private_key, public_from_private
 from ..store.lawpack import PackError
-from . import cleanup, discover
+from ..text.cleanup import Cleaner
+from . import discover
 
 STEPS = [("check", "Looking for new issues on the SGG site"), ("download", "Downloading"), ("extract", "Reading the PDFs"),
          ("ingest", "Splitting into articles and indexing"), ("install", "Installing the updated law pack")]
@@ -63,6 +64,7 @@ class BoUpdater:
     def __init__(self, ctx: AppContext):
         self.ctx = ctx
         self.job: BoJob | None = None
+        self._cleaner: Cleaner | None = None  # built once from the pack's vocabulary (it takes some seconds)
         self._lock = threading.Lock()
 
     # ---- control -----------------------------------------------------------------------------------------------
@@ -189,6 +191,34 @@ class BoUpdater:
         finally:
             job.finished_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
+    def _clean_texts(self, job: BoJob, st: dict, mds: list[Path], root: Path) -> int:
+        """Repairs words the PDF damaged (split by a space, a letter left alone, a backwards lam-alef) before the text is split and embedded.
+        Only safe cases, decided with the vocabulary of the pack; the originals are kept in md_raw/ and every change is written to a report."""
+        if not self.ctx.settings.bo_text_cleanup:
+            return 0
+        st["detail"] = "repairing damaged words"
+        try:
+            if self._cleaner is None:
+                self._cleaner = Cleaner.from_pack(self.ctx.settings.resolved_lawpack_path())
+        except Exception as e:  # noqa: BLE001 - never block an update for this
+            job.warnings.append(f"word repair skipped ({e.__class__.__name__}: {e})")
+            return 0
+        if not self._cleaner.usable():
+            return 0
+        total, lines = 0, []
+        for md in mds:
+            ch = self._cleaner.clean_file(md, raw_dir=root / "md_raw")
+            total += len(ch)
+            if ch:
+                lines.append(f"## {md.name}: {len(ch)} change(s)")
+                lines += [f"- {c}" for c in ch]
+        if total:
+            rep = root / "repairs" / f"{datetime.now(timezone.utc):%Y%m%d_%H%M}.md"
+            rep.parent.mkdir(parents=True, exist_ok=True)
+            rep.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            job.log.append(f"{total} damaged word(s) repaired; list: {rep}")
+        return total
+
     def _check_cancel(self, job: BoJob) -> None:
         if job.cancel.is_set():
             raise Cancelled()
@@ -268,20 +298,8 @@ class BoUpdater:
         if not mds:
             st.update(status="error", detail=f"0 of {len(pdfs)} read")
             raise RuntimeError("no PDF could be read")
-        # 3b. join the words the PDF split with a stray space (see cleanup.py; the letters were repaired by the extractor)
-        st["detail"] = "joining words split by the PDF"
-        try:
-            vocab = cleanup.pack_vocabulary(s.resolved_lawpack_path())
-            for md in mds:
-                self._check_cancel(job)
-                done = cleanup.clean_issue(md, vocab)
-                if done:
-                    job.log.append(f"{md.stem}: {len(done)} split word(s) joined (list: {md.parent / 'raw' / (md.stem + '.changes.txt')})")
-        except Cancelled:
-            raise
-        except Exception as e:  # noqa: BLE001 - the text as extracted is still usable
-            job.warnings.append(f"word clean-up skipped ({e.__class__.__name__}: {e})")
-        st.update(status="done", detail=f"{len(mds)} of {len(pdfs)} read")
+        fixed = self._clean_texts(job, st, mds, root)
+        st.update(status="done", detail=f"{len(mds)} of {len(pdfs)} read" + (f", {fixed} damaged word(s) repaired" if fixed else ""))
 
         # 4. parse (+ chunk and embed with the pipeline's scripts when the pack came from them) -----------------------------------------------------
         st = self._begin(job, "ingest", total=1, detail="splitting into articles")

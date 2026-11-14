@@ -67,7 +67,7 @@ def main() -> int:
              Description="Sanad: Moroccan law assistant (local, source-verified)"/>
     <MajorUpgrade DowngradeErrorMessage="A newer version of Sanad is already installed."/>
     <MediaTemplate EmbedCab="yes"/>
-    <Icon Id="SanadIcon" SourceFile={quoteattr(str(stage / "sanad.ico"))}/>
+    <Icon Id="SanadIcon" SourceFile={quoteattr(str(stage / "app.ico"))}/>
     <Property Id="ARPPRODUCTICON" Value="SanadIcon"/>
     <Property Id="ALLUSERS" Secure="yes"/>
     <Directory Id="TARGETDIR" Name="SourceDir">

@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     window = webview.create_window("Sanad", html=LOADING, js_api=api, width=1360, height=860, min_size=(900, 600),
                                    frameless=frameless, easy_drag=False, text_select=True, background_color="#F4F3F0")
     api._window = window
-    icon = Path(a.app_dir) / "sanad.ico" if a.app_dir else None
+    icon = Path(a.app_dir) / "app.ico" if a.app_dir else None
     storage = s.data_dir / "window"  # keeps the interface's own settings and chat list between starts
     storage.mkdir(parents=True, exist_ok=True)
     webview.start(boot, (window,), private_mode=False, storage_path=str(storage), icon=str(icon) if icon and icon.exists() else None)

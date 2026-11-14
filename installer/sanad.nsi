@@ -14,6 +14,7 @@ InstallDirRegKey HKCU "Software\Sanad" "InstallDir"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 
+; the setup wizard keeps its own icon (sanad.ico); the installed app and its shortcuts use app.ico (via Sanad.exe)
 !define MUI_ICON "sanad.ico"
 !define MUI_UNICON "sanad.ico"
 !define MUI_WELCOMEPAGE_TEXT "Sanad answers questions on Moroccan law from the official texts, on your own computer.$\r$\n$\r$\nThis installs the application. On the first start it downloads the law pack and the local models (about 7 GB), so keep an internet connection for that first start."

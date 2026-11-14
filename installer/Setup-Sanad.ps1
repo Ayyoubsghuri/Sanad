@@ -35,7 +35,7 @@ $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
 $form.BackColor = [System.Drawing.Color]::FromArgb(244, 243, 240)
 $form.Font = New-Object System.Drawing.Font('Segoe UI', 9.5)
-$ico = Join-Path $App 'sanad.ico'
+$ico = Join-Path $App 'app.ico'
 if (Test-Path $ico) { $form.Icon = New-Object System.Drawing.Icon($ico) }
 
 function New-Label($text, $y, $height, $font, $color) {
