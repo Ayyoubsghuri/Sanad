@@ -54,6 +54,8 @@ The screenshots below were taken with the small synthetic test pack (texts marke
 ## Install on Windows
 
 Download one of the two installers from the [Releases page](https://github.com/Ayyoubsghuri/Sanad/releases). They install the same thing; pick either.
+The same page has the Android app (`Sanad-<version>.apk`); see [`mobile/android/README.md`](mobile/android/README.md) and the
+release notes for what the phone version does not do yet (for example, it always answers with the law in force today).
 
 | File | Type |
 |---|---|
@@ -102,7 +104,7 @@ installer/build.sh
 
 The files are written to `installer/out/`. To publish a new version, change the number in
 [`installer/VERSION`](installer/VERSION) on `main`: the workflow builds the two files and publishes them as the GitHub
-Release `v<version>`. Running the **Windows installers** workflow by hand attaches the files to the run instead.
+Release `v<version>`, together with the Android app. Running the **Release** workflow by hand attaches the files to the run instead.
 
 ## Run from source
 
