@@ -89,13 +89,7 @@ The app also accepts a pack through `POST /v1/pack/import` (upload the `.db` and
 
 ### For the publisher
 
-```
-py tools\pack_publish.py --tag pack-2026.11.13 --repo OWNER/REPO
-```
+The tools that build, sign and upload packs are kept on the publisher's computer (`backend/private/`, not in this
+repository). What users need is `pack_release.json`, which they write and commit here.
 
-It copies the pack and its signature into `release_out\`, prints the size and the public key and writes `pack_release.json` (commit that file).
-Then on GitHub: Releases > Draft a new release > tag `pack-2026.11.13` > attach `current.db` and `current.db.sig` > Publish.
-A GitHub release file must be under 2 GiB (2,147,483,648 bytes). A bigger pack goes to a free Hugging Face dataset repository instead:
-create a dataset `OWNER/NAME` on huggingface.co, upload `current.db` and `current.db.sig` from `release_out\` (Files > Add file > Upload), and run
-`py tools\pack_publish.py --tag x --host hf --repo OWNER/NAME` so that `pack_release.json` points there.
 The installer resumes an interrupted download, so a slow connection can simply run it again.

@@ -224,29 +224,6 @@ def test_synthbench_samples_articles_and_saves_questions(ctx, tmp_path):
     assert again == got and Fake.calls == -(-len(items) // 2)
 
 
-def test_pack_publish_and_install_round_trip(tmp_path, pack_path, keys, monkeypatch):
-    import json, shutil, subprocess, sys
-    from pathlib import Path
-    root = Path(__file__).resolve().parents[1]
-    data = tmp_path / "pub"
-    (data / "lawpack").mkdir(parents=True)
-    shutil.copy2(pack_path, data / "lawpack" / "current.db")
-    shutil.copy2(str(pack_path) + ".sig", data / "lawpack" / "current.db.sig")
-    env = {**__import__("os").environ, "LEGALRAG_DATA_DIR": str(data), "LEGALRAG_LAWPACK_PUBLIC_KEY_HEX": keys[1]}
-    work = tmp_path / "work"
-    work.mkdir()
-    r = subprocess.run([sys.executable, str(root / "tools" / "pack_publish.py"), "--tag", "t1"], cwd=work, env=env, capture_output=True, text=True)
-    assert r.returncode == 0, r.stdout + r.stderr
-    info = json.loads((work / "pack_release.json").read_text())
-    assert info["public_key_hex"] == keys[1] and (work / "release_out" / "current.db.sig").exists()
-    user = tmp_path / "user"
-    env2 = {**env, "LEGALRAG_DATA_DIR": str(user)}
-    ok = subprocess.run([sys.executable, str(root / "tools" / "install_pack.py"), "--db", str(work / "release_out" / "current.db"), "--key", keys[1]], cwd=work, env=env2, capture_output=True, text=True)
-    assert ok.returncode == 0 and (user / "lawpack" / "current.db").exists(), ok.stdout + ok.stderr
-    bad = subprocess.run([sys.executable, str(root / "tools" / "install_pack.py"), "--db", str(work / "release_out" / "current.db"), "--key", "00" * 32], cwd=work, env={**env, "LEGALRAG_DATA_DIR": str(tmp_path / "other")}, capture_output=True, text=True)
-    assert bad.returncode == 1 and not (tmp_path / "other" / "lawpack" / "current.db").exists()
-
-
 def test_install_pack_download_resumes_and_checks_hash(tmp_path, pack_path, keys):
     import http.server, json, os, subprocess, sys, threading
     from pathlib import Path

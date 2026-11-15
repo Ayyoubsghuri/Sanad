@@ -39,9 +39,9 @@ cd ../mobile/android && gradle assembleDebug
 
 ## The law pack for the phone
 
-On the PC with the full pack: `py backend\tools\make_mobile_pack.py` (it keeps every dated version of each article, so
-the app can answer with the law in force on the date chosen in its top bar), then upload `mobile_out\` to the Hugging Face dataset
-in the folder `mobile/` (`backend\scripts\PUBLISH_MOBILE_PACK_HF.bat`). The app downloads `manifest.json`,
+The publisher builds it from the full pack (every dated version of each article, so the app can answer with the law in
+force on the date chosen in its top bar) and uploads it to the folder `mobile/` of the Hugging Face dataset; the tools for
+that are kept on the publisher's computer, not in this repository. The app downloads `manifest.json`,
 `sanad_mobile.db` and `sanad_mobile.vec` from there and checks their SHA-256.
 
 ## How a question is answered
