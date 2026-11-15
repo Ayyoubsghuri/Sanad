@@ -51,6 +51,20 @@ public final class Net {
         return s;
     }
 
+    /** GET with headers (the providers' model lists). */
+    public static String getJson(String url, Map<String, String> headers) throws IOException {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setConnectTimeout(20000);
+        c.setReadTimeout(30000);
+        for (Map.Entry<String, String> h : headers.entrySet()) c.setRequestProperty(h.getKey(), h.getValue());
+        int code = c.getResponseCode();
+        InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+        String text = in == null ? "" : read(in);
+        c.disconnect();
+        if (code >= 400) throw new HttpError(code, text.length() > 300 ? text.substring(0, 300) : text);
+        return text;
+    }
+
     static String read(InputStream in) throws IOException {
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         byte[] buf = new byte[16384];

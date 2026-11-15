@@ -20,10 +20,21 @@ android {
         }
     }
 
+    packaging {
+        resources {
+            excludes += ["META-INF/DEPENDENCIES", "META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/INDEX.LIST",
+                         "META-INF/versions/9/OSGI-INF/MANIFEST.MF", "META-INF/*.version"]
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    implementation "com.anthropic:anthropic-java:3.8.0"   // Claude answers (Claude.java)
 }
 
 // The interface is the web app (frontend/, built with `npm run build`) plus the phone's bridge and setup page (web-extra/).

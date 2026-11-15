@@ -101,29 +101,59 @@ public final class Engine {
         return s.toString();
     }
 
+    /** One call to the AI service chosen in the setup page (OpenAI, Gemini, Claude or another OpenAI-compatible service). */
     String chat(String system, String user, int maxTokens) throws Exception {
+        String provider = prefs.provider();
+        if ("anthropic".equals(provider)) {
+            try {
+                return Claude.chat(prefs.aiKey(), prefs.aiModel(), system, user, maxTokens, maxTokens >= 1000);
+            } catch (com.anthropic.errors.UnauthorizedException e) {
+                throw new Exception("Anthropic refused the key (401): check it in Settings");
+            }
+        }
         JSONObject body = new JSONObject();
-        body.put("model", prefs.openaiModel());
+        body.put("model", prefs.aiModel());
         JSONArray msgs = new JSONArray();
         msgs.put(new JSONObject().put("role", "system").put("content", system));
         msgs.put(new JSONObject().put("role", "user").put("content", user));
         body.put("messages", msgs);
-        body.put("max_completion_tokens", maxTokens);
+        boolean gemini = "gemini".equals(provider);
+        body.put(gemini ? "max_tokens" : "max_completion_tokens", maxTokens);
         Map<String, String> h = new HashMap<>();
-        h.put("Authorization", "Bearer " + prefs.openaiKey());
+        h.put("Authorization", "Bearer " + prefs.aiKey());
+        String url = prefs.aiBase() + "/chat/completions";
+        String name = gemini ? "Google" : "openai".equals(provider) ? "OpenAI" : "The AI service";
         String res;
         try {
-            res = Net.postJson(prefs.openaiBase() + "/chat/completions", h, body.toString(), 120000);
+            res = Net.postJson(url, h, body.toString(), 120000);
         } catch (Net.HttpError e) {
             if (e.code == 400 && e.getMessage().contains("max_completion_tokens")) { // older OpenAI-compatible servers
                 body.remove("max_completion_tokens");
                 body.put("max_tokens", maxTokens);
-                res = Net.postJson(prefs.openaiBase() + "/chat/completions", h, body.toString(), 120000);
-            } else if (e.code == 401) {
-                throw new Exception("OpenAI refused the key (401): check it in Settings");
+                res = Net.postJson(url, h, body.toString(), 120000);
+            } else if (e.code == 401 || e.code == 403) {
+                throw new Exception(name + " refused the key (" + e.code + "): check it in Settings");
             } else throw e;
         }
         return new JSONObject(res).getJSONArray("choices").getJSONObject(0).getJSONObject("message").optString("content", "").trim();
+    }
+
+    /** The chat models a key can use, for the model dropdown of the setup page. */
+    static List<String> models(String provider, String key, String base) throws Exception {
+        if ("anthropic".equals(provider)) return Claude.models(key);
+        Map<String, String> h = new HashMap<>();
+        h.put("Authorization", "Bearer " + key);
+        JSONArray data = new JSONObject(Net.getJson(base + "/models", h)).getJSONArray("data");
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < data.length(); i++) {
+            String id = data.getJSONObject(i).optString("id", "").replaceFirst("^models/", "");
+            String l = id.toLowerCase();
+            if (l.isEmpty() || l.matches(".*(embed|audio|tts|transcribe|realtime|image|dall-e|whisper|moderation|search|vision|live|veo|imagen|aqa).*")) continue;
+            if ("openai".equals(provider) && !l.matches("^(gpt-|o\\d|chatgpt).*")) continue;
+            if ("gemini".equals(provider) && !l.startsWith("gemini")) continue;
+            out.add(id);
+        }
+        return out;
     }
 
     List<float[]> embed(List<String> texts) throws Exception {

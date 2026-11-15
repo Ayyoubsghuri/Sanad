@@ -46,6 +46,14 @@ button:disabled{opacity:.45}
 .status.err{color:var(--err)}
 .note{color:var(--muted);font-size:12px;margin:14px 2px 0;text-align:center}
 .hidden{display:none}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 2px}
+.seg button{padding:10px 4px;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--text);font-size:13px;font-weight:600}
+.seg button.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+select{width:100%;font:inherit;font-size:15px;color:var(--text);background:var(--field);border:1px solid var(--line2);border-radius:12px;padding:12px 13px;outline:none;appearance:none;
+ background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.mrow{display:flex;gap:8px;align-items:center}.mrow select{flex:1}
+.icon{width:46px;flex:none;padding:12px 0;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--text)}
+.mnote{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
 .spin{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block;vertical-align:-3px;animation:s 0.8s linear infinite;margin-right:8px}
 @keyframes s{to{transform:rotate(360deg)}}
 </style>
@@ -67,14 +75,30 @@ button:disabled{opacity:.45}
 
     <div class="card">
       <h2>AI answers</h2>
-      <p class="hint">An OpenAI API key, or the key of any OpenAI-compatible service.</p>
-      <label for="ai_key">API key</label>
+      <p class="hint">Choose the service that writes the answers, then paste its API key.</p>
+      <div class="seg" id="prov">
+        <button type="button" data-p="openai">OpenAI</button>
+        <button type="button" data-p="gemini">Gemini</button>
+        <button type="button" data-p="anthropic">Claude</button>
+        <button type="button" data-p="compat">Other</button>
+      </div>
+      <label for="ai_key" id="ai_key_label">API key</label>
       <input id="ai_key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false">
-      <label for="ai_model">Model</label>
-      <input id="ai_model" type="text" placeholder="gpt-4o-mini" autocomplete="off" spellcheck="false">
-      <details><summary>Another provider</summary>
+      <p class="hint" id="key_hint" style="margin:6px 0 0"></p>
+      <div id="base_box" class="hidden">
         <label for="ai_base">Base URL (OpenAI-compatible)</label>
-        <input id="ai_base" type="url" placeholder="https://api.openai.com/v1" autocomplete="off" spellcheck="false">
+        <input id="ai_base" type="url" placeholder="https://…/v1" autocomplete="off" spellcheck="false">
+      </div>
+      <label for="ai_model">Model</label>
+      <div class="mrow">
+        <select id="ai_model"></select>
+        <button type="button" class="icon" id="reload" title="Load the models of this key">↻</button>
+      </div>
+      <input id="ai_model_other" class="hidden" type="text" placeholder="Model name" autocomplete="off" spellcheck="false" style="margin-top:8px">
+      <div class="mnote" id="mnote"></div>
+      <details id="openai_adv"><summary>Use another OpenAI address</summary>
+        <label for="openai_base">Base URL</label>
+        <input id="openai_base" type="url" placeholder="https://api.openai.com/v1" autocomplete="off" spellcheck="false">
       </details>
       <div class="res" id="r_ai"></div>
     </div>
@@ -123,16 +147,95 @@ button:disabled{opacity:.45}
   var N = window.SanadNative;
   var $ = function (id) { return document.getElementById(id); };
   var fromApp = /from=app/.test(location.search);
+  var waiting = {};
+  window.__sanadReply = function (id, status, body) { var f = waiting[id]; delete waiting[id]; if (f) f(JSON.parse(body || "{}")); };
   var state = {};
   try { state = JSON.parse(N.state()); } catch (e) { state = { keys: {}, pack: {} }; }
   var k = state.keys || {};
-  $("ai_model").value = k.ai_model || "";
-  $("ai_base").value = k.ai_base || "";
+  var saved = k.saved || {}, chosen = k.models || {};
+  var provider = k.provider || "openai";
+  // the same choices as the desktop app's "API keys" screen; the live list of the key replaces them
+  var PRESET = {
+    openai: ["gpt-4o", "gpt-4.1", "gpt-4o-mini"],
+    anthropic: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
+    gemini: [],
+    compat: []
+  };
+  var DEFAULT = { openai: "gpt-4o", anthropic: "claude-opus-5-5" };
+  var KEY_INFO = {
+    openai: ["OpenAI API key", "sk-…", "platform.openai.com → API keys."],
+    gemini: ["Gemini API key", "AIza…", "aistudio.google.com → Get API key."],
+    anthropic: ["Anthropic API key", "sk-ant-…", "console.anthropic.com → API keys."],
+    compat: ["API key", "key (leave empty if none)", "Any service with an OpenAI-compatible /chat/completions endpoint (OpenRouter, Azure, a local server…)."]
+  };
+  var lists = {};
   $("cf_account").value = k.cf_account || "";
   $("pack_url").value = k.pack_url || "";
   $("rewrite").checked = k.rewrite !== false;
-  if (k.ai_key) $("ai_key").placeholder = "Saved — leave empty to keep it";
+  $("openai_base").value = k.openai_base || "";
   if (k.cf_token) $("cf_token").placeholder = "Saved — leave empty to keep it";
+
+  /** Gemini: the newest "x.y-flash" model of the list (a fast, capable default), else the first one. */
+  function geminiDefault(ids) {
+    var best = null, bv = -1;
+    ids.forEach(function (id) {
+      var m = id.match(/^gemini-(\d+(?:\.\d+)?)-flash$/);
+      if (m && parseFloat(m[1]) > bv) { bv = parseFloat(m[1]); best = id; }
+    });
+    if (best) return best;
+    for (var i = 0; i < ids.length; i++) if (/flash/.test(ids[i]) && !/lite|image|tts/.test(ids[i])) return ids[i];
+    return ids[0] || "";
+  }
+  function fillModels(ids, keep) {
+    var sel = $("ai_model");
+    var want = keep || chosen[provider] || (provider === "gemini" ? geminiDefault(ids) : DEFAULT[provider]) || ids[0] || "";
+    var all = ids.slice();
+    if (want && all.indexOf(want) < 0) all.unshift(want);
+    sel.innerHTML = "";
+    all.forEach(function (id) { var o = document.createElement("option"); o.value = id; o.textContent = id + (id === DEFAULT[provider] ? "  (default)" : ""); sel.appendChild(o); });
+    var other = document.createElement("option"); other.value = "__other"; other.textContent = "Other model…"; sel.appendChild(other);
+    sel.value = want || "__other";
+    $("ai_model_other").classList.toggle("hidden", sel.value !== "__other");
+  }
+  function model() { var v = $("ai_model").value; return v === "__other" ? $("ai_model_other").value.trim() : v; }
+  function loadModels(silent) {
+    var key = $("ai_key").value.trim();
+    if (!key && !saved[provider]) { if (!silent) $("mnote").textContent = "Enter the key to load the models it can use."; return; }
+    var id = "m" + Date.now(), p = provider;
+    $("mnote").textContent = "Loading the models of this key…";
+    waiting[id] = function (r) {
+      if (p !== provider) return;
+      if (r.ok && r.models && r.models.length) {
+        lists[p] = r.models;
+        fillModels(r.models, model() && model() !== "__other" ? model() : "");
+        $("mnote").textContent = r.models.length + " models available for this key.";
+      } else {
+        $("mnote").textContent = r.ok ? "No chat model found for this key: type the model name (Other model…)." : "Could not load the models: " + (r.error || "no answer");
+      }
+    };
+    N.models(id, p, key, provider === "compat" ? $("ai_base").value.trim() : provider === "openai" ? $("openai_base").value.trim() : "");
+  }
+  function setProvider(p) {
+    provider = p;
+    [].forEach.call(document.querySelectorAll("#prov button"), function (b) { b.classList.toggle("on", b.getAttribute("data-p") === p); });
+    var info = KEY_INFO[p];
+    $("ai_key_label").textContent = info[0];
+    $("ai_key").value = "";
+    $("ai_key").placeholder = saved[p] ? "Saved — leave empty to keep it" : info[1];
+    $("key_hint").textContent = info[2];
+    $("base_box").classList.toggle("hidden", p !== "compat");
+    $("openai_adv").classList.toggle("hidden", p !== "openai");
+    if (p === "compat") $("ai_base").value = k.compat_base || "";
+    $("r_ai").className = "res";
+    $("mnote").textContent = "";
+    fillModels(lists[p] || PRESET[p], "");
+    if (saved[p] && !lists[p]) loadModels(true);
+    else if (p === "gemini" && !lists[p]) $("mnote").textContent = "Enter the key to load the Gemini models.";
+  }
+  [].forEach.call(document.querySelectorAll("#prov button"), function (b) { b.onclick = function () { setProvider(b.getAttribute("data-p")); }; });
+  $("ai_model").onchange = function () { $("ai_model_other").classList.toggle("hidden", this.value !== "__other"); };
+  $("reload").onclick = function () { loadModels(false); };
+  $("ai_key").addEventListener("change", function () { if (this.value.trim().length >= 8) loadModels(true); });
   if (fromApp && state.ready && state.pack && state.pack.present) {
     $("back").classList.remove("hidden");
     $("back").onclick = function (e) { e.preventDefault(); N.openApp(); };
@@ -155,16 +258,17 @@ button:disabled{opacity:.45}
     $("open").classList.toggle("hidden", !p.present);
   }
 
-  var waiting = {};
-  window.__sanadReply = function (id, status, body) { var f = waiting[id]; delete waiting[id]; if (f) f(JSON.parse(body || "{}")); };
 
   $("check").onclick = function () {
     var need = [];
-    if (!$("ai_key").value.trim() && !k.ai_key) need.push("the AI API key");
+    if (!$("ai_key").value.trim() && !saved[provider] && provider !== "compat") need.push("the API key");
+    if (provider === "compat" && !/^https?:\/\//.test($("ai_base").value.trim())) need.push("the base URL of the service");
+    if (!model()) need.push("the model");
     if (!$("cf_account").value.trim()) need.push("the Cloudflare Account ID");
     if (!$("cf_token").value.trim() && !k.cf_token) need.push("the Cloudflare API token");
     if (need.length) { alert("Please enter " + need.join(", ") + "."); return; }
-    N.save(JSON.stringify({ ai_key: $("ai_key").value, ai_model: $("ai_model").value.trim(), ai_base: $("ai_base").value.trim(),
+    N.save(JSON.stringify({ provider: provider, ai_key: $("ai_key").value, ai_model: model(),
+      ai_base: provider === "compat" ? $("ai_base").value.trim() : $("openai_base").value.trim(),
       cf_account: $("cf_account").value.trim(), cf_token: $("cf_token").value, rewrite: $("rewrite").checked, pack_url: $("pack_url").value.trim() }));
     var b = $("check");
     b.disabled = true;
@@ -173,11 +277,11 @@ button:disabled{opacity:.45}
     waiting[id] = function (r) {
       b.disabled = false;
       b.textContent = "Check and continue";
-      result($("r_ai"), r.ai, "The AI service answered.");
+      result($("r_ai"), r.ai, "The AI service answered" + (r.ai && r.ai.model ? " (" + r.ai.model + ")." : "."));
       result($("r_cf"), r.cloudflare, "Cloudflare answered.");
       if (r.ai && r.ai.ok && r.cloudflare && r.cloudflare.ok) {
         state = JSON.parse(N.state());
-        k = state.keys;
+        k = state.keys; saved = k.saved || saved; chosen = k.models || chosen;
         if (state.pack && state.pack.present && fromApp) { N.openApp(); return; }
         setTimeout(function () { packView(); show(2); if (state.pack && state.pack.present) N.openApp(); }, 500);
       }
@@ -212,6 +316,7 @@ button:disabled{opacity:.45}
   $("open").onclick = function () { N.openApp(); };
   $("keysAgain").onclick = function () { show(1); };
 
+  setProvider(provider);
   packView();
   if (state.ready && !(state.pack && state.pack.present) && !fromApp) show(2);
   else show(1);

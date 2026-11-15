@@ -8,7 +8,11 @@ OpenAI-compatible API).
 
 Before the app opens, a setup page asks for:
 
-1. **AI answers**: an OpenAI API key (or the key, model and address of another OpenAI-compatible service);
+1. **AI answers**: choose **OpenAI**, **Gemini**, **Claude** or **Other** (any OpenAI-compatible service), paste its API key and
+   pick the model. The model list is read from the provider with your key; the defaults are the desktop app's (`gpt-4o` for
+   OpenAI, `claude-opus-5-5` for Claude) and, for Gemini, the newest Flash model your key offers. Gemini is called through
+   Google's OpenAI-compatible endpoint, Claude through Anthropic's official Java SDK (`Claude.java`), with the API's
+   refusal fallbacks switched on for Claude Opus 5.5 and Sonnet 5.5;
 2. **Search by meaning**: your Cloudflare **Account ID** and an **API token** with Workers AI access
    (Cloudflare dashboard → AI → Workers AI → “Use REST API”).
 

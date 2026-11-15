@@ -70,7 +70,7 @@ final class Api {
         if (pk != null) pack.put("version", pk.meta.get("version"));
         else pack.put("error", "The law pack is not installed: open Settings to download it.");
         return new JSONObject().put("mode", "hybrid").put("platform", "android").put("pack", pack)
-                .put("providers", new JSONObject().put("llm", new JSONObject().put("provider", "openai").put("model", host.prefs().openaiModel())));
+                .put("providers", new JSONObject().put("llm", new JSONObject().put("provider", host.prefs().provider()).put("model", host.prefs().aiModel())));
     }
 
     private Reply prepare(JSONObject b) throws Exception {

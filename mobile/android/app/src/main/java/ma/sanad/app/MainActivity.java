@@ -179,12 +179,18 @@ public class MainActivity extends Activity implements Api.Host {
             });
         }
 
-        /** What the setup page shows: which keys are saved (never the secret values) and the installed law pack. */
+        /** What the setup page shows: which keys are saved (never the secret values), the chosen models and the law pack. */
         @JavascriptInterface
         public String state() {
             try {
-                JSONObject k = new JSONObject()
-                        .put("ai_key", !prefs.openaiKey().isEmpty()).put("ai_model", prefs.get("openai_model", "")).put("ai_base", prefs.get("openai_base", ""))
+                JSONObject saved = new JSONObject(), models = new JSONObject();
+                for (String pv : Prefs.PROVIDERS) {
+                    saved.put(pv, !prefs.aiKey(pv).isEmpty());
+                    models.put(pv, prefs.get(Prefs.modelName(pv), ""));
+                }
+                JSONObject k = new JSONObject().put("provider", prefs.provider()).put("saved", saved).put("models", models)
+                        .put("defaults", new JSONObject().put("openai", Prefs.defaultModel("openai")).put("anthropic", Prefs.defaultModel("anthropic")))
+                        .put("openai_base", prefs.get("openai_base", "")).put("compat_base", prefs.get("compat_base", ""))
                         .put("cf_account", prefs.cfAccount()).put("cf_token", !prefs.cfToken().isEmpty())
                         .put("rewrite", prefs.flag("rewrite", true)).put("pack_url", prefs.get("pack_url", ""));
                 JSONObject p = new JSONObject().put("present", pack != null).put("version", pack != null ? pack.meta.get("version") : JSONObject.NULL)
@@ -195,20 +201,41 @@ public class MainActivity extends Activity implements Api.Host {
             }
         }
 
-        /** Saves the keys; an empty secret field keeps the key already saved. */
+        /** Saves the choices; an empty secret field keeps the key already saved for that service. */
         @JavascriptInterface
         public void save(String json) {
             try {
                 JSONObject o = new JSONObject(json);
-                if (!o.optString("ai_key").trim().isEmpty()) prefs.put("openai_key", o.optString("ai_key"));
+                String pv = o.optString("provider", "openai");
+                prefs.put("ai_provider", pv);
+                if (!o.optString("ai_key").trim().isEmpty()) prefs.put(Prefs.keyName(pv), o.optString("ai_key"));
+                prefs.put(Prefs.modelName(pv), o.optString("ai_model"));
+                if (pv.equals("openai")) prefs.put("openai_base", o.optString("ai_base"));
+                if (pv.equals("compat")) prefs.put("compat_base", o.optString("ai_base"));
                 if (!o.optString("cf_token").trim().isEmpty()) prefs.put("cf_token", o.optString("cf_token"));
                 prefs.put("cf_account", o.optString("cf_account"));
-                prefs.put("openai_model", o.optString("ai_model"));
-                prefs.put("openai_base", o.optString("ai_base"));
                 prefs.put("pack_url", o.optString("pack_url"));
                 prefs.setFlag("rewrite", o.optBoolean("rewrite", true));
                 if (pack != null) engine = new Engine(prefs, pack);
             } catch (Exception ignored) { }
+        }
+
+        /** The chat models a key can use: window.__sanadReply(id, 200, {ok, models} or {ok:false, error}). An empty key uses the saved one. */
+        @JavascriptInterface
+        public void models(String id, String provider, String key, String base) {
+            pool.execute(() -> {
+                JSONObject r = new JSONObject();
+                try {
+                    String k = key == null || key.trim().isEmpty() ? prefs.aiKey(provider) : key.trim();
+                    if (k.isEmpty()) throw new Exception("enter the key first");
+                    String b = base == null || base.trim().isEmpty() ? prefs.aiBase(provider) : base.trim().replaceAll("/+$", "");
+                    if ("gemini".equals(provider)) b = Prefs.GEMINI_BASE;
+                    r.put("ok", true).put("models", new org.json.JSONArray(Engine.models(provider, k, b)));
+                } catch (Exception e) {
+                    try { r.put("ok", false).put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) { }
+                }
+                reply(id, 200, r.toString());
+            });
         }
 
         /** Tries both services with the saved keys; the result goes to window.__sanadReply(id, 200, {cloudflare, ai}). */
@@ -225,7 +252,7 @@ public class MainActivity extends Activity implements Api.Host {
                 }
                 try {
                     e.chat("Reply with the single word OK.", "OK?", 20);
-                    r.put("ai", new JSONObject().put("ok", true));
+                    r.put("ai", new JSONObject().put("ok", true).put("model", prefs.aiModel()));
                 } catch (Exception ex) {
                     try { r.put("ai", new JSONObject().put("ok", false).put("error", String.valueOf(ex.getMessage()))); } catch (Exception ignored) { }
                 }
