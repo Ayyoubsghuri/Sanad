@@ -1,16 +1,37 @@
 # Sanad for Android
 
-A phone version of Sanad that works on its own: the law pack lives on the phone, the question is turned into a bge-m3 vector by
-Cloudflare Workers AI, and the answer is written by OpenAI (or any OpenAI-compatible API). You enter your own keys in the app's
-Settings; they stay on the phone.
+The phone version of Sanad, with the same interface as the desktop app. It works on its own: the law pack lives on the phone,
+the question is turned into a bge-m3 vector by Cloudflare Workers AI, and the answer is written by OpenAI (or any
+OpenAI-compatible API).
 
-## Build
+## First start
 
-GitHub Actions builds the APK (`.github/workflows/android.yml`): open the repository's **Actions** tab, the latest
-"Android APK" run, and download the `sanad-apk` artifact. Unzip it and install `app-debug.apk` on the phone
-(allow "install unknown apps" for your browser or file manager).
+Before the app opens, a setup page asks for:
 
-To build on a PC with the Android SDK: `gradle assembleDebug` in this folder (Gradle 8.7+, JDK 17).
+1. **AI answers**: an OpenAI API key (or the key, model and address of another OpenAI-compatible service);
+2. **Search by meaning**: your Cloudflare **Account ID** and an **API token** with Workers AI access
+   (Cloudflare dashboard → AI → Workers AI → “Use REST API”).
+
+It checks both keys, then downloads the law pack (use Wi-Fi). The keys stay in the app's private storage on the phone.
+Later, **API keys** in the app's menu opens the same page (to change a key or download a newer law pack).
+
+## How it is built
+
+- `frontend/` is the interface (React). The Android build bundles its `dist/` folder into the app, together with
+  `web-extra/bridge.js` and `web-extra/setup.html` (Gradle task `copyWeb`).
+- The interface is shown in a WebView (`MainActivity`). Its calls to the backend (`http://127.0.0.1:8765/v1/...`) are routed
+  by `bridge.js` to the Java engine (`Api` → `Engine`), so no server runs on the phone. Desktop-only features
+  (operating modes, Bulletin Officiel update, document upload) are hidden or answer "not available in the phone app".
+
+GitHub Actions builds the APK (`.github/workflows/android.yml`) on every push to `main` that changes `mobile/android/` or
+`frontend/`, and publishes it on the Releases page as **Sanad for Android (latest build)** (`Sanad.apk`).
+
+To build on a PC with the Android SDK (JDK 17, Gradle 8.7+):
+
+```
+cd frontend && npm ci --legacy-peer-deps && npm run build
+cd ../mobile/android && gradle assembleDebug
+```
 
 ## The law pack for the phone
 
@@ -27,3 +48,4 @@ in the folder `mobile/` (`backend\scripts\PUBLISH_MOBILE_PACK_HF.bat`). The app 
    which answers citing them as [n]; the app shows the cited passages.
 
 There is no reranker on the phone and no claim-by-claim verification as on the PC: read the quoted sources.
+The question is sent as typed to Cloudflare and to the AI service (the desktop app masks names first).

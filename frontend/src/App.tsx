@@ -55,6 +55,7 @@ import { DocumentReviewModal } from "./components/DocumentReviewModal";
 import { answerToMessage } from "./api/answerToMessage";
 import { applyWorkspaceTheme } from "./themes/palettes";
 import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/WindowControls";
+import { IS_ANDROID, openAndroidSetup } from "./platform";
 import {
   AgentStep,
   ArtifactItem,
@@ -937,9 +938,9 @@ export function App() {
             operatingMode={settings.operatingMode || "hybrid"}
             audienceMode={settings.audienceMode || "citizen"}
             asOfDate={settings.asOfDate || new Date().toISOString().slice(0, 10)}
-            onOpenOperatingMode={() => setOperatingModeModalOpen(true)}
-            onOpenBoUpdate={() => setBoUpdateModalOpen(true)}
-            onOpenApiKeys={() => setApiKeysModalOpen(true)}
+            onOpenOperatingMode={IS_ANDROID ? undefined : () => setOperatingModeModalOpen(true)}
+            onOpenBoUpdate={IS_ANDROID ? undefined : () => setBoUpdateModalOpen(true)}
+            onOpenApiKeys={IS_ANDROID ? openAndroidSetup : () => setApiKeysModalOpen(true)}
             onToggleAudienceMode={() =>
               updateSettings({
                 audienceMode:
@@ -1454,7 +1455,7 @@ export function App() {
                             className="font-medium"
                             style={{ color: "var(--text-muted)" }}
                           >
-                            {tr("Verified web sources")}
+                            {tr(IS_ANDROID ? "Sources" : "Verified web sources")}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             {msg.sources.map((src, sIdx) => (

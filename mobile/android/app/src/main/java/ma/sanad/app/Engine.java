@@ -145,7 +145,7 @@ public final class Engine {
             JSONArray v = data.getJSONArray(i);
             float[] f = new float[v.length()];
             for (int j = 0; j < f.length; j++) f[j] = (float) v.getDouble(j);
-            if (f.length != pack.vec.dim) throw new Exception("Cloudflare returned " + f.length + " numbers, the pack has " + pack.vec.dim);
+            if (pack != null && f.length != pack.vec.dim) throw new Exception("Cloudflare returned " + f.length + " numbers, the pack has " + pack.vec.dim);
             out.add(f);
         }
         return out;

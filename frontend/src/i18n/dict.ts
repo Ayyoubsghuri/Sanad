@@ -49,6 +49,7 @@ export const DICT: Record<string, [string, string, string]> = {
   "PDF Evidence · Page {0} · Click to inspect excerpt": ["PDF evidence · page {0} · click to inspect the excerpt","Preuve PDF · page {0} · cliquez pour examiner l'extrait","دليل PDF · الصفحة {0} · انقر لفحص المقتطف"],
   "{0} · {1} lines · Click to inspect": ["{0} · {1} lines · click to inspect","{0} · {1} lignes · cliquez pour examiner","{0} · {1} أسطر · انقر للفحص"],
   "Verified web sources": ["Verified web sources","Sources web vérifiées","مصادر الويب الموثَّقة"],
+  "Sources": ["Sources","Sources","المصادر"],
   "Copied": ["Copied","Copié","تم النسخ"],
   "Copy": ["Copy","Copier","نسخ"],
   "Retry": ["Retry","Réessayer","إعادة المحاولة"],

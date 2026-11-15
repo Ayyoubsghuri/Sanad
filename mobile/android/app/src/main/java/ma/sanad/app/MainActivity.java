@@ -1,38 +1,53 @@
 package ma.sanad.app;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputType;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Locale;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class MainActivity extends Activity {
-    static final int BG = Color.parseColor("#14161A"), CARD = Color.parseColor("#1E2127"), TEXT = Color.parseColor("#E8E6E1"),
-            MUTED = Color.parseColor("#9AA0A6"), ACCENT = Color.parseColor("#C8A55A"), ERR = Color.parseColor("#E57373");
+/**
+ * Sanad on the phone: the same interface as the desktop app (frontend/, built into assets/web) in a WebView.
+ * Its calls to the backend are answered by this app's own engine (Api); the first-run page (assets/web/setup.html) asks for
+ * the Cloudflare account ID and token and the AI provider's key, then downloads the law pack, before the interface opens.
+ */
+public class MainActivity extends Activity implements Api.Host {
+    static final String ORIGIN = "https://sanad.local";
 
     Prefs prefs;
-    Pack pack;
-    Engine engine;
+    volatile Pack pack;
+    volatile Engine engine;
     File packDir;
-    volatile boolean busy, cancel;
+    WebView web;
+    Api api;
+    final ExecutorService pool = Executors.newFixedThreadPool(3);
+    volatile boolean downloading, cancelDownload;
+
+    @Override public Engine engine() { return engine; }
+    @Override public Pack pack() { return pack; }
+    @Override public Prefs prefs() { return prefs; }
 
     @Override
     protected void onCreate(Bundle b) {
@@ -40,209 +55,235 @@ public class MainActivity extends Activity {
         prefs = new Prefs(this);
         packDir = new File(getFilesDir(), "pack");
         packDir.mkdirs();
-        route();
-    }
+        api = new Api(this);
+        openPack();
 
-    void route() {
-        if (!prefs.ready()) showSettings();
-        else if (!Pack.present(packDir)) showDownload();
-        else if (openPack()) showChat();
-        else showDownload();
+        boolean dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        getWindow().setStatusBarColor(dark ? Color.parseColor("#0B0B0B") : Color.parseColor("#F4F3F0"));
+        getWindow().setNavigationBarColor(dark ? Color.parseColor("#0B0B0B") : Color.parseColor("#F4F3F0"));
+        if (!dark) getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+
+        web = new WebView(this);
+        web.setBackgroundColor(dark ? Color.parseColor("#0B0B0B") : Color.parseColor("#F4F3F0"));
+        WebSettings s = web.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setAllowFileAccess(false);
+        s.setAllowContentAccess(false);
+        s.setMediaPlaybackRequiresUserGesture(true);
+        web.addJavascriptInterface(new Bridge(), "SanadNative");
+        web.setWebChromeClient(new WebChromeClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
+                Uri u = req.getUrl();
+                if (!"sanad.local".equals(u.getHost())) return null;
+                return asset(u.getPath());
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                Uri u = req.getUrl();
+                if ("sanad.local".equals(u.getHost())) return false;
+                try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) { }
+                return true; // links to official sources open in the browser
+            }
+        });
+        setContentView(web);
+        web.loadUrl(ORIGIN + (prefs.ready() && pack != null ? "/" : "/setup.html"));
     }
 
     boolean openPack() {
-        if (pack != null) return true;
+        if (!Pack.present(packDir)) return false;
         try {
-            pack = new Pack(packDir);
+            if (pack == null) pack = new Pack(packDir);
             engine = new Engine(prefs, pack);
             return true;
         } catch (Exception e) {
             pack = null;
-            toastText = "The law pack could not be opened (" + e.getMessage() + "): download it again.";
+            engine = null;
             return false;
         }
     }
 
-    String toastText;
-
-    // ------------------------------------------------------------------ helpers
-    TextView text(String s, float sp, int color, boolean bold) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextSize(sp);
-        t.setTextColor(color);
-        t.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
-        t.setLineSpacing(0, 1.25f);
-        t.setTextIsSelectable(true);
-        if (bold) t.setTypeface(Typeface.DEFAULT_BOLD);
-        return t;
-    }
-
-    GradientDrawable round(int color, int radiusDp) {
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(color);
-        g.setCornerRadius(dp(radiusDp));
-        return g;
-    }
-
-    int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
-
-    Button button(String s, boolean primary) {
-        Button btn = new Button(this);
-        btn.setText(s);
-        btn.setAllCaps(false);
-        btn.setTextColor(primary ? BG : TEXT);
-        btn.setBackground(round(primary ? ACCENT : CARD, 10));
-        return btn;
-    }
-
-    LinearLayout column(int padDp) {
-        LinearLayout l = new LinearLayout(this);
-        l.setOrientation(LinearLayout.VERTICAL);
-        l.setPadding(dp(padDp), dp(padDp), dp(padDp), dp(padDp));
-        return l;
-    }
-
-    LinearLayout.LayoutParams fill(int topDp) {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(topDp);
-        return lp;
-    }
-
-    EditText field(String hint, String value, boolean secret) {
-        EditText e = new EditText(this);
-        e.setHint(hint);
-        e.setText(value);
-        e.setTextColor(TEXT);
-        e.setHintTextColor(MUTED);
-        e.setSingleLine(true);
-        e.setTextDirection(View.TEXT_DIRECTION_LTR);
-        if (secret) e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        e.setBackground(round(CARD, 8));
-        e.setPadding(dp(12), dp(10), dp(12), dp(10));
-        return e;
-    }
-
-    View root(View content) {
-        ScrollView sv = new ScrollView(this);
-        sv.setBackgroundColor(BG);
-        sv.setFillViewport(true);
-        sv.addView(content);
-        return sv;
-    }
-
-    // ------------------------------------------------------------------ settings
-    void showSettings() {
-        LinearLayout c = column(20);
-        c.addView(text("سند · Sanad", 26, ACCENT, true));
-        c.addView(text("Settings. Your keys stay on this phone, in this app's private storage.", 14, MUTED, false), fill(6));
-        c.addView(text("OpenAI API key (answers)", 14, TEXT, true), fill(18));
-        EditText ok = field("sk-...", prefs.openaiKey(), true);
-        c.addView(ok, fill(6));
-        c.addView(text("Model", 14, TEXT, true), fill(12));
-        EditText om = field("gpt-4o-mini", prefs.get("openai_model", ""), false);
-        c.addView(om, fill(6));
-        c.addView(text("Cloudflare account ID (question → bge-m3 vector)", 14, TEXT, true), fill(18));
-        EditText ca = field("32 characters", prefs.cfAccount(), false);
-        c.addView(ca, fill(6));
-        c.addView(text("Cloudflare Workers AI token", 14, TEXT, true), fill(12));
-        EditText ct = field("token", prefs.cfToken(), true);
-        c.addView(ct, fill(6));
-        CheckBox rw = new CheckBox(this);
-        rw.setText("Rewrite questions into formal Arabic before searching (better for Darija, French, English)");
-        rw.setTextColor(TEXT);
-        rw.setChecked(prefs.flag("rewrite", true));
-        c.addView(rw, fill(14));
-        c.addView(text("Advanced", 14, MUTED, true), fill(18));
-        EditText ob = field("OpenAI-compatible base URL (default https://api.openai.com/v1)", prefs.get("openai_base", ""), false);
-        c.addView(ob, fill(6));
-        EditText pu = field("Law pack folder URL (default: your Hugging Face)", prefs.get("pack_url", ""), false);
-        c.addView(pu, fill(6));
-        TextView err = text("", 14, ERR, false);
-        c.addView(err, fill(10));
-        Button save = button("Save", true);
-        c.addView(save, fill(14));
-        save.setOnClickListener(v -> {
-            prefs.put("openai_key", ok.getText().toString());
-            prefs.put("openai_model", om.getText().toString());
-            prefs.put("cf_account", ca.getText().toString());
-            prefs.put("cf_token", ct.getText().toString());
-            prefs.put("openai_base", ob.getText().toString());
-            prefs.put("pack_url", pu.getText().toString());
-            prefs.setFlag("rewrite", rw.isChecked());
-            if (!prefs.ready()) { err.setText("Fill in the OpenAI key, the Cloudflare account ID and the Cloudflare token."); return; }
-            engine = pack == null ? null : new Engine(prefs, pack);
-            route();
-        });
-        if (Pack.present(packDir)) {
-            Button pk = button("Law pack: check for an update / download again", false);
-            c.addView(pk, fill(10));
-            pk.setOnClickListener(v -> showDownload());
-        }
-        if (prefs.ready() && pack != null) {
-            Button back = button("Back to questions", false);
-            c.addView(back, fill(10));
-            back.setOnClickListener(v -> showChat());
-        }
-        setContentView(root(c));
-    }
-
-    // ------------------------------------------------------------------ download
-    void showDownload() {
-        LinearLayout c = column(20);
-        c.addView(text("سند · Sanad", 26, ACCENT, true));
-        c.addView(text("The law pack (the laws in force, their keyword index and their vectors) is downloaded once and stays on the phone. "
-                + "Use Wi-Fi: it is about 1–2 GB. If the connection drops, press Download again: it continues where it stopped.", 15, TEXT, false), fill(10));
-        if (toastText != null) { c.addView(text(toastText, 14, ERR, false), fill(10)); toastText = null; }
-        TextView status = text(Pack.present(packDir) ? "A pack is installed: " + (pack != null ? pack.meta.get("version") : "") : "No pack yet.", 14, MUTED, false);
-        c.addView(status, fill(14));
-        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setMax(1000);
-        c.addView(bar, fill(10));
-        Button go = button("Download", true);
-        c.addView(go, fill(14));
-        Button stop = button("Stop", false);
-        c.addView(stop, fill(8));
-        Button settings = button("Settings", false);
-        c.addView(settings, fill(8));
-        settings.setOnClickListener(v -> { if (!busy) showSettings(); });
-        stop.setOnClickListener(v -> cancel = true);
-        go.setOnClickListener(v -> {
-            if (busy) return;
-            busy = true;
-            cancel = false;
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            new Thread(() -> download(status, bar)).start();
-        });
-        setContentView(root(c));
-    }
-
-    void download(TextView status, ProgressBar bar) {
+    /** Files of the interface, from assets/web. Pages get bridge.js first, so their calls to the backend reach this app. */
+    WebResourceResponse asset(String path) {
+        if (path == null || path.equals("/") || path.isEmpty()) path = "/index.html";
+        String file = path.substring(1);
+        boolean page = file.endsWith(".html");
         try {
-            say(status, "Reading the list of files ...");
+            InputStream in;
+            try {
+                in = getAssets().open("web/" + file);
+            } catch (Exception notFound) {
+                if (file.contains(".") && !file.startsWith("c/")) return new WebResourceResponse("text/plain", "utf-8", 404, "Not found", new HashMap<>(), new ByteArrayInputStream(new byte[0]));
+                file = "index.html"; // an address of the app itself (/c/<session>): the interface handles it
+                page = true;
+                in = getAssets().open("web/index.html");
+            }
+            if (page) {
+                String html = new String(readAll(in), StandardCharsets.UTF_8).replaceFirst("<head>", "<head><script src=\"/bridge.js\"></script>");
+                in = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
+            }
+            Map<String, String> h = new HashMap<>();
+            h.put("Cache-Control", page ? "no-cache" : "max-age=31536000");
+            return new WebResourceResponse(mime(file), "utf-8", 200, "OK", h, in);
+        } catch (Exception e) {
+            return new WebResourceResponse("text/plain", "utf-8", 500, "Error", new HashMap<>(), new ByteArrayInputStream(new byte[0]));
+        }
+    }
+
+    static byte[] readAll(InputStream in) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[16384];
+        for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+        in.close();
+        return out.toByteArray();
+    }
+
+    static String mime(String f) {
+        if (f.endsWith(".html")) return "text/html";
+        if (f.endsWith(".js")) return "application/javascript";
+        if (f.endsWith(".css")) return "text/css";
+        if (f.endsWith(".svg")) return "image/svg+xml";
+        if (f.endsWith(".png")) return "image/png";
+        if (f.endsWith(".jpg") || f.endsWith(".jpeg")) return "image/jpeg";
+        if (f.endsWith(".woff2")) return "font/woff2";
+        if (f.endsWith(".json")) return "application/json";
+        if (f.endsWith(".pdf")) return "application/pdf";
+        return "application/octet-stream";
+    }
+
+    void js(String code) { runOnUiThread(() -> web.evaluateJavascript(code, null)); }
+
+    void reply(String id, int status, String body) {
+        js("window.__sanadReply&&window.__sanadReply(" + JSONObject.quote(id) + "," + status + "," + JSONObject.quote(body) + ")");
+    }
+
+    void progress(JSONObject o) { js("window.__sanadProgress&&window.__sanadProgress(" + o + ")"); }
+
+    @Override
+    public void onBackPressed() {
+        if (web != null && web.canGoBack()) web.goBack();
+        else super.onBackPressed();
+    }
+
+    // ------------------------------------------------------------------ what the pages can call
+    final class Bridge {
+        /** A call of the interface to the backend: answered on a worker thread, the reply goes back to window.__sanadReply. */
+        @JavascriptInterface
+        public void request(String id, String method, String path, String body) {
+            pool.execute(() -> {
+                Api.Reply r = api.handle(method == null ? "GET" : method.toUpperCase(), path == null ? "/" : path, body == null ? "" : body);
+                reply(id, r.status, r.body);
+            });
+        }
+
+        /** What the setup page shows: which keys are saved (never the secret values) and the installed law pack. */
+        @JavascriptInterface
+        public String state() {
+            try {
+                JSONObject k = new JSONObject()
+                        .put("ai_key", !prefs.openaiKey().isEmpty()).put("ai_model", prefs.get("openai_model", "")).put("ai_base", prefs.get("openai_base", ""))
+                        .put("cf_account", prefs.cfAccount()).put("cf_token", !prefs.cfToken().isEmpty())
+                        .put("rewrite", prefs.flag("rewrite", true)).put("pack_url", prefs.get("pack_url", ""));
+                JSONObject p = new JSONObject().put("present", pack != null).put("version", pack != null ? pack.meta.get("version") : JSONObject.NULL)
+                        .put("downloading", downloading);
+                return new JSONObject().put("keys", k).put("pack", p).put("ready", prefs.ready()).toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
+        /** Saves the keys; an empty secret field keeps the key already saved. */
+        @JavascriptInterface
+        public void save(String json) {
+            try {
+                JSONObject o = new JSONObject(json);
+                if (!o.optString("ai_key").trim().isEmpty()) prefs.put("openai_key", o.optString("ai_key"));
+                if (!o.optString("cf_token").trim().isEmpty()) prefs.put("cf_token", o.optString("cf_token"));
+                prefs.put("cf_account", o.optString("cf_account"));
+                prefs.put("openai_model", o.optString("ai_model"));
+                prefs.put("openai_base", o.optString("ai_base"));
+                prefs.put("pack_url", o.optString("pack_url"));
+                prefs.setFlag("rewrite", o.optBoolean("rewrite", true));
+                if (pack != null) engine = new Engine(prefs, pack);
+            } catch (Exception ignored) { }
+        }
+
+        /** Tries both services with the saved keys; the result goes to window.__sanadReply(id, 200, {cloudflare, ai}). */
+        @JavascriptInterface
+        public void test(String id) {
+            pool.execute(() -> {
+                JSONObject r = new JSONObject();
+                Engine e = new Engine(prefs, null);
+                try {
+                    e.embed(java.util.Collections.singletonList("test"));
+                    r.put("cloudflare", new JSONObject().put("ok", true));
+                } catch (Exception ex) {
+                    try { r.put("cloudflare", new JSONObject().put("ok", false).put("error", String.valueOf(ex.getMessage()))); } catch (Exception ignored) { }
+                }
+                try {
+                    e.chat("Reply with the single word OK.", "OK?", 20);
+                    r.put("ai", new JSONObject().put("ok", true));
+                } catch (Exception ex) {
+                    try { r.put("ai", new JSONObject().put("ok", false).put("error", String.valueOf(ex.getMessage()))); } catch (Exception ignored) { }
+                }
+                reply(id, 200, r.toString());
+            });
+        }
+
+        @JavascriptInterface
+        public void download() {
+            if (downloading) return;
+            downloading = true;
+            cancelDownload = false;
+            runOnUiThread(() -> getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
+            pool.execute(MainActivity.this::downloadPack);
+        }
+
+        @JavascriptInterface
+        public void cancel() { cancelDownload = true; }
+
+        @JavascriptInterface
+        public void openApp() { runOnUiThread(() -> { web.clearHistory(); web.loadUrl(ORIGIN + "/"); }); }
+
+        @JavascriptInterface
+        public void openSetup() { runOnUiThread(() -> web.loadUrl(ORIGIN + "/setup.html?from=app")); }
+    }
+
+    // ------------------------------------------------------------------ law pack download
+    void downloadPack() {
+        try {
+            progress(new JSONObject().put("phase", "list"));
             JSONObject m = new JSONObject(Net.get(prefs.packUrl() + "manifest.json"));
             JSONObject files = m.getJSONObject("files");
             String[] keys = {"db", "vec"};
+            long all = 0, before = 0;
+            for (String k : keys) all += files.getJSONObject(k).getLong("size");
             for (String k : keys) {
                 JSONObject f = files.getJSONObject(k);
                 String name = f.getString("name");
                 long size = f.getLong("size");
+                final long base = before, total = all;
                 File dest = new File(packDir, name + ".new");
                 Net.download(prefs.packUrl() + name, dest, size, new Net.Progress() {
-                    public void update(long done, long total) {
-                        runOnUiThread(() -> {
-                            bar.setProgress((int) (1000 * done / Math.max(1, total)));
-                            status.setText(String.format(Locale.ROOT, "%s: %,d / %,d MB", name, done / 1_000_000, total / 1_000_000));
-                        });
+                    long last;
+                    public void update(long done, long t) {
+                        long now = System.currentTimeMillis();
+                        if (now - last < 300) return;
+                        last = now;
+                        try { progress(new JSONObject().put("phase", "download").put("file", name).put("done", base + done).put("total", total)); } catch (Exception ignored) { }
                     }
-                    public boolean cancelled() { return cancel; }
+                    public boolean cancelled() { return cancelDownload; }
                 });
-                say(status, "Checking " + name + " ...");
+                progress(new JSONObject().put("phase", "check").put("file", name).put("done", base + size).put("total", all));
                 String sha = Net.sha256(dest, null);
                 if (!sha.equalsIgnoreCase(f.getString("sha256"))) {
                     dest.delete();
-                    throw new Exception(name + " is damaged (SHA-256 does not match): press Download again");
+                    throw new Exception(name + " is damaged (SHA-256 does not match): download it again");
                 }
+                before += size;
             }
             if (pack != null) { pack.db.close(); pack = null; engine = null; }
             for (String k : keys) {
@@ -251,140 +292,16 @@ public class MainActivity extends Activity {
                 fin.delete();
                 if (!new File(packDir, name + ".new").renameTo(fin)) throw new Exception("could not install " + name);
             }
-            new File(packDir, "manifest.json").delete();
-            java.nio.file.Files.write(new File(packDir, "manifest.json").toPath(), m.toString().getBytes("UTF-8"));
-            runOnUiThread(() -> {
-                busy = false;
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                route();
-            });
+            java.nio.file.Files.write(new File(packDir, "manifest.json").toPath(), m.toString().getBytes(StandardCharsets.UTF_8));
+            if (!openPack()) throw new Exception("the law pack was downloaded but could not be opened");
+            progress(new JSONObject().put("phase", "done").put("version", pack.meta.get("version")));
         } catch (Exception e) {
-            String msg = e.getMessage();
-            runOnUiThread(() -> {
-                busy = false;
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                status.setTextColor(ERR);
-                status.setText(cancel ? "Stopped. Press Download to continue." : "Error: " + msg);
-            });
-        }
-    }
-
-    void say(TextView t, String s) { runOnUiThread(() -> t.setText(s)); }
-
-    // ------------------------------------------------------------------ chat
-    LinearLayout thread;
-    ScrollView threadScroll;
-
-    void showChat() {
-        LinearLayout page = new LinearLayout(this);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setBackgroundColor(BG);
-
-        LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(16), dp(12), dp(8), dp(8));
-        TextView title = text("سند · Sanad", 22, ACCENT, true);
-        title.setTextIsSelectable(false);
-        bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        Button st = button("Settings", false);
-        bar.addView(st);
-        st.setOnClickListener(v -> { if (!busy) showSettings(); });
-        page.addView(bar);
-
-        threadScroll = new ScrollView(this);
-        thread = column(14);
-        threadScroll.addView(thread);
-        page.addView(threadScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        if (thread.getChildCount() == 0) {
-            String v = pack != null ? pack.meta.get("version") + " · " + pack.meta.get("passages") + " passages" : "";
-            thread.addView(text("اسأل عن القانون المغربي بالدارجة أو العربية أو الفرنسية أو الإنجليزية.\nAsk about Moroccan law.\n\n" + v, 14, MUTED, false));
-        }
-
-        LinearLayout input = new LinearLayout(this);
-        input.setPadding(dp(10), dp(8), dp(10), dp(12));
-        input.setGravity(Gravity.BOTTOM);
-        EditText q = new EditText(this);
-        q.setHint("سؤالك… / Your question…");
-        q.setTextColor(TEXT);
-        q.setHintTextColor(MUTED);
-        q.setMaxLines(5);
-        q.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
-        q.setBackground(round(CARD, 12));
-        q.setPadding(dp(12), dp(10), dp(12), dp(10));
-        input.addView(q, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        Button send = button("→", true);
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(dp(56), dp(48));
-        sp.leftMargin = dp(8);
-        input.addView(send, sp);
-        page.addView(input);
-        send.setOnClickListener(v -> {
-            String s = q.getText().toString().trim();
-            if (s.isEmpty() || busy) return;
-            q.setText("");
-            ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(q.getWindowToken(), 0);
-            ask(s);
-        });
-        setContentView(page);
-    }
-
-    void ask(String question) {
-        busy = true;
-        LinearLayout card = column(14);
-        card.setBackground(round(CARD, 14));
-        LinearLayout.LayoutParams lp = fill(12);
-        thread.addView(card, lp);
-        card.addView(text(question, 16, ACCENT, true));
-        TextView status = text("…", 14, MUTED, false);
-        card.addView(status, fill(8));
-        scrollDown();
-        new Thread(() -> {
             try {
-                Engine.Answer a = engine.ask(question, what -> say(status,
-                        "rewrite".equals(what) ? "Preparing the search…" : "search".equals(what) ? "Searching the law on the phone…" : "Writing the answer…"));
-                runOnUiThread(() -> { render(card, status, a); busy = false; scrollDown(); });
-            } catch (Exception e) {
-                String msg = e.getMessage();
-                runOnUiThread(() -> { status.setTextColor(ERR); status.setText("Error: " + msg); busy = false; });
-            }
-        }).start();
-    }
-
-    void render(LinearLayout card, TextView status, Engine.Answer a) {
-        card.removeView(status);
-        card.addView(text(a.text == null ? "" : a.text, 16, TEXT, false), fill(10));
-        for (String n : a.notes) card.addView(text("⚠ " + n, 12, MUTED, false), fill(6));
-        if (a.passages.isEmpty()) return;
-        card.addView(text(a.cited.isEmpty() ? "Passages found" : "Sources", 14, ACCENT, true), fill(14));
-        for (int i = 0; i < a.passages.size(); i++) {
-            int n = i + 1;
-            boolean cited = a.cited.contains(n);
-            if (!a.cited.isEmpty() && !cited) continue;
-            Pack.Passage p = a.passages.get(i);
-            LinearLayout src = column(10);
-            src.setBackground(round(BG, 10));
-            src.addView(text("[" + n + "] " + Engine.label(p), 13, ACCENT, true));
-            TextView body = text(p.body, 14, TEXT, false);
-            body.setMaxLines(4);
-            src.addView(body, fill(6));
-            TextView more = text("▾", 13, MUTED, false);
-            more.setTextIsSelectable(false);
-            src.addView(more);
-            src.setOnClickListener(v -> {
-                boolean open = body.getMaxLines() > 4;
-                body.setMaxLines(open ? 4 : Integer.MAX_VALUE);
-                more.setText(open ? "▾" : "▴");
-            });
-            card.addView(src, fill(8));
+                progress(new JSONObject().put("phase", cancelDownload ? "stopped" : "error").put("error", String.valueOf(e.getMessage())));
+            } catch (Exception ignored) { }
+        } finally {
+            downloading = false;
+            runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
         }
-        int others = a.passages.size() - (a.cited.isEmpty() ? a.passages.size() : a.cited.size());
-        if (others > 0) card.addView(text("+" + others + " other passage(s) found but not cited.", 12, MUTED, false), fill(6));
-    }
-
-    void scrollDown() { threadScroll.post(() -> threadScroll.fullScroll(View.FOCUS_DOWN)); }
-
-    @Override
-    public void onBackPressed() {
-        if (busy) return;
-        super.onBackPressed();
     }
 }

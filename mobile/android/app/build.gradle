@@ -10,8 +10,8 @@ android {
         applicationId "ma.sanad.app"
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "0.1"
+        versionCode 2
+        versionName "0.2"
     }
 
     buildTypes {
@@ -25,3 +25,18 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 }
+
+// The interface is the web app (frontend/, built with `npm run build`) plus the phone's bridge and setup page (web-extra/).
+def webAssets = layout.buildDirectory.dir("generated/webassets")
+def frontendDist = rootProject.file("../../frontend/dist")
+tasks.register("copyWeb", Copy) {
+    doFirst {
+        if (!new File(frontendDist, "index.html").exists())
+            throw new GradleException("Build the interface first: cd frontend && npm ci --legacy-peer-deps && npm run build")
+    }
+    from(frontendDist) { exclude "assets/aistudio/**" }
+    from(rootProject.file("web-extra"))
+    into(webAssets.map { it.dir("web") })
+}
+android.sourceSets.main.assets.srcDirs += webAssets
+preBuild.dependsOn("copyWeb")
