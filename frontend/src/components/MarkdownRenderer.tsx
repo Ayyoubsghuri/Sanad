@@ -76,11 +76,13 @@ function textOf(n: React.ReactNode): string {
   return "";
 }
 const hasArabic = (n: React.ReactNode) => ARABIC.test(textOf(n));
-/** A list's direction from its first letter. dir="auto" cannot do it for a list: the browser skips the items, which have
- *  their own dir, so an Arabic list fell back to left-to-right and its numbers showed on the left. */
+/** A list's direction from its letters: mostly Arabic = right-to-left (numbers and bullets on the right). dir="auto" cannot
+ *  do it for a list (the browser skips the items, which have their own dir), and the first letter alone was not reliable. */
 const listDir = (n: React.ReactNode): "rtl" | "ltr" => {
-  const m = textOf(n).match(/[A-Za-z\u00C0-\u024F]|[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/);
-  return m && !/[A-Za-z\u00C0-\u024F]/.test(m[0]) ? "rtl" : "ltr";
+  const t = textOf(n);
+  const ar = (t.match(/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/g) || []).length;
+  const lat = (t.match(/[A-Za-z\u00C0-\u024F]/g) || []).length;
+  return ar > 0 && ar >= lat ? "rtl" : "ltr";
 };
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({

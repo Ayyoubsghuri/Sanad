@@ -166,6 +166,58 @@ public class MainActivity extends Activity implements Api.Host {
 
     void progress(JSONObject o) { js("window.__sanadProgress&&window.__sanadProgress(" + o + ")"); }
 
+    // ------------------------------------------------------------------ files from the interface (Workbench downloads, PDF)
+    WebView printView; // kept until Android's print screen has read it
+
+    /** Saves a file in Downloads/Sanad (Android 10+) or in the app's Documents folder, then opens it. Returns where it went. */
+    String saveFile(String name, String mime, byte[] data) throws Exception {
+        String safe = name.replaceAll("[\\\\/:*?\"<>|]", "_");
+        Uri uri;
+        String where;
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, safe);
+            v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mime);
+            v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/Sanad");
+            uri = getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (uri == null) throw new Exception("Android refused to create the file");
+            try (java.io.OutputStream o = getContentResolver().openOutputStream(uri)) { o.write(data); }
+            where = "Downloads/Sanad/" + safe;
+        } else {
+            File dir = getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS);
+            File f = new File(dir, safe);
+            java.nio.file.Files.write(f.toPath(), data);
+            uri = null;
+            where = f.getAbsolutePath();
+        }
+        final Uri open = uri;
+        final String msg = where;
+        runOnUiThread(() -> {
+            android.widget.Toast.makeText(this, "Saved: " + msg, android.widget.Toast.LENGTH_LONG).show();
+            if (open != null) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(open, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+                } catch (Exception ignored) { } // no app opens this type: the toast says where it is
+            }
+        });
+        return where;
+    }
+
+    /** Android's print screen for an HTML page (choose "Save as PDF"): Arabic is laid out by the WebView itself. */
+    void printHtml(String title, String html) {
+        printView = new WebView(this);
+        printView.getSettings().setJavaScriptEnabled(false);
+        printView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView v, String url) {
+                android.print.PrintManager pm = (android.print.PrintManager) getSystemService(PRINT_SERVICE);
+                String job = (title == null || title.trim().isEmpty() ? "Sanad" : title.trim());
+                pm.print(job, v.createPrintDocumentAdapter(job), new android.print.PrintAttributes.Builder().build());
+            }
+        });
+        printView.loadDataWithBaseURL(ORIGIN + "/", html, "text/html", "utf-8", null);
+    }
+
     // ------------------------------------------------------------------ app updates (the newest APK on the Releases page)
     static final String UPDATE_BASE = "https://github.com/Ayyoubsghuri/Sanad/releases/download/android-latest/";
     long updateDownload = -1;
@@ -341,6 +393,20 @@ public class MainActivity extends Activity implements Api.Host {
                 }
             });
         }
+
+        /** A file made by the interface (base64): saved and opened. Returns "ok:<where>" or "error:<why>". */
+        @JavascriptInterface
+        public String saveFile(String name, String mime, String base64) {
+            try {
+                return "ok:" + MainActivity.this.saveFile(name, mime == null || mime.isEmpty() ? "application/octet-stream" : mime.split(";")[0],
+                        android.util.Base64.decode(base64, android.util.Base64.DEFAULT));
+            } catch (Exception e) {
+                return "error:" + e.getMessage();
+            }
+        }
+
+        @JavascriptInterface
+        public void printHtml(String title, String html) { runOnUiThread(() -> MainActivity.this.printHtml(title, html)); }
 
         @JavascriptInterface
         public void installUpdate() { runOnUiThread(MainActivity.this::downloadUpdate); }

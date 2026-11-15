@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { printOnAndroid, saveFileOnAndroid } from "../platform";
 import { PdfPageImage } from "./PdfPageImage";
 import { tr } from "../i18n";
 import {
@@ -554,6 +555,10 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
     const html = isDoc
       ? generateStyledSnippetHtml(artifact.title, docMeta, snippets, uniquePages)
       : `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(artifact.title)}</title><style>body{font-family:sans-serif;padding:24px;white-space:pre-wrap}</style></head><body dir="auto">${escapeHtml(artifact.content)}</body></html>`;
+    if (printOnAndroid(artifact.title, html)) {
+      setDownloadMenuOpen(false);
+      return;
+    }
     const frame = document.createElement("iframe");
     frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
     document.body.appendChild(frame);
@@ -581,8 +586,9 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
     const isDoc = artifact.kind === ArtifactKind.Document;
     const safeName = (docMeta?.filename || artifact.title)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/[^\p{L}\p{N}]+/gu, "-") // Arabic titles keep their letters
+      .replace(/^-|-$/g, "")
+      .slice(0, 80);
 
     let blob: Blob;
     let fileExt: string;
@@ -653,6 +659,20 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
           )
         : artifact.content;
       blob = new Blob([content], { type: mimeType });
+    }
+
+    try {
+      const saved = await saveFileOnAndroid(`${safeName || "sanad"}.${fileExt}`, blob);
+      if (saved !== null) {
+        setDownloadedFormat(fileExt);
+        setDownloadMenuOpen(false);
+        setTimeout(() => setDownloadedFormat(null), 2400);
+        return;
+      }
+    } catch (e) {
+      alert(`${e instanceof Error ? e.message : String(e)}`);
+      setDownloadMenuOpen(false);
+      return;
     }
 
     const url = URL.createObjectURL(blob);
