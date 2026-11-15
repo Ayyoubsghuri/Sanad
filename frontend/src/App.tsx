@@ -58,6 +58,7 @@ import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/
 import { IS_ANDROID, openAndroidSetup } from "./platform";
 import { usePresence } from "./usePresence";
 import { AsOfDateChip } from "./components/AsOfDateChip";
+import { UpdateBanner } from "./components/UpdateBanner";
 import {
   AgentStep,
   ArtifactItem,
@@ -1037,6 +1038,8 @@ export function App() {
           />
           <WindowControls />
         </header>
+
+        {IS_ANDROID && <UpdateBanner />}
 
         {/* Home Screen vs Active Thread Conversation */}
         {!activeThread || activeThread.messages.length === 0 ? (

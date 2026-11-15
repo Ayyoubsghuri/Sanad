@@ -1,5 +1,12 @@
 // Generated: source text -> [English, French, Arabic]. Keys are the original source strings.
 export const DICT: Record<string, [string, string, string]> = {
+  "A new version of Sanad is available.": ["A new version of Sanad is available.", "Une nouvelle version de Sanad est disponible.", "يتوفر إصدار جديد من سند."],
+  "Downloading the update… Android will then ask you to install it.": ["Downloading the update… Android will then ask you to install it.", "Téléchargement de la mise à jour… Android vous proposera ensuite de l'installer.", "جارٍ تنزيل التحديث… سيطلب منك أندرويد بعد ذلك تثبيته."],
+  "Allow Sanad to install updates, come back, then tap Update again.": ["Allow Sanad to install updates, come back, then tap Update again.", "Autorisez Sanad à installer des mises à jour, revenez, puis touchez à nouveau Mettre à jour.", "اسمح لسند بتثبيت التحديثات، ثم ارجع واضغط على تحديث مرة أخرى."],
+  "Confirm the installation in the window Android opened.": ["Confirm the installation in the window Android opened.", "Confirmez l'installation dans la fenêtre ouverte par Android.", "أكّد التثبيت في النافذة التي فتحها أندرويد."],
+  "The update could not be downloaded: {0}": ["The update could not be downloaded: {0}", "La mise à jour n'a pas pu être téléchargée : {0}", "تعذّر تنزيل التحديث: {0}"],
+  "Update": ["Update", "Mettre à jour", "تحديث"],
+  "Later": ["Later", "Plus tard", "لاحقًا"],
   "The answers use the law in force on this date": ["The answers use the law in force on this date", "Les réponses appliquent la loi en vigueur à cette date", "تعتمد الأجوبة القانون الساري في هذا التاريخ"],
   "Law today": ["Law today", "Loi d'aujourd'hui", "قانون اليوم"],
   "Back to today": ["Back to today", "Revenir à aujourd'hui", "العودة إلى اليوم"],
