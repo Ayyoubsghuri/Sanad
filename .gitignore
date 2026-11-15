@@ -8,6 +8,7 @@
 !/docs/
 !/.github/
 !/README.md
+!/mobile/
 
 # python
 __pycache__/
@@ -25,6 +26,7 @@ env/
 *.db
 *.db.sig
 release_out/
+mobile_out/
 reports/
 
 # third-party dataset used for benchmarking (licence unknown)
@@ -43,3 +45,9 @@ dist/
 installer/stage/
 installer/out/
 installer/sanad.wxs
+
+# android build output
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
