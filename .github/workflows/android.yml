@@ -30,14 +30,28 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-      - name: Build debug APK
+      - name: Build the signed APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SANAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          gradle assembleDebug --no-daemon --stacktrace
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Sanad.apk
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/sanad.jks"
+            export SANAD_KEYSTORE="$RUNNER_TEMP/sanad.jks"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: the APK gets a throw-away key and will not install over the previous one."
+          fi
+          export SANAD_VERSION_CODE=$(( $(date +%s) / 60 - 28000000 ))
+          gradle assembleRelease --no-daemon --stacktrace
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/Sanad.apk
+          printf '{"versionCode": %s, "versionName": "0.2", "apk": "Sanad.apk", "commit": "%s", "size": %s}\n' \
+            "$SANAD_VERSION_CODE" "$GITHUB_SHA" "$(stat -c %s out/Sanad.apk)" > out/android-version.json
+          cat out/android-version.json
       - uses: actions/upload-artifact@v4
         with:
           name: sanad-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: mobile/android/out/*
           if-no-files-found: error
       - name: Publish the APK on the Releases page (tag android-latest)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/android-app'
@@ -47,5 +61,7 @@ jobs:
           name: Sanad for Android (latest build)
           prerelease: true
           make_latest: false
-          body: "Install on your Android phone: download Sanad.apk, open it, allow installing from this source. Built from branch ${{ github.ref_name }}, commit ${{ github.sha }}."
-          files: mobile/android/app/build/outputs/apk/debug/Sanad.apk
+          body: "Install on your Android phone: download Sanad.apk, open it, allow installing from this source. Later versions install over it, and the app offers them itself. Built from branch ${{ github.ref_name }}, commit ${{ github.sha }}."
+          files: |
+            mobile/android/out/Sanad.apk
+            mobile/android/out/android-version.json

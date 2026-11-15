@@ -19,6 +19,21 @@ Before the app opens, a setup page asks for:
 It checks both keys, then downloads the law pack (use Wi-Fi). The keys stay in the app's private storage on the phone.
 Later, **API keys** in the app's menu opens the same page (to change a key or download a newer law pack).
 
+## Updates
+
+Every APK is signed with the same release key, so a new version installs over the old one and keeps your keys, your
+chats and the law pack. When a newer version is published, the app shows **A new version of Sanad is available ·
+Update**: it downloads the APK and opens Android's installer (the first time, Android asks you to allow Sanad to install
+updates).
+
+The key is a GitHub secret of the repository (Settings → Secrets and variables → Actions):
+
+- `ANDROID_KEYSTORE_BASE64`: the keystore file, base64-encoded;
+- `ANDROID_KEYSTORE_PASSWORD`: its password.
+
+Keep a copy of the keystore and its password somewhere safe: an APK signed with another key can never update the app.
+Without the secret, the build is signed with a throw-away key (it still works, but must be installed fresh).
+
 ## How it is built
 
 - `frontend/` is the interface (React). The Android build bundles its `dist/` folder into the app, together with

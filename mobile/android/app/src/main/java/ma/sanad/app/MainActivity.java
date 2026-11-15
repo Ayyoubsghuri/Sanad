@@ -91,6 +91,9 @@ public class MainActivity extends Activity implements Api.Host {
             }
         });
         setContentView(web);
+        android.content.IntentFilter f = new android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(downloadDone, f, android.content.Context.RECEIVER_EXPORTED);
+        else registerReceiver(downloadDone, f);
         web.loadUrl(ORIGIN + (prefs.ready() && pack != null ? "/" : "/setup.html"));
     }
 
@@ -162,6 +165,69 @@ public class MainActivity extends Activity implements Api.Host {
     }
 
     void progress(JSONObject o) { js("window.__sanadProgress&&window.__sanadProgress(" + o + ")"); }
+
+    // ------------------------------------------------------------------ app updates (the newest APK on the Releases page)
+    static final String UPDATE_BASE = "https://github.com/Ayyoubsghuri/Sanad/releases/download/android-latest/";
+    long updateDownload = -1;
+
+    long installedVersionCode() {
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return android.os.Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+        } catch (Exception e) {
+            return Long.MAX_VALUE;
+        }
+    }
+
+    void updateEvent(JSONObject o) { js("window.__sanadUpdate&&window.__sanadUpdate(" + o + ")"); }
+
+    /** Downloads the newest APK with Android's download manager, then opens Android's installer on it. */
+    void downloadUpdate() {
+        if (android.os.Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+            // Android asks once whether Sanad may install updates; the user comes back and taps Update again
+            try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))); } catch (Exception ignored) { }
+            try { updateEvent(new JSONObject().put("state", "permission")); } catch (Exception ignored) { }
+            return;
+        }
+        android.app.DownloadManager dm = (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        File old = new File(getExternalFilesDir(null), "Sanad-update.apk");
+        old.delete();
+        android.app.DownloadManager.Request r = new android.app.DownloadManager.Request(Uri.parse(UPDATE_BASE + "Sanad.apk"))
+                .setTitle("Sanad update")
+                .setMimeType("application/vnd.android.package-archive")
+                .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalFilesDir(this, null, "Sanad-update.apk");
+        updateDownload = dm.enqueue(r);
+        try { updateEvent(new JSONObject().put("state", "downloading")); } catch (Exception ignored) { }
+    }
+
+    final android.content.BroadcastReceiver downloadDone = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context c, Intent i) {
+            long id = i.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            if (id != updateDownload || id < 0) return;
+            android.app.DownloadManager dm = (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            Uri apk = dm.getUriForDownloadedFile(id);
+            if (apk == null) {
+                try { updateEvent(new JSONObject().put("state", "error").put("error", "the download failed")); } catch (Exception ignored) { }
+                return;
+            }
+            Intent install = new Intent(Intent.ACTION_VIEW).setDataAndType(apk, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivity(install);
+                updateEvent(new JSONObject().put("state", "installing"));
+            } catch (Exception e) {
+                try { updateEvent(new JSONObject().put("state", "error").put("error", String.valueOf(e.getMessage()))); } catch (Exception ignored) { }
+            }
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        try { unregisterReceiver(downloadDone); } catch (Exception ignored) { }
+        super.onDestroy();
+    }
 
     @Override
     public void onBackPressed() {
@@ -260,6 +326,24 @@ public class MainActivity extends Activity implements Api.Host {
                 reply(id, 200, r.toString());
             });
         }
+
+        /** Is a newer Sanad published? The answer goes to window.__sanadUpdate({state:"available"|"current", ...}). */
+        @JavascriptInterface
+        public void checkUpdate() {
+            pool.execute(() -> {
+                try {
+                    JSONObject v = new JSONObject(Net.get(UPDATE_BASE + "android-version.json"));
+                    long latest = v.optLong("versionCode", 0), mine = installedVersionCode();
+                    updateEvent(new JSONObject().put("state", latest > mine ? "available" : "current").put("latest", latest).put("installed", mine)
+                            .put("size", v.optLong("size", 0)));
+                } catch (Exception e) {
+                    try { updateEvent(new JSONObject().put("state", "unknown")); } catch (Exception ignored) { }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void installUpdate() { runOnUiThread(MainActivity.this::downloadUpdate); }
 
         @JavascriptInterface
         public void download() {
