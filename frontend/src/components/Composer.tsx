@@ -217,6 +217,11 @@ export const Composer: React.FC<ComposerProps> = ({
     el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
   };
 
+  // the box follows its text: after a long message is sent (value cleared), it goes back to one line
+  useLayoutEffect(() => {
+    if (textareaRef.current) adjustHeight(textareaRef.current);
+  }, [value]);
+
   const canSend = value.trim().length > 0 || attachments.length > 0;
 
   return (

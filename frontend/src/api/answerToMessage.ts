@@ -87,7 +87,8 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
         parts.push(`**${T(L, "noAnswerHere")}** ${T(L, "maybeMissing")}`);
       }
     }
-    if (a.as_of) parts.push(`_${T(L, "lawAsOf")} ${a.as_of}${a.as_of_assumption ? `: ${noteText(a.as_of_assumption, L)}` : ""}_`);
+    // the date is isolated left-to-right: inside Arabic text 2026-11-15 would otherwise show as 15-11-2026
+    if (a.as_of) parts.push(`_${T(L, "lawAsOf")} \u2066${a.as_of.replace(/-/g, "\u2011")}\u2069${a.as_of_assumption ? `: ${noteText(a.as_of_assumption, L)}` : ""}_`);
     for (const c of a.claims ?? []) {
       const refs = c.sources.map((id) => idx.get(id)).filter(Boolean).map((n) => `[${n}]`).join("");
       parts.push(`${c.text} ${refs}`.trim());
@@ -111,7 +112,7 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
         `**${T(L, "sources")}**\n` +
           shown
             .map(({ s, n }) => {
-              const bo = s.bo?.number ? ` (BO ${s.bo.number}${s.bo.date ? `, ${s.bo.date}` : ""})` : "";
+              const bo = s.bo?.number ? ` \u2066(BO ${s.bo.number}${s.bo.date ? `, ${s.bo.date.replace(/-/g, "\u2011")}` : ""})\u2069` : ""; // left-to-right inside Arabic, the date never split
               const warn = s.in_force_on_as_of === false ? ` ⚠ ${T(L, "notInForce")}` : s.contested ? ` ⚠ ${T(L, "contested")}` : "";
               const text = s.text.length > 700 ? `${s.text.slice(0, 700).replace(/\n+/g, " ")}…` : s.text.replace(/\n+/g, " ");
               return `${n}. **${s.law}, ${s.article}**${bo}${warn}\n   > ${text}`;
