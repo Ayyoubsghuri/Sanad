@@ -57,6 +57,7 @@ import { applyWorkspaceTheme } from "./themes/palettes";
 import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/WindowControls";
 import { IS_ANDROID, openAndroidSetup } from "./platform";
 import { usePresence } from "./usePresence";
+import { AsOfDateChip } from "./components/AsOfDateChip";
 import {
   AgentStep,
   ArtifactItem,
@@ -1018,6 +1019,7 @@ export function App() {
             </div>
           </div>
 
+          <AsOfDateChip value={settings.asOfDate || ""} onChange={(d) => updateSettings({ asOfDate: d })} />
           <HeaderActionsBar
             activeThreadArtifacts={activeThreadArtifacts}
             rightPanel={rightPanel}

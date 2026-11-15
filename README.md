@@ -55,7 +55,7 @@ The screenshots below were taken with the small synthetic test pack (texts marke
 
 Download one of the two installers from the [Releases page](https://github.com/Ayyoubsghuri/Sanad/releases). They install the same thing; pick either.
 The same page has the Android app (`Sanad-<version>.apk`); see [`mobile/android/README.md`](mobile/android/README.md) and the
-release notes for what the phone version does not do yet (for example, it always answers with the law in force today).
+release notes for what the phone version does not do yet.
 
 | File | Type |
 |---|---|

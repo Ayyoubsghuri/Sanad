@@ -1,5 +1,9 @@
 // Generated: source text -> [English, French, Arabic]. Keys are the original source strings.
 export const DICT: Record<string, [string, string, string]> = {
+  "The answers use the law in force on this date": ["The answers use the law in force on this date", "Les réponses appliquent la loi en vigueur à cette date", "تعتمد الأجوبة القانون الساري في هذا التاريخ"],
+  "Law today": ["Law today", "Loi d'aujourd'hui", "قانون اليوم"],
+  "Back to today": ["Back to today", "Revenir à aujourd'hui", "العودة إلى اليوم"],
+  "Law in force on": ["Law in force on", "Loi en vigueur au", "القانون الساري في"],
   "Law pack": ["Law pack", "Pack de lois", "حزمة القوانين"],
   "Check for a new law pack": ["Check for a new law pack", "Vérifier s'il existe un nouveau pack de lois", "التحقق من وجود حزمة قوانين جديدة"],
   "Check": ["Check", "Vérifier", "تحقق"],

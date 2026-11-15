@@ -29,7 +29,7 @@ final class Api {
     }
 
     private static final class Query {
-        String question;
+        String question, asOf;
         final List<JSONObject> steps = new ArrayList<>();
         volatile boolean done, cancelled;
     }
@@ -77,6 +77,8 @@ final class Api {
         String id = UUID.randomUUID().toString();
         Query q = new Query();
         q.question = b.optString("question", "").trim();
+        q.asOf = b.isNull("as_of") ? null : b.optString("as_of", "").trim();
+        if (q.asOf != null && q.asOf.isEmpty()) q.asOf = null;
         queries.put(id, q);
         return ok(new JSONObject().put("query_id", id).put("case_id", JSONObject.NULL).put("mode", "hybrid")
                 .put("pseudonymised_text", q.question).put("confidence", 1).put("warnings", new JSONArray())
@@ -95,7 +97,7 @@ final class Api {
         final long[] started = {0};
         Engine.Answer ans;
         try {
-            ans = engine.ask(q.question, what -> {
+            ans = engine.ask(q.question, q.asOf, what -> {
                 long now = System.currentTimeMillis();
                 closeRunning(q, now - started[0]);
                 started[0] = now;
@@ -110,6 +112,7 @@ final class Api {
             q.done = true;
         }
         if (q.cancelled) return ok(a.put("status", "cancelled"));
+        a.put("as_of", ans.asOf);
         a.put("steps", new JSONArray(q.steps));
         JSONArray sources = new JSONArray();
         for (int i = 0; i < ans.passages.size(); i++) sources.put(source(ans.passages.get(i), i, ans.passages.size()));
@@ -164,7 +167,7 @@ final class Api {
         Matcher m = Pattern.compile("BO\\s+(\\S+)\\s*(.*)").matcher(p.bo == null ? "" : p.bo);
         if (m.find()) bo.put("number", m.group(1)).put("date", m.group(2).isEmpty() ? JSONObject.NULL : m.group(2));
         return new JSONObject().put("id", "p" + p.id).put("law", law).put("article", article).put("text", p.body == null ? "" : p.body)
-                .put("bo", bo).put("valid_from", "").put("kind", "article").put("relevance", 1.0 - (double) i / Math.max(1, n))
+                .put("bo", bo).put("valid_from", p.validFrom == null ? "" : p.validFrom).put("valid_to", p.validTo == null ? JSONObject.NULL : p.validTo).put("kind", "article").put("relevance", 1.0 - (double) i / Math.max(1, n))
                 .put("has_pdf", false).put("in_force_on_as_of", true);
     }
 

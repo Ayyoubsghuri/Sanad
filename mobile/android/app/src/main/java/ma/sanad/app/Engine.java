@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 /** One question: (rewrite to formal Arabic) -> keyword + meaning search on the phone -> answer by your OpenAI key, citing the passages. */
 public final class Engine {
     public static final class Answer {
-        public String question, searchText, text;
+        public String question, searchText, text, asOf;
         public List<Pack.Passage> passages = new ArrayList<>();
         public List<Integer> cited = new ArrayList<>();
         public List<String> notes = new ArrayList<>();
@@ -29,7 +29,7 @@ public final class Engine {
             + "If the user asks HOW to do something (start a procedure, claim a right), also name in the same sentence the kinds of procedure the legislation "
             + "distinguishes (for example for a divorce: الطلاق بإذن المحكمة، الطلاق الاتفاقي، التطليق للشقاق، الخلع، التمليك). Return only the Arabic question, nothing else.";
 
-    static final String ANSWER = "You are Sanad, an assistant for Moroccan law. You receive a question and numbered passages of Moroccan legislation in force today.\n"
+    static final String ANSWER = "You are Sanad, an assistant for Moroccan law. You receive a question and numbered passages of Moroccan legislation in force on the date given with the question.\n"
             + "Rules:\n"
             + "1. Use ONLY the passages. Every sentence that states what the law says ends with the number of its passage in brackets, like [3] or [2][5].\n"
             + "2. Quote the decisive words of the law exactly, between «».\n"
@@ -45,8 +45,15 @@ public final class Engine {
 
     public Engine(Prefs prefs, Pack pack) { this.prefs = prefs; this.pack = pack; }
 
-    public Answer ask(String question, Step step) throws Exception {
+    public Answer ask(String question, Step step) throws Exception { return ask(question, null, step); }
+
+    /** asOf: the date (yyyy-mm-dd) whose law applies; null = today. */
+    public Answer ask(String question, String asOf, Step step) throws Exception {
         Answer a = new Answer();
+        a.asOf = asOf == null || !asOf.matches("\\d{4}-\\d{2}-\\d{2}") ? java.time.LocalDate.now().toString() : asOf;
+        java.util.BitSet allowed = pack.inForce(a.asOf);
+        if (!pack.dated && asOf != null && !asOf.equals(java.time.LocalDate.now().toString()))
+            a.notes.add("This law pack holds only the texts in force on " + pack.meta.getOrDefault("as_of", "its build date") + ": download the newest law pack (Settings) to answer for another date.");
         a.question = question.trim();
         a.searchText = a.question;
         if (prefs.flag("rewrite", true)) {
@@ -62,12 +69,12 @@ public final class Engine {
         List<String> words = new ArrayList<>(Norm.tokens(a.searchText));
         if (!a.searchText.equals(a.question)) words.addAll(Norm.tokens(a.question));
         List<int[]> lists = new ArrayList<>();
-        lists.add(pack.keyword(Norm.ftsQuery(words, pack.stop, 24), 50));
+        lists.add(pack.keyword(Norm.ftsQuery(words, pack.stop, 24), 50, allowed));
         try {
             List<String> texts = new ArrayList<>();
             texts.add(a.searchText);
             if (!a.searchText.equals(a.question)) texts.add(a.question);
-            for (float[] v : embed(texts)) lists.add(pack.meaning(v, 50));
+            for (float[] v : embed(texts)) lists.add(pack.meaning(v, 50, allowed));
         } catch (Exception e) {
             a.notes.add("meaning search unavailable (" + e.getMessage() + "): keyword search only");
         }
@@ -78,7 +85,8 @@ public final class Engine {
             return a;
         }
         step.on("answer");
-        StringBuilder user = new StringBuilder("Question: ").append(a.question).append("\n\nPassages:\n");
+        StringBuilder user = new StringBuilder("Question: ").append(a.question)
+                .append("\nDate: the law in force on ").append(a.asOf).append("\n\nPassages:\n");
         for (int i = 0; i < a.passages.size(); i++) {
             Pack.Passage p = a.passages.get(i);
             user.append("\n[").append(i + 1).append("] ").append(label(p)).append("\n").append(p.body).append("\n");

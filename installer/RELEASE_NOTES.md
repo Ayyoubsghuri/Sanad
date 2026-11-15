@@ -18,12 +18,14 @@ uninstall it first (each build is signed with a different key, so Android refuse
 On first start the app asks for the AI service (OpenAI, Gemini or Claude) and its key, and for a Cloudflare account ID and
 API token (search by meaning), then downloads the phone's law pack (use Wi-Fi).
 
+**Law at a date:** the **Law today** chip in the top bar picks the date whose law applies (on Windows and on Android).
+On the phone this needs the newest phone law pack (it carries every dated version): download it from the setup page
+(API keys in the menu → Download the latest version).
+
 ### What the Android app does not do (yet)
 
 The phone app has the same interface as the desktop app, but a lighter engine. Compared with Windows:
 
-- **Law in force today only.** The phone always answers with the texts in force today. The desktop's date setting
-  ("the law as it was on a given date") has no effect on the phone, and older versions of an article are not searched.
 - **No claim-by-claim verification.** The desktop app checks every sentence of the answer against the cited articles; on the
   phone, read the quoted articles under the answer.
 - **No reranker.** Passages are ranked by keyword and meaning search only.

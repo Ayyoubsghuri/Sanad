@@ -3,7 +3,8 @@ r"""Make the phone version of the law pack (for the Sanad Android app).
     py tools\make_mobile_pack.py                      # reads your installed pack, writes mobile_out\
     py tools\make_mobile_pack.py --db C:\path\current.db --out mobile_out
 
-It keeps what the phone needs to search the law IN FORCE TODAY and drops the rest:
+It keeps what the phone needs to search the law, with every dated version of each article (valid_from / valid_to), so the
+phone answers with the law in force on the date the user picks (the app's "as of" date; today by default):
   sanad_mobile.db    the passages (quotable text + law, article, Bulletin Officiel) and a keyword index (SQLite FTS4, which every Android has)
   sanad_mobile.vec   the bge-m3 vectors, 1 byte per number instead of 4 (int8 + one scale per passage), read from disk by the phone
   manifest.json      sizes and SHA-256 of both files (the app checks them after downloading)
@@ -18,7 +19,7 @@ import json
 import sqlite3
 import struct
 import sys
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -51,7 +52,8 @@ def pick_embedder(con: sqlite3.Connection, wanted: str | None) -> tuple[str, str
     raise SystemExit(f"no embedder {wanted!r} in the pack; it has {[r[0] for r in rows]}")
 
 
-def build(db: Path, out: Path, as_of: str, embedder: str | None = None, langs: tuple[str, ...] = ("ar", "fr")) -> dict:
+def build(db: Path, out: Path, as_of: str | None = None, embedder: str | None = None, langs: tuple[str, ...] = ("ar", "fr")) -> dict:
+    """as_of=None keeps every version (the default: the phone filters by date); a date keeps only the versions in force then."""
     out.mkdir(parents=True, exist_ok=True)
     src = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     src.row_factory = sqlite3.Row
@@ -60,14 +62,15 @@ def build(db: Path, out: Path, as_of: str, embedder: str | None = None, langs: t
     lang_sql = ",".join("?" for _ in langs)
     rows = src.execute(
         f"""SELECT c.chunk_id, c.lang, c.body, c.keyword_text, p.instrument_id, p.number AS art, p.suffix, i.kind, i.number AS inum, i.title_ar, i.title_fr,
-                   i.bo_number, i.bo_date, i.domain, pv.valid_from, ce.vector
+                   i.bo_number, i.bo_date, i.domain, pv.valid_from, pv.valid_to, ce.vector
             FROM chunk c JOIN provision_version pv ON pv.pv_id=c.pv_id JOIN provision p ON p.provision_id=pv.provision_id
             JOIN instrument i ON i.instrument_id=p.instrument_id
             LEFT JOIN chunk_embedding ce ON ce.chunk_id=c.chunk_id AND ce.embedder_id=?
-            WHERE c.edition='official' AND c.lang IN ({lang_sql}) AND pv.valid_from<=? AND (pv.valid_to IS NULL OR pv.valid_to>?)
+            WHERE c.edition='official' AND c.lang IN ({lang_sql})
+              {"AND pv.valid_from<=? AND (pv.valid_to IS NULL OR pv.valid_to>?)" if as_of else ""}
               AND pv.verification_status IN ('verified','single_source','derived')
-            ORDER BY i.instrument_id, p.number_int, p.suffix, c.chunk_id""",
-        (eid, *langs, as_of, as_of))
+            ORDER BY i.instrument_id, p.number_int, p.suffix, pv.valid_from, c.chunk_id""",
+        (eid, *langs, *((as_of, as_of) if as_of else ())))
 
     dbp, vecp = out / "sanad_mobile.db", out / "sanad_mobile.vec"
     for p in (dbp, vecp, out / "sanad_mobile.vec.part"):
@@ -78,7 +81,8 @@ def build(db: Path, out: Path, as_of: str, embedder: str | None = None, langs: t
         CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         CREATE TABLE passage (id INTEGER PRIMARY KEY, chunk_id INTEGER NOT NULL, lang TEXT NOT NULL, instrument_id TEXT NOT NULL, kind TEXT NOT NULL,
                               authority INTEGER NOT NULL, law_number TEXT, law_title TEXT, article TEXT, bo TEXT, domain TEXT, valid_from TEXT, body TEXT NOT NULL,
-                              has_vector INTEGER NOT NULL);
+                              has_vector INTEGER NOT NULL, valid_to TEXT);
+        CREATE INDEX passage_dates ON passage(valid_from, valid_to);
         CREATE VIRTUAL TABLE passage_fts USING fts4(content="", kw);
         CREATE TABLE stopword (w TEXT PRIMARY KEY) WITHOUT ROWID;
     """)
@@ -107,19 +111,19 @@ def build(db: Path, out: Path, as_of: str, embedder: str | None = None, langs: t
             title = r["title_ar"] if r["lang"] == "ar" else (r["title_fr"] or r["title_ar"])
             bo = " ".join(x for x in (f"BO {r['bo_number']}" if r["bo_number"] else "", r["bo_date"] or "") if x)
             batch_p.append((n, r["chunk_id"], r["lang"], r["instrument_id"], r["kind"], AUTHORITY.get(r["kind"], 9), r["inum"], title, art, bo, r["domain"],
-                            r["valid_from"], r["body"], 1 if scales[-1] else 0))
+                            r["valid_from"], r["body"], 1 if scales[-1] else 0, r["valid_to"]))
             batch_f.append((n, r["keyword_text"] or ""))
             if len(batch_p) >= 5000:
-                dst.executemany("INSERT INTO passage VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", batch_p)
+                dst.executemany("INSERT INTO passage VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", batch_p)
                 dst.executemany("INSERT INTO passage_fts(docid, kw) VALUES (?,?)", batch_f)
                 batch_p, batch_f = [], []
                 print(f"\r  {n:,} passages", end="", flush=True)
         if batch_p:
-            dst.executemany("INSERT INTO passage VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", batch_p)
+            dst.executemany("INSERT INTO passage VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", batch_p)
             dst.executemany("INSERT INTO passage_fts(docid, kw) VALUES (?,?)", batch_f)
     print(f"\r  {n:,} passages, {with_vec:,} with a vector")
     if not n:
-        raise SystemExit("no passage in force on " + as_of)
+        raise SystemExit("no passage" + (f" in force on {as_of}" if as_of else ""))
     src.close()
 
     # vector file = header + scales + int8 rows (row i belongs to passage id i+1)
@@ -132,7 +136,7 @@ def build(db: Path, out: Path, as_of: str, embedder: str | None = None, langs: t
 
     built = datetime.now(timezone.utc).isoformat(timespec="seconds")
     version = f"{datetime.now(timezone.utc):%Y.%m.%d.%H%M}-mobile"
-    meta = {"version": version, "built_at": built, "as_of": as_of, "source_pack_version": pack_version or "", "embedder_id": eid, "model": model,
+    meta = {"version": version, "built_at": built, "as_of": as_of or "all versions", "dated": "1", "source_pack_version": pack_version or "", "embedder_id": eid, "model": model,
             "cloudflare_model": CF_MODEL, "dim": str(dim), "passages": str(n), "with_vector": str(with_vec)}
     dst.executemany("INSERT INTO meta VALUES (?,?)", list(meta.items()))
     dst.commit()
@@ -151,7 +155,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", help="the full pack (default: the installed one)")
     ap.add_argument("--out", default="mobile_out")
-    ap.add_argument("--date", default=date.today().isoformat(), help="law in force on this date (default: today)")
+    ap.add_argument("--date", help="keep only the law in force on this date (default: every version, so the phone can answer for any date)")
     ap.add_argument("--embedder", help="embedder id (default: the one with the most vectors)")
     a = ap.parse_args()
     if a.db:

@@ -44,7 +44,10 @@ public final class VecIndex {
     }
 
     /** Top-k rows by cosine with q (q need not be normalised).  Returns row numbers (passage id = row + 1). */
-    public int[] search(float[] q, int k) {
+    public int[] search(float[] q, int k) { return search(q, k, null); }
+
+    /** Same, only over the rows whose passage id (row + 1) is set in `allow` (null = every row). */
+    public int[] search(float[] q, int k, java.util.BitSet allow) {
         double n = 0;
         for (float x : q) n += x * x;
         n = Math.sqrt(n);
@@ -59,7 +62,7 @@ public final class VecIndex {
             while (bb.remaining() >= dim) {
                 bb.get(row);
                 float s = scales[r];
-                if (s != 0f) {
+                if (s != 0f && (allow == null || allow.get(r + 1))) {
                     float dot = 0;
                     for (int i = 0; i < dim; i++) dot += qq[i] * row[i];
                     double score = dot * s;

@@ -37,3 +37,16 @@ def test_mobile_pack_has_passages_index_and_vectors(tmp_path, pack_path):
         cos = float(mat[0] @ f / (np.linalg.norm(mat[0]) * np.linalg.norm(f)))
         assert cos > 0.999
     assert con.execute("SELECT COUNT(*) FROM stopword").fetchone()[0] > 50
+
+
+def test_mobile_pack_keeps_every_dated_version(tmp_path, pack_path):
+    """By default every version is kept with its dates, so the phone can answer for the date the user picks."""
+    import make_mobile_pack as mm
+    m_all = mm.build(Path(pack_path), tmp_path / "all")
+    m_day = mm.build(Path(pack_path), tmp_path / "day", "2026-10-27")
+    assert m_all["passages"] > m_day["passages"]  # the fixture has articles replaced on 2026-08-24
+    con = sqlite3.connect(tmp_path / "all" / "sanad_mobile.db")
+    assert con.execute("SELECT value FROM meta WHERE key='dated'").fetchone()[0] == "1"
+    on = lambda d: con.execute("SELECT COUNT(*) FROM passage WHERE valid_from<=? AND (valid_to IS NULL OR valid_to>?)", (d, d)).fetchone()[0]  # noqa: E731
+    assert on("2026-10-27") == m_day["passages"]  # what the phone keeps for that date = the old one-date pack
+    assert on("2000-06-01") != on("2026-10-27")
