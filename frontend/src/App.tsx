@@ -78,6 +78,7 @@ import {
 } from "./types/agent";
 import {
   DEFAULT_INITIAL_MAPPINGS,
+  OLD_DEMO_ORIGINALS,
   restoreRealEntities,
 } from "./utils/pseudonymiser";
 
@@ -284,7 +285,12 @@ export function App() {
       const saved = localStorage.getItem(STORAGE_KEYS.mappings);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // the first prototype's American demo rules are replaced by the Moroccan examples; the user's own rules are kept
+          const own = parsed.filter((m: PseudonymMapping) => !OLD_DEMO_ORIGINALS.includes(m.original));
+          if (own.length === parsed.length) return parsed;
+          return own.length ? own : DEFAULT_INITIAL_MAPPINGS;
+        }
       }
     } catch {
       // Ignore storage error

@@ -592,6 +592,7 @@ export const DICT: Record<string, [string, string, string]> = {
   "All Rules": ["All rules","Toutes les règles","كل القواعد"],
   "No rules found for this category.": ["No rules found for this category.","Aucune règle pour cette catégorie.","لا توجد قواعد لهذه الفئة."],
   "Delete rule for {0}": ["Delete rule for {0}","Supprimer la règle pour {0}","حذف القاعدة الخاصة بـ {0}"],
+  "Restore the example rules": ["Restore the example rules","Rétablir les règles d'exemple","استعادة القواعد النموذجية"],
   "Reset standard enterprise rules": ["Reset standard enterprise rules","Rétablir les règles d'entreprise standard","إعادة ضبط قواعد المؤسسة القياسية"],
   "Done": ["Done","Terminé","تم"],
   "Signaler une Divergence / Citer BO": ["Report a discrepancy / cite the Official Bulletin","Signaler une Divergence / Citer BO","الإبلاغ عن اختلاف / الاستشهاد بالجريدة الرسمية"],

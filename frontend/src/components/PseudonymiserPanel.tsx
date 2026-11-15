@@ -27,6 +27,7 @@ import { PseudonymMapping, WorkspaceSettings } from "../types/agent";
 import {
   applyPseudonyms,
   DEFAULT_INITIAL_MAPPINGS,
+  EXAMPLE_SANDBOX_TEXT,
   restoreRealEntities,
   scanAndDetectEntities,
 } from "../utils/pseudonymiser";
@@ -54,7 +55,7 @@ export const PseudonymiserPanel: React.FC<PseudonymiserPanelProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [sandboxInput, setSandboxInput] = useState(
     currentPromptText ||
-      "Confidential briefing for Dr. Sarah Jenkins regarding Acme Corporation and Helios Bio-Analytics AG acquisition for $48,000,000. Send questions to sarah.jenkins@acme-research.org."
+      EXAMPLE_SANDBOX_TEXT
   );
 
   // New rule form states
@@ -585,7 +586,7 @@ export const PseudonymiserPanel: React.FC<PseudonymiserPanelProps> = ({
           style={{ color: "var(--text-muted)" }}
         >
           <RotateCcw className="w-3 h-3" />
-          <span>{tr("Reset standard enterprise rules")}</span>
+          <span>{tr("Restore the example rules")}</span>
         </button>
 
         <button
