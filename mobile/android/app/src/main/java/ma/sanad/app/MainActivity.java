@@ -68,6 +68,7 @@ public class MainActivity extends Activity implements Api.Host {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        s.setTextZoom(100); // the interface sets its own sizes; the phone's font-size setting would make it overflow
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setMediaPlaybackRequiresUserGesture(true);

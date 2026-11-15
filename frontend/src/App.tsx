@@ -56,6 +56,7 @@ import { answerToMessage } from "./api/answerToMessage";
 import { applyWorkspaceTheme } from "./themes/palettes";
 import { DRAG_REGION, IS_DESKTOP_FRAMELESS, WindowControls } from "./components/WindowControls";
 import { IS_ANDROID, openAndroidSetup } from "./platform";
+import { usePresence } from "./usePresence";
 import {
   AgentStep,
   ArtifactItem,
@@ -264,6 +265,15 @@ export function App() {
     "none" | "artifact" | "appearance" | "pseudonymiser"
 >("none");
   const [vaultModalOpen, setVaultModalOpen] = useState<boolean>(false);
+  // kept on screen while they slide out (see usePresence)
+  const sidebarP = usePresence(sidebarOpen, false);
+  const panelP = usePresence<typeof rightPanel>(rightPanel, "none");
+  const [isPhone, setIsPhone] = useState(() => typeof window !== "undefined" && window.innerWidth < 640);
+  useEffect(() => {
+    const onResize = () => setIsPhone(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [sendPreviewOpen, setSendPreviewOpen] = useState<boolean>(false);
   const [newTopic, setNewTopic] = useState<boolean>(false); // the next question ignores the earlier turns of the chat
 
@@ -898,16 +908,16 @@ export function App() {
       }}
     >
       {/* Mobile Sidebar Backdrop */}
-      {sidebarOpen && (
+      {sidebarP.shown && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+          className={`fixed inset-0 z-30 bg-black/25 lg:hidden ${sidebarP.closing ? "anim-fade-out" : "anim-fade-in"}`}
         />
       )}
 
       {/* Left Workspace Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-y-0 left-0 z-40 lg:static lg:z-auto h-full">
+      {sidebarP.shown && (
+        <div className={`fixed inset-y-0 left-0 z-40 lg:static lg:z-auto h-full ${sidebarP.closing ? "anim-out-left" : "anim-in-left"}`}>
           <Sidebar
             threads={threads}
             activeThreadId={activeThreadId}
@@ -1022,12 +1032,12 @@ export function App() {
 
         {/* Home Screen vs Active Thread Conversation */}
         {!activeThread || activeThread.messages.length === 0 ? (
-          <div className="flex-1 overflow-y-auto px-5 py-8 md:py-12">
-            <div className="max-w-2xl mx-auto flex flex-col justify-center min-h-full space-y-7">
+          <div key="home" className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 sm:py-8 md:py-12 anim-page">
+            <div className="max-w-2xl mx-auto flex flex-col justify-center min-h-full space-y-5 sm:space-y-7">
               {/* Calm Editorial Greeting */}
-              <div className="flex items-start gap-4 md:gap-5">
+              <div className="flex items-start gap-3 sm:gap-4 md:gap-5">
                 <SanadAvatar
-                  size={84}
+                  size={isPhone ? 54 : 84}
                   mode={getAvatarMode(isStreaming, inputText)}
                   typingProgress={Math.min(inputText.length / 80, 1)}
                   className="mt-1"
@@ -1199,7 +1209,7 @@ export function App() {
         ) : (
           <>
             {/* Scrollable Conversation Thread */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+            <div key={activeThread.id} className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 sm:px-6 anim-page">
               <div
                 className={`max-w-3xl mx-auto ${
                   isComfy ? "py-8 space-y-8" : "py-5 space-y-5"
@@ -1593,8 +1603,8 @@ export function App() {
       </main>
 
       {/* Right Split-Pane: Artifact Workbench */}
-      {rightPanel === "artifact" && selectedArtifact && (
-        <div className="fixed inset-0 z-40 lg:static lg:z-auto lg:contents">
+      {panelP.shown === "artifact" && selectedArtifact && (
+        <div className={`fixed inset-0 z-40 lg:static lg:z-auto lg:contents ${panelP.closing ? "anim-out-right" : "anim-in-right"}`}>
           <ArtifactWorkbench
             artifact={selectedArtifact}
             allArtifacts={
@@ -1611,8 +1621,8 @@ export function App() {
       )}
 
       {/* Right Split-Pane: Appearance & Tweaks Drawer */}
-      {rightPanel === "appearance" && (
-        <div className="fixed inset-y-0 right-0 z-40 lg:static lg:z-auto h-full">
+      {panelP.shown === "appearance" && (
+        <div className={`fixed inset-0 sm:left-auto z-40 lg:static lg:z-auto h-full ${panelP.closing ? "anim-out-right" : "anim-in-right"}`}>
           <AppearanceDrawer
             settings={settings}
             onChange={updateSettings}
@@ -1623,8 +1633,8 @@ export function App() {
       )}
 
       {/* Right Split-Pane: Pseudonymiser & Privacy Shield Drawer */}
-      {rightPanel === "pseudonymiser" && (
-        <div className="fixed inset-y-0 right-0 z-40 lg:static lg:z-auto h-full">
+      {panelP.shown === "pseudonymiser" && (
+        <div className={`fixed inset-0 z-40 lg:static lg:inset-auto lg:z-auto h-full ${panelP.closing ? "anim-out-right" : "anim-in-right"}`}>
           <PseudonymiserPanel
             mappings={pseudonymMappings}
             onUpdateMappings={setPseudonymMappings}

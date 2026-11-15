@@ -268,3 +268,24 @@ select option:checked, select option:hover {
   background-color: var(--bg-card);
   color: var(--text-heading, var(--text-primary));
 }
+/* ---- motion: sidebar and side panels slide, pages fade up (respects "reduce motion") ---------------------------------- */
+@keyframes sanad-in-left { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes sanad-in-right { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes sanad-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sanad-page-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.anim-in-left { animation: sanad-in-left 0.28s cubic-bezier(0.22, 0.9, 0.24, 1) both; }
+.anim-in-right { animation: sanad-in-right 0.28s cubic-bezier(0.22, 0.9, 0.24, 1) both; }
+.anim-out-left { animation: sanad-in-left 0.22s cubic-bezier(0.4, 0, 1, 1) reverse both; }
+.anim-out-right { animation: sanad-in-right 0.22s cubic-bezier(0.4, 0, 1, 1) reverse both; }
+.anim-fade-in { animation: sanad-fade-in 0.25s ease-out both; }
+.anim-fade-out { animation: sanad-fade-in 0.22s ease-in reverse both; }
+.anim-page { animation: sanad-page-in 0.32s cubic-bezier(0.22, 0.9, 0.24, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-in-left, .anim-in-right, .anim-out-left, .anim-out-right, .anim-fade-in, .anim-fade-out, .anim-page { animation: none; }
+}
+
+/* ---- phones: nothing wider than the screen, a smaller home heading ---------------------------------------------------- */
+html, body { overflow-x: hidden; }
+@media (max-width: 640px) {
+  .heading-scalable-xl { font-size: calc(1.6rem * var(--heading-scale)); line-height: 1.18; }
+}

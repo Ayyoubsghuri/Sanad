@@ -273,10 +273,10 @@ export const Composer: React.FC<ComposerProps> = ({
       )}
 
       {/* Main Textarea */}
-      <div className="px-4.5 pt-3.5 pb-2">
+      <div className="px-3.5 pt-2.5 pb-0.5 sm:px-4.5 sm:pt-3.5 sm:pb-2">
         <textarea
           ref={textareaRef}
-          rows={2}
+          rows={typeof window !== "undefined" && window.innerWidth < 640 ? 1 : 2}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
@@ -292,7 +292,7 @@ export const Composer: React.FC<ComposerProps> = ({
       </div>
 
       {/* Single-Row Clean Claude-Style Bottom Bar */}
-      <div className="flex items-center justify-between px-3 pb-3 pt-1 gap-2 relative min-w-0">
+      <div className="flex items-center justify-between px-2 pb-2 pt-0.5 sm:px-3 sm:pb-3 sm:pt-1 gap-1.5 sm:gap-2 relative min-w-0">
         {/* Left Cluster: Attach + Mode Toggles (Horizontally scrollable with wheel/touch/drag) */}
         <div
           ref={toolbarScrollRef}
@@ -417,7 +417,7 @@ export const Composer: React.FC<ComposerProps> = ({
               type="button"
               onClick={onToggleNewTopic}
               title={newTopic ? tr("New topic: the next question ignores this chat (click to cancel)") : tr("New topic: answer the next question on its own")}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full border transition-all duration-150 cursor-pointer shrink-0 text-xs font-medium"
+              className="inline-flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto sm:px-2.5 rounded-full border transition-all duration-150 cursor-pointer shrink-0 text-xs font-medium"
               style={{
                 backgroundColor: newTopic ? "var(--bg-card)" : "var(--bg-canvas)",
                 borderColor: newTopic ? "var(--border-strong)" : "var(--border-subtle)",
@@ -425,7 +425,7 @@ export const Composer: React.FC<ComposerProps> = ({
               }}
             >
               <MessageSquarePlus className="w-3.5 h-3.5" />
-              <span>{tr("New topic")}</span>
+              <span className="hidden sm:inline">{tr("New topic")}</span>
             </button>
           )}
 
