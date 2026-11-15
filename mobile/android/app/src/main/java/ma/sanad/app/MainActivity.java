@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
             prefs.put("cf_token", ct.getText().toString());
             prefs.put("openai_base", ob.getText().toString());
             prefs.put("pack_url", pu.getText().toString());
-            prefs.flag("rewrite", rw.isChecked());
+            prefs.setFlag("rewrite", rw.isChecked());
             if (!prefs.ready()) { err.setText("Fill in the OpenAI key, the Cloudflare account ID and the Cloudflare token."); return; }
             engine = pack == null ? null : new Engine(prefs, pack);
             route();

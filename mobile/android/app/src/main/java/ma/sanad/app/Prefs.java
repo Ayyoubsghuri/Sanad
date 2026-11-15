@@ -13,7 +13,7 @@ public final class Prefs {
     public String get(String k, String def) { return p.getString(k, def); }
     public void put(String k, String v) { p.edit().putString(k, v == null ? "" : v.trim()).apply(); }
     public boolean flag(String k, boolean def) { return p.getBoolean(k, def); }
-    public void flag(String k, boolean v) { p.edit().putBoolean(k, v).apply(); }
+    public void setFlag(String k, boolean v) { p.edit().putBoolean(k, v).apply(); }
 
     public String openaiKey() { return get("openai_key", ""); }
     public String openaiModel() { String m = get("openai_model", ""); return m.isEmpty() ? "gpt-4o-mini" : m; }
