@@ -1,7 +1,7 @@
 # Sanad for Android
 
 The phone version of Sanad, with the same interface as the desktop app. It works on its own: the law pack lives on the phone,
-the question is turned into a bge-m3 vector by Cloudflare Workers AI, and the answer is written by OpenAI (or any
+the question is turned into a bge-m3 vector by Cloudflare Workers AI, and the answer is written by OpenAI, Gemini or Claude (or any
 OpenAI-compatible API).
 
 ## First start
