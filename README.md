@@ -8,7 +8,16 @@
 
 Arabic · French · English · Darija
 
-[Download for Windows](#install-on-windows) · [Law pack on Hugging Face](https://huggingface.co/datasets/Xdnh00p/sanad-lawpack) · [Run from source](#run-from-source) · [How it works](#how-it-works)
+<a href="https://github.com/Ayyoubsghuri/Sanad/releases/latest"><img src="https://img.shields.io/badge/Download_for_Windows-.exe_%2F_.msi-1f6feb?style=for-the-badge&logo=windows&logoColor=white" height="44" alt="Download Sanad for Windows"></a>
+&nbsp;
+<a href="https://github.com/Ayyoubsghuri/Sanad/releases/latest"><img src="https://img.shields.io/badge/Download_for_Android-.apk-2ea043?style=for-the-badge&logo=android&logoColor=white" height="44" alt="Download Sanad for Android"></a>
+
+<a href="https://github.com/Ayyoubsghuri/Sanad/releases/latest"><img src="https://img.shields.io/github/v/release/Ayyoubsghuri/Sanad?label=latest%20version" alt="Latest version"></a>
+
+**Nothing else to install: no Python, no database server, no account.** Run the installer and Sanad sets itself up
+(the first start downloads the laws and the local models, about 7 GB).
+
+[Install on Windows](#install-on-windows) · [Law pack on Hugging Face](https://huggingface.co/datasets/Xdnh00p/sanad-lawpack) · [Run from source](#run-from-source) · [How it works](#how-it-works)
 
 <a href="docs/video/sanad-promo.mp4"><img src="docs/video/sanad-promo.gif" width="900" alt="Sanad promo video"></a>
 
@@ -111,7 +120,8 @@ model without this automatic check.
 
 ## Install on Windows
 
-Download one of the two installers from the [Releases page](https://github.com/Ayyoubsghuri/Sanad/releases). They install the same thing; pick either.
+**[⬇ Download the latest version](https://github.com/Ayyoubsghuri/Sanad/releases/latest)** and run one of the two installers. They install the same thing; pick either.
+**You do not need Python, a database server or administrator rights**: the installer brings everything Sanad needs.
 The same page has the Android app (`Sanad-<version>.apk`); see [`mobile/android/README.md`](mobile/android/README.md) and the
 release notes for what the phone version does not do yet.
 
@@ -119,6 +129,16 @@ release notes for what the phone version does not do yet.
 |---|---|
 | `SanadSetup-<version>.exe` | Setup wizard (English, French, Arabic) |
 | `Sanad-<version>.msi` | Windows Installer package, for example for `msiexec /i Sanad-<version>.msi` |
+
+> [!IMPORTANT]
+> **"Windows protected your PC"** — the installers are not code-signed yet, so Windows SmartScreen shows this blue
+> warning the first time. The app is not broken. To continue:
+>
+> 1. Click **More info** (under the text of the warning).
+> 2. Click **Run anyway**.
+>
+> To check that the file is the one published here, compare its SHA-256 with `SHA256SUMS.txt` on the release page:
+> `certutil -hashfile SanadSetup-<version>.exe SHA256`
 
 Both install for the current user only, without administrator rights, into `%LOCALAPPDATA%\Programs\Sanad`, and add a
 **Sanad** shortcut with the Sanad logo to the Start menu and the desktop.
