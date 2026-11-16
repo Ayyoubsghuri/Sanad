@@ -100,6 +100,31 @@ public final class Engine {
         return a;
     }
 
+    /** Keyword + meaning search over the law in force on asOf (no rewrite, no answer): the professional tools use it. */
+    List<Pack.Passage> search(String text, String asOf, int k) throws Exception {
+        java.util.BitSet allowed = pack.inForce(asOf);
+        List<int[]> lists = new ArrayList<>();
+        lists.add(pack.keyword(Norm.ftsQuery(new ArrayList<>(Norm.tokens(text)), pack.stop, 24), 50, allowed));
+        try {
+            List<String> one = new ArrayList<>();
+            one.add(text);
+            for (float[] v : embed(one)) lists.add(pack.meaning(v, 50, allowed));
+        } catch (Exception ignored) {
+            // keyword search alone
+        }
+        return pack.passages(Fuse.rrf(lists, 60, k));
+    }
+
+    /** A model call that must return one JSON object following `schema` (all providers, through chat()). */
+    JSONObject chatJson(String system, JSONObject payload, JSONObject schema, int maxTokens) throws Exception {
+        String sys = system + "\n\nReply with ONLY one JSON object that follows this JSON schema, with no text before or after it:\n" + schema.toString();
+        String out = chat(sys, payload.toString(), maxTokens);
+        if (out == null) throw new Exception("the model returned nothing");
+        int a = out.indexOf('{'), b = out.lastIndexOf('}');
+        if (a < 0 || b <= a) throw new Exception("the model did not return JSON");
+        return new JSONObject(out.substring(a, b + 1));
+    }
+
     public static String label(Pack.Passage p) {
         StringBuilder s = new StringBuilder();
         if (p.lawTitle != null && !p.lawTitle.isEmpty()) s.append(p.lawTitle);

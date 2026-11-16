@@ -51,6 +51,30 @@ The screenshots below were taken with the small synthetic test pack (texts marke
 <img src="docs/screenshots/calculators.png" width="620" alt="Verified legal calculators">
 </div>
 
+## Professional toolkit (Pro Lawyer mode)
+
+Switch the sidebar's audience button to **Pro Lawyer** and open **Professional Toolkit**:
+
+| Tool | What it does |
+|---|---|
+| **AI Courtroom** | Lawyer A builds the strongest case for your client, Lawyer B attacks it, and an independent judge weighs both side by side: the issues, which side each favours, risks, what to do, and an estimated chance of success (never 0 % or 100 %). |
+| **Case Analyzer** | The legal issues of a file, the law in force on the chosen date, what similar Court of Cassation rulings decided, which arguments won and which lost there, evidence and next steps. |
+| **Jurisprudence Finder** | Comparable Court of Cassation rulings with their outcome, principle, and the grounds that were accepted or rejected. |
+
+Plus 24 tools for each profession: lawyers (defence memorandum, consultation, strengths and weaknesses, opposing lawyer
+simulator, contract review, appeal grounds), judges and researchers (compare two decisions, applicable provisions,
+neutral summary, contradictions), notaries (property documents, sale agreement, inheritance checklist, missing
+documents, clauses vs legislation), company legal departments (employment contract, compliance, procurement, legal
+risks, internal policy) and judicial officers (notices, deadlines, execution checklist, service record).
+
+Every tool works the same way: the text is pseudonymised on the device and shown before it is sent; the law in force on
+the date and similar rulings are found locally; the model may cite only those sources (a citation it invents is
+removed and the point is marked "no source"); names are restored on the device; any result opens as a document to
+export. Without a model (Offline mode) the tools list the articles and rulings found.
+
+Rulings come from `rulings.db`, built by the publisher from Court of Cassation PDFs and installed in
+`%USERPROFILE%\.moroccan-legal-rag\rulings\rulings.db`. Without it the tools use the law alone and say so.
+
 ## Install on Windows
 
 Download one of the two installers from the [Releases page](https://github.com/Ayyoubsghuri/Sanad/releases). They install the same thing; pick either.

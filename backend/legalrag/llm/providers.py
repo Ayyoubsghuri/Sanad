@@ -23,6 +23,7 @@ class GenRequest:
     user_fields: list[str]  # user-derived strings that are leak-scanned
     case_id: str | None = None
     kind: str = "generate"
+    max_tokens: int = 3000
 
 
 class LLMProvider(Protocol):
@@ -43,7 +44,7 @@ class AnthropicProvider:
     def generate_json(self, req: GenRequest) -> dict[str, Any]:
         headers = {"content-type": "application/json", "anthropic-version": "2023-06-01", "x-api-key": self.key_getter() or ""}
         body = {
-            "model": self.model, "max_tokens": 3000, "temperature": 0, "system": req.system,
+            "model": self.model, "max_tokens": req.max_tokens, "temperature": 0, "system": req.system,
             "messages": [{"role": "user", "content": json.dumps(req.payload, ensure_ascii=False)}],
             "tools": [{"name": "submit", "description": "Submit the structured result.", "input_schema": req.schema}],
             "tool_choice": {"type": "tool", "name": "submit"},

@@ -26,6 +26,7 @@ final class Api {
         Engine engine();          // null while the law pack is not installed
         Pack pack();
         Prefs prefs();
+        String asset(String name) throws Exception;   // a file of the bundled web folder (assets/web)
     }
 
     private static final class Query {
@@ -36,8 +37,9 @@ final class Api {
 
     private final Host host;
     private final Map<String, Query> queries = new ConcurrentHashMap<>();
+    private final ProTools pro;
 
-    Api(Host host) { this.host = host; }
+    Api(Host host) { this.host = host; this.pro = new ProTools(host); }
 
     Reply handle(String method, String path, String body) {
         try {
@@ -57,6 +59,10 @@ final class Api {
                     case "progress": return ok(new JSONObject().put("steps", new JSONArray(q.steps)).put("done", q.done));
                     default: q.cancelled = true; return ok(new JSONObject().put("cancelled", true));
                 }
+            }
+            if (p.startsWith("/v1/pro/")) {
+                ProTools.Out o = pro.handle(method, p, body);
+                return new Reply(o.status, o.body);
             }
             return error(404, "Not available in the phone app.");
         } catch (Exception e) {

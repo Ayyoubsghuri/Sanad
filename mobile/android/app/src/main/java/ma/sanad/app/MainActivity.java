@@ -48,6 +48,14 @@ public class MainActivity extends Activity implements Api.Host {
     @Override public Engine engine() { return engine; }
     @Override public Pack pack() { return pack; }
     @Override public Prefs prefs() { return prefs; }
+    @Override public String asset(String name) throws Exception {
+        try (java.io.InputStream in = getAssets().open("web/" + name)) {
+            java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            for (int n; (n = in.read(buf)) > 0; ) b.write(buf, 0, n);
+            return b.toString("UTF-8");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle b) {

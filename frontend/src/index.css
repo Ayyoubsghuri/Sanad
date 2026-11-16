@@ -289,3 +289,11 @@ html, body { overflow-x: hidden; }
 @media (max-width: 640px) {
   .heading-scalable-xl { font-size: calc(1.6rem * var(--heading-scale)); line-height: 1.18; }
 }
+
+/* Professional toolkit: steps and tabs fade in */
+@keyframes pro-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.pro-fade-in { animation: pro-fade-in .28s ease both; }
+@media (prefers-reduced-motion: reduce) { .pro-fade-in { animation: none; } }

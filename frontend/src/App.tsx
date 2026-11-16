@@ -40,6 +40,7 @@ import { StatuteBrowserModal } from "./components/StatuteBrowserModal";
 import { AuditTraceModal } from "./components/AuditTraceModal";
 import { ReportErrorModal } from "./components/ReportErrorModal";
 import { ConsultationPrepModal } from "./components/ConsultationPrepModal";
+import { ProToolkitModal } from "./components/ProToolkitModal";
 import {
   INITIAL_PROJECT_DOCS,
   SEED_THREADS,
@@ -327,6 +328,7 @@ export function App() {
   const [auditTraceModalOpen, setAuditTraceModalOpen] = useState<boolean>(false);
   const [reportErrorModalOpen, setReportErrorModalOpen] = useState<boolean>(false);
   const [consultationPrepModalOpen, setConsultationPrepModalOpen] = useState<boolean>(false);
+  const [proToolkitOpen, setProToolkitOpen] = useState<boolean>(false);
   const [selectedSituationForPrep, setSelectedSituationForPrep] = useState<CitizenSituation | null>(null);
 
   const [auditLogs, setAuditLogs] = useState<AuditTraceRecord[]>(() => {
@@ -973,6 +975,7 @@ export function App() {
             onOpenAuditTrace={() => setAuditTraceModalOpen(true)}
             onOpenConcordance={() => setConcordanceModalOpen(true)}
             onOpenConsultation={() => setConsultationPrepModalOpen(true)}
+            onOpenProToolkit={() => setProToolkitOpen(true)}
           />
         </div>
       )}
@@ -1829,6 +1832,17 @@ export function App() {
         onClose={() => setConsultationPrepModalOpen(false)}
         situation={selectedSituationForPrep}
         asOfDate={settings.asOfDate || new Date().toISOString().slice(0, 10)}
+      />
+
+      {/* 9. Professional toolkit (Pro Lawyer mode): AI courtroom, case analyser, jurisprudence, tools per profession */}
+      <ProToolkitModal
+        isOpen={proToolkitOpen}
+        onClose={() => setProToolkitOpen(false)}
+        asOfDate={settings.asOfDate || new Date().toISOString().slice(0, 10)}
+        onOpenArtifact={(a) => {
+          setProToolkitOpen(false);
+          handleOpenArtifact(a);
+        }}
       />
     </div>
   );

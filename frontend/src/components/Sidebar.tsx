@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { tr } from "../i18n";
 import { useI18n } from "../i18n";
-import {
+import { Gavel,
   BookOpen,
   Calendar,
   Calculator,
@@ -55,6 +55,7 @@ interface SidebarProps {
   onOpenAuditTrace?: () => void;
   onOpenConcordance?: () => void;
   onOpenConsultation?: () => void;
+  onOpenProToolkit?: () => void;
   onOpenBoUpdate?: () => void;
   onOpenApiKeys?: () => void;
 }
@@ -87,6 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAuditTrace,
   onOpenConcordance,
   onOpenConsultation,
+  onOpenProToolkit,
   onOpenBoUpdate,
   onOpenApiKeys,
 }) => {
@@ -245,6 +247,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
+
+        {/* Professional toolkit: shown in Pro Lawyer mode */}
+        {audienceMode === "professional" && onOpenProToolkit && (
+          <button
+            type="button"
+            onClick={onOpenProToolkit}
+            className="mt-2 w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-start cursor-pointer transition-all hover:opacity-90 pro-fade-in"
+            style={{ backgroundColor: "var(--accent-primary)", color: "var(--bg-surface)" }}
+          >
+            <Gavel className="w-4 h-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold truncate">{tr("Professional Toolkit")}</span>
+              <span className="block text-[10px] opacity-80 truncate">{tr("AI Courtroom · Case Analyzer · Jurisprudence")}</span>
+            </span>
+          </button>
+        )}
 
         {/* Bulletin Officiel auto-update + API keys */}
         {(onOpenBoUpdate || onOpenApiKeys) && (
