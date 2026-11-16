@@ -2,99 +2,12 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
-### New in 0.3.10
+### What's new
 
 - **Web research removed.** The compass button next to Thinking is gone: the official websites block automated
-  searches, so it returned nothing useful. Answers rely on the law pack and the court rulings, as before; nothing is sent
-  to a search engine.
+  searches, so it returned nothing useful. Nothing is sent to a search engine.
 
-### New in 0.3.9
-
-- **The end of an answer is now a plan built from everything Sanad found.** When you describe your own situation,
-  "What you can do now" brings together the law, the time limits, the similar Court of Cassation rulings and what is still
-  unknown:
-  - **What the Court of Cassation decided in similar cases:** one or two plain sentences, each naming its ruling.
-  - **The steps, in order:** the most urgent first (a running time limit, keeping proof), each citing its articles and,
-    where it helps, a ruling.
-  - **What could change the answer:** the facts you did not give that matter (type of contract, reason given…).
-- **Time limits:** before writing the plan, Sanad also searches the same laws for their time limits and limitation
-  periods, so the most urgent step can give the deadline with its article.
-- **Better rulings:** rulings that apply the same articles as the answer come first, and each card says which article it
-  applies. In Citizen mode the rulings open from a card («قرارات محكمة النقض») instead of filling the answer; Pro Lawyer
-  mode keeps them in the answer.
-- Every point is checked in code: a sentence or step may only name the articles and rulings it was given, and a number
-  that none of them contains removes it. Empty "where" or "time limit" lines are no longer shown.
-
-### New in 0.3.8
-
-- **Fixed: the window showed `{"detail":"Not Found"}`** when another Sanad backend was already running on port 8765
-  (for example `legalrag` started by hand for the web version). The app now uses its own backend on a free port in that
-  case, and its page always talks to its own backend.
-- When the practical steps cannot be written, the answer now says so in one line.
-
-### New in 0.3.7
-
-- **Web research (the compass button next to Thinking) now works, and is off by default.** When you turn it on, Sanad
-  also searches official Moroccan websites (SGG, Adala, CSPJ, Parliament, Constitutional Court…) and lists the pages it
-  finds under the answer, apart from the law: they are links to open, not used to write the answer. Only a short query
-  made from the masked question is sent (names removed; nothing is sent if an ID card or phone number is still in it),
-  and each search appears in the outbound log. Not available in Offline mode.
-
-### New in 0.3.6
-
-- **API keys in Offline mode:** online providers (OpenAI, Anthropic, others) are shown greyed out as "Disabled in Offline
-  mode" and can no longer be tested, edited or selected; only a local model can be added and chosen. The button on a
-  local model now reads "Use in Offline mode" / "Used in Offline mode".
-
-### New in 0.3.5
-
-- **One law pack on disk:** updating the law pack no longer keeps the old one as `previous.db`. The copy left by earlier
-  versions is deleted at the next start, which frees about 2 GB.
-
-### New in 0.3.4
-
-- The titles of "What you can do now" and "Similar Court of Cassation rulings" are now on their own line.
-
-### New in 0.3.3
-
-- **What you can do now:** when you describe your own situation, the answer now ends with practical steps in the order to
-  take them: what to do, where, which papers to prepare, within which time limit, and when to see a professional. On
-  Windows every step is checked: it can only cite the articles of the answer, and a step giving a time limit or a number
-  that no cited article contains is removed. A general question about the law gets no such section. (Windows and Android.)
-
-### New in 0.3.2
-
-- **Similar court rulings under every answer:** once the court rulings are downloaded (Professional Toolkit →
-  Download court rulings), each answer ends with the closest Court of Cassation rulings: number, date, chamber, outcome,
-  the principle and a link to the PDF, plus how the most similar rulings were decided. They are shown apart from the law,
-  as an aid to interpretation, and searched on this computer only (nothing is sent).
-
-### New in 0.3.1
-
-- **Court rulings download:** the Professional Toolkit now offers **Download court rulings** (about 26,000 Court of
-  Cassation decisions, 2008–2025). The file is checked (SHA-256) before it is installed; **Update** appears when a newer
-  set is published. Stopped downloads continue where they left off.
-- **Offline mode with a local model:** in API keys, add a **Local model** (Ollama or LM Studio, found automatically) and
-  pick it for Offline mode: answers and the toolkit then run entirely on this computer.
-- **Fixed:** in Hybrid mode the toolkit, the guides and the contract check were refused by the privacy gateway.
-- Rulings now show every outcome (cassation, rejected, inadmissible, lapsed, withdrawn, reversed, affirmed, corrected).
-
-### Professional Toolkit (Pro Lawyer mode)
-
-Switch the sidebar's audience button to **Pro Lawyer**, then open **Professional Toolkit**:
-
-- **AI Courtroom**: Lawyer A builds your client's case, Lawyer B attacks it, and an independent judge weighs both: the
-  issues and which side each favours, risks, what to do, and an estimated chance of success.
-- **Case Analyzer**: the legal issues of a file, the law in force on the date, what similar rulings decided and which
-  arguments won or lost there.
-- **Jurisprudence Finder**: comparable Court of Cassation rulings with their outcome and accepted or rejected grounds.
-- 24 tools for lawyers, judges and researchers, notaries, company legal departments and judicial officers (defence
-  memorandum, contract review, appeal grounds, comparing decisions, inheritance checklist, compliance, notices,
-  execution checklist and more).
-
-Every point cites its articles and rulings; citations the model invents are removed. On Windows the text is masked
-before it is sent and shown to you first. Court rulings appear once the rulings database is installed; until then the
-tools rely on the law alone.
+Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 
 ### Downloads
 
