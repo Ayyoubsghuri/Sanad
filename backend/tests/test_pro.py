@@ -154,3 +154,95 @@ def test_phone_copy_of_the_toolkit_is_current():
 
     f = Path(__file__).resolve().parents[2] / "mobile/android/web-extra/pro_toolkit.json"
     assert f.read_text(encoding="utf-8") == export.text()
+
+
+def test_gateway_allows_the_toolkit_in_hybrid_and_local_models_offline(ctx):
+    """Every call kind the app makes must pass the Hybrid mode check, and a model on this computer works in Offline mode."""
+    from legalrag.privacy.gateway import MODE_ALLOWS, is_local_url
+
+    ctx.db.set_settings({"mode": "hybrid"})
+    for kind in ("guide", "contract_check", "pro_plan", "pro_lawyer_a", "pro_judge", "pro_write", "generate"):
+        assert ctx.gateway.allowed(kind), kind
+    ctx.db.set_settings({"mode": "offline"})
+    assert not ctx.gateway.allowed("pro_plan") and not MODE_ALLOWS["offline"]
+    assert is_local_url("http://127.0.0.1:11434/v1") and is_local_url("http://localhost:1234/v1") and not is_local_url("https://api.openai.com/v1")
+
+
+def test_offline_mode_uses_only_a_local_model(client, ctx):
+    ctx.llm_override = None
+    r = client.put("/v1/llm-providers/cloud", headers=H, json={"kind": "openai", "label": "OpenAI", "model": "gpt-4o", "api_key": "sk-test-key-123"})
+    assert r.status_code == 200
+    assert client.put("/v1/llm-providers/mine", headers=H, json={"kind": "local", "label": "Ollama", "model": "qwen2.5:7b",
+                                                                     "base_url": "https://example.com/v1"}).status_code == 422
+    assert client.put("/v1/llm-providers/mine", headers=H, json={"kind": "local", "label": "Ollama", "model": "qwen2.5:7b"}).status_code == 200
+    assert client.post("/v1/llm-providers/offline", headers=H, json={"id": "cloud"}).status_code == 422
+    ctx.db.set_settings({"mode": "offline"})
+    assert ctx.llm() is None                       # the active provider is the cloud one: Offline mode gives no model
+    v = client.post("/v1/llm-providers/offline", headers=H, json={"id": "mine"}).json()
+    assert v["offline"] == "mine"
+    prov = ctx.llm()
+    assert prov is not None and prov.name == "local" and prov.base.startswith("http://127.0.0.1:11434")
+    ctx.db.set_settings({"mode": "hybrid"})
+    assert ctx.llm().name == "openai"             # Hybrid keeps the cloud model
+    assert client.get("/v1/llm-providers/local-models?base_url=https://api.openai.com/v1", headers=H).status_code == 422
+    got = client.get("/v1/llm-providers/local-models?base_url=http://127.0.0.1:9/v1", headers=H).json()
+    assert got["ok"] is False and got["models"] == []
+
+
+def _fake_model_server(seen):
+    """An OpenAI-compatible server (cloud or Ollama) answering every structured call of the toolkit."""
+    import httpx
+
+    def handler(request: httpx.Request):
+        body = json.loads(request.content)
+        seen.append((request.url.host, body["messages"][0]["content"][:40]))
+        props = body["response_format"]["json_schema"]["schema"]["properties"]
+        if "queries" in props:
+            out = {"issues": ["طرد"], "queries": ["التعويض عن الطرد التعسفي"]}
+        elif "chance_of_success" in props:
+            out = {"issues": [], "verdict": "v", "chance_of_success": 60, "confidence": "low", "chance_reasoning": "r", "risks": [], "recommendations": []}
+        elif "rebuttals" in props:
+            out = {"position": "b", "rebuttals": [], "counter_arguments": []}
+        else:
+            out = {"position": "a", "arguments": [{"title": "t", "argument": "x", "sources": ["S1"], "strength": "strong"}]}
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(out, ensure_ascii=False)}}]})
+
+    return httpx.MockTransport(handler)
+
+
+def _run_courtroom(client):
+    p = client.post("/v1/pro/jobs", headers=H, json={"tool": "courtroom", "fields": {"facts": FACTS, "side": "claimant"}}).json()
+    client.post(f"/v1/pro/jobs/{p['job_id']}/run", headers=H, json={})
+    return p, wait(client, p["job_id"])
+
+
+def test_toolkit_through_the_real_gateway_hybrid_cloud_and_offline_local(tmp_path, pack_path, keys):
+    from fastapi.testclient import TestClient
+
+    from legalrag.config import Settings
+    from legalrag.main import create_app
+    from legalrag.state import build_context
+
+    seen: list = []
+    s = Settings(data_dir=tmp_path / "d", lawpack_path=pack_path, lawpack_public_key_hex=keys[1], api_token="test-token", ner_enabled=False, query_rewrite=False)
+    c = build_context(s, transport=_fake_model_server(seen))
+    try:
+        cl = TestClient(create_app(s, c))
+        cl.put("/v1/llm-providers/cloud", headers=H, json={"kind": "openai_compat", "label": "Cloud", "model": "m", "base_url": "https://api.example.com/v1"})
+        cl.put("/v1/llm-providers/mine", headers=H, json={"kind": "local", "label": "Ollama", "model": "qwen2.5:7b"})
+        cl.post("/v1/llm-providers/active", headers=H, json={"id": "cloud"})
+        cl.post("/v1/llm-providers/offline", headers=H, json={"id": "mine"})
+
+        c.db.set_settings({"mode": "hybrid"})
+        p, j = _run_courtroom(cl)
+        assert j["status"] == "done", j.get("error")        # the pro_* calls pass the Hybrid mode check
+        assert {h for h, _ in seen} == {"api.example.com"} and len(seen) == 4
+
+        seen.clear()
+        c.db.set_settings({"mode": "offline"})
+        p, j = _run_courtroom(cl)
+        assert p["planned_calls"] == 4 and j["status"] == "done", j.get("error")
+        assert {h for h, _ in seen} == {"127.0.0.1"}        # Offline: only the model on this computer
+        assert j["result"]["output"]["judge"]["chance_of_success"] == 60
+    finally:
+        c.close()

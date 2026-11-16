@@ -21,11 +21,20 @@ from . import names as N
 from .patterns import DIRECT_IDENTIFIER_KINDS, detect_patterns
 
 # which call kinds each operating mode may make
+_TEXT_KINDS = {"understand", "generate", "claim_check", "error_report", "rewrite", "summary", "research", "plan",
+               "guide", "contract_check", "line", "open_procedure"}
 MODE_ALLOWS = {
     "offline": set(),
-    "hybrid": {"understand", "generate", "claim_check", "error_report", "rewrite", "summary", "research", "plan"},
-    "cloud_assisted": {"understand", "generate", "claim_check", "error_report", "rewrite", "summary", "research", "plan", "embed", "rerank"},
+    "hybrid": set(_TEXT_KINDS),
+    "cloud_assisted": _TEXT_KINDS | {"embed", "rerank"},
 }
+PREFIX_ALLOWS = {"hybrid": ("pro_",), "cloud_assisted": ("pro_",)}   # the professional tools: pro_plan, pro_lawyer_a, ...
+LOOPBACK = {"127.0.0.1", "localhost", "::1", "[::1]"}
+
+
+def is_local_url(url: str) -> bool:
+    """A model server on this computer (Ollama, LM Studio, llama.cpp): nothing leaves the device."""
+    return (urlparse(url).hostname or "").lower() in LOOPBACK
 
 
 class OutboundBlocked(Exception):
@@ -85,7 +94,8 @@ class Gateway:
         return self.mode_getter()
 
     def allowed(self, kind: str) -> bool:
-        return kind in MODE_ALLOWS.get(self.mode, set())
+        m = self.mode
+        return kind in MODE_ALLOWS.get(m, set()) or kind.startswith(PREFIX_ALLOWS.get(m, ()))
 
     def post_json(
         self,
@@ -100,9 +110,10 @@ class Gateway:
         case_id: str | None,
         timeout: float | None = None,
     ) -> dict[str, Any]:
-        if not self.allowed(kind):
+        local = is_local_url(url)
+        if not local and not self.allowed(kind):   # a model on this computer is allowed in every mode, Offline included
             raise ModeForbids(self.mode, kind)
-        leaked = self.guard.scan(user_fields, case_id)
+        leaked = [] if local else self.guard.scan(user_fields, case_id)
         if leaked:
             self.db.log_outbound(kind=kind, provider=provider, model=model, host=urlparse(url).netloc, case_id=case_id, status="blocked", error=",".join(leaked))
             raise OutboundBlocked(leaked)
