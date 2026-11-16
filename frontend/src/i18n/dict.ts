@@ -214,8 +214,6 @@ export const DICT: Record<string, [string, string, string]> = {
   "Remove {0}": ["Remove {0}","Retirer {0}","إزالة {0}"],
   "Extended thinking active ({0} tokens) - Click to configure": ["Extended thinking active ({0} tokens) - Click to configure","Réflexion approfondie active ({0} jetons) - Cliquez pour configurer","التفكير المعمّق مفعّل ({0} رمزاً) - انقر للضبط"],
   "Enable extended thinking": ["Enable extended thinking","Activer la réflexion approfondie","تفعيل التفكير المعمّق"],
-  "Web research active (Click to disable)": ["Web research active (Click to disable)","Recherche web active (cliquez pour désactiver)","البحث على الويب مفعّل (انقر لتعطيله)"],
-  "Enable web research": ["Enable web research","Activer la recherche web","تفعيل البحث على الويب"],
   "Pseudonymiser active: PII will be masked (Click to inspect rules)": ["Pseudonymiser active: PII will be masked (Click to inspect rules)","Pseudonymisation active : les données personnelles seront masquées (cliquez pour voir les règles)","إخفاء الهوية مفعّل: ستُخفى البيانات الشخصية (انقر لعرض القواعد)"],
   "Pseudonymiser inactive (Click to configure)": ["Pseudonymiser inactive (Click to configure)","Pseudonymisation inactive (cliquez pour configurer)","إخفاء الهوية غير مفعّل (انقر للضبط)"],
   "tokens": ["tokens","jetons","رموز"],
@@ -872,7 +870,4 @@ export const DICT: Record<string, [string, string, string]> = {
   "Désactivé en mode Hors-Ligne": ["Disabled in Offline mode", "Désactivé en mode Hors-Ligne", "معطّل في الوضع دون اتصال"],
   "Utilisé en mode Hors-Ligne": ["Used in Offline mode", "Utilisé en mode Hors-Ligne", "مستعمل في الوضع دون اتصال"],
   "Utiliser en mode Hors-Ligne": ["Use in Offline mode", "Utiliser en mode Hors-Ligne", "استعمله في الوضع دون اتصال"],
-  "Web research is not available in Offline mode": ["Web research is not available in Offline mode", "La recherche web n'est pas disponible en mode Hors-Ligne", "البحث في الويب غير متاح في الوضع دون اتصال"],
-  "Web research on: links from official Moroccan sites are added under the answer (click to turn off)": ["Web research on: links from official Moroccan sites are added under the answer (click to turn off)", "Recherche web activée : des liens de sites officiels marocains sont ajoutés sous la réponse (cliquer pour désactiver)", "البحث في الويب مفعّل: تضاف تحت الجواب روابط من مواقع مغربية رسمية (انقر للإيقاف)"],
-  "Web research off: click to also search official Moroccan sites (only a short masked query is sent)": ["Web research off: click to also search official Moroccan sites (only a short masked query is sent)", "Recherche web désactivée : cliquer pour chercher aussi sur les sites officiels marocains (seule une courte requête masquée est envoyée)", "البحث في الويب متوقف: انقر للبحث أيضا في المواقع المغربية الرسمية (تُرسل عبارة بحث قصيرة بعد إخفاء البيانات فقط)"],
 };

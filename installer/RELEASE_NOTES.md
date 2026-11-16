@@ -2,6 +2,12 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.10
+
+- **Web research removed.** The compass button next to Thinking is gone: the official websites block automated
+  searches, so it returned nothing useful. Answers rely on the law pack and the court rulings, as before; nothing is sent
+  to a search engine.
+
 ### New in 0.3.9
 
 - **The end of an answer is now a plan built from everything Sanad found.** When you describe your own situation,

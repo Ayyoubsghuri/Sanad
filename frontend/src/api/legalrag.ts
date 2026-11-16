@@ -219,15 +219,7 @@ export interface NextSteps {
   professional?: string;
 }
 
-export interface WebResults {
-  query?: string;
-  results?: { title: string; url: string; site: string; snippet: string }[];
-  skipped?: string;
-  error?: string;
-}
-
 export interface QueryAnswer {
-  web?: WebResults | null;
   rulings?: AnswerRulings | null;
   next_steps?: NextSteps | null;
   next_steps_error?: string | null;
@@ -280,7 +272,7 @@ export const prepareQuery = (
 
 export const runQuery = (
   id: string,
-  body: { approved?: boolean; edited_text?: string; review_confirmed?: boolean; depth?: "normal" | "deep" | "max"; web?: boolean } = {},
+  body: { approved?: boolean; edited_text?: string; review_confirmed?: boolean; depth?: "normal" | "deep" | "max" } = {},
   signal?: AbortSignal
 ) => call<QueryAnswer>(`/v1/queries/${id}/run`, { method: "POST", body: JSON.stringify(body) }, signal);
 

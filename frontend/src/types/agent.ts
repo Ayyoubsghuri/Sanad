@@ -152,7 +152,6 @@ export interface WorkspaceSettings {
   showRecentSidebar: boolean;
   thinkingMode: boolean;
   thinkingBudget?: number; // token budget for reasoning (1024 - 32768)
-  enableWebSearch: boolean;
   systemInstruction: string;
   autoPseudonymise: boolean;
   alwaysPreviewBeforeSend: boolean;

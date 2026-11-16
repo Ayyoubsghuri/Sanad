@@ -8,7 +8,6 @@ import {
   MessageSquarePlus,
   Check,
   ChevronDown,
-  Compass,
   FileText,
   Lock,
   Plus,
@@ -33,9 +32,6 @@ interface ComposerProps {
   onToggleThinking: () => void;
   thinkingBudget?: number;
   onChangeThinkingBudget?: (budget: number) => void;
-  enableWebSearch: boolean;
-  onToggleWebSearch: () => void;
-  webSearchDisabled?: boolean;
   autoPseudonymise?: boolean;
   onOpenPseudonymiser?: () => void;
   onOpenVault?: () => void;
@@ -73,9 +69,6 @@ export const Composer: React.FC<ComposerProps> = ({
   onToggleThinking,
   thinkingBudget = 8000,
   onChangeThinkingBudget,
-  enableWebSearch,
-  onToggleWebSearch,
-  webSearchDisabled = false,
   autoPseudonymise = true,
   onOpenPseudonymiser,
   onOpenVault,
@@ -383,43 +376,6 @@ export const Composer: React.FC<ComposerProps> = ({
                 isThinkingMenuOpen ? "rotate-180" : ""
               } ${thinkingMode ? "opacity-80" : "opacity-50"}`}
             />
-          </button>
-
-          {/* Clean Circular Web Research Toggle */}
-          <button
-            type="button"
-            onClick={onToggleWebSearch}
-            disabled={webSearchDisabled}
-            aria-pressed={enableWebSearch}
-            title={
-              webSearchDisabled
-                ? tr("Web research is not available in Offline mode")
-                : enableWebSearch
-                ? tr("Web research on: links from official Moroccan sites are added under the answer (click to turn off)")
-                : tr("Web research off: click to also search official Moroccan sites (only a short masked query is sent)")
-            }
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-150 cursor-pointer shrink-0 relative disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: enableWebSearch
-                ? "var(--bg-card)"
-                : "var(--bg-canvas)",
-              borderColor: enableWebSearch
-                ? "var(--border-strong)"
-                : "var(--border-subtle)",
-              color: enableWebSearch
-                ? "var(--accent-warm)"
-                : "var(--text-muted)",
-            }}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            {enableWebSearch && (
-              <span
-                className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-                style={{
-                  backgroundColor: "var(--accent-warm)",
-                }}
-              />
-            )}
           </button>
 
           {/* New topic: the next question is answered on its own, without the earlier turns of this chat */}

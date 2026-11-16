@@ -96,7 +96,6 @@ const DEFAULT_SETTINGS: WorkspaceSettings = {
   showRecentSidebar: true,
   thinkingMode: true,
   thinkingBudget: 8000,
-  enableWebSearch: false,
   systemInstruction: "",
   autoPseudonymise: true,
   alwaysPreviewBeforeSend: false,
@@ -199,7 +198,7 @@ export function App() {
         }
         if (parsed.theme === "balloura") parsed.theme = ThemeId.Ember; // renamed theme
         if (parsed.operatingMode === "cloud-assisted") parsed.operatingMode = "hybrid"; // cloud-assisted mode is disabled
-        if (!parsed.webResearchV2) { parsed.enableWebSearch = false; parsed.webResearchV2 = true; } // the old button did nothing and was on: web research now starts off
+        delete parsed.enableWebSearch; delete parsed.webResearchV2; // web research was removed
         if (parsed.asOfDate === "2026-10-24") parsed.asOfDate = ""; // old built-in demo date: it hid every text published after it
         return { ...DEFAULT_SETTINGS, ...parsed };
       }
@@ -504,7 +503,6 @@ export function App() {
     setSettings((prev) => ({
       ...DEFAULT_SETTINGS,
       thinkingMode: prev.thinkingMode,
-      enableWebSearch: prev.enableWebSearch,
       systemInstruction: prev.systemInstruction,
     }));
   };
@@ -744,7 +742,6 @@ export function App() {
           approved: true,
           review_confirmed: settings.alwaysPreviewBeforeSend,
           // Deep (16K) and Maximum (32K) thinking budgets also switch on the deeper search (judge the passages, search again)
-          web: !!settings.enableWebSearch && settings.operatingMode !== "offline",
           depth: !settings.thinkingMode ? "normal" : (settings.thinkingBudget || 8000) >= 32000 ? "max" : (settings.thinkingBudget || 8000) >= 16000 ? "deep" : "normal",
         },
         controller.signal
@@ -1097,11 +1094,6 @@ export function App() {
                 thinkingBudget={settings.thinkingBudget}
                 onChangeThinkingBudget={(budget) =>
                   updateSettings({ thinkingBudget: budget })
-                }
-                enableWebSearch={settings.enableWebSearch && settings.operatingMode !== "offline"}
-                webSearchDisabled={settings.operatingMode === "offline"}
-                onToggleWebSearch={() =>
-                  updateSettings({ enableWebSearch: !settings.enableWebSearch })
                 }
                 autoPseudonymise={settings.autoPseudonymise}
                 onOpenPseudonymiser={() => setRightPanel("pseudonymiser")}
@@ -1598,13 +1590,6 @@ export function App() {
                   thinkingBudget={settings.thinkingBudget}
                   onChangeThinkingBudget={(budget) =>
                     updateSettings({ thinkingBudget: budget })
-                  }
-                  enableWebSearch={settings.enableWebSearch && settings.operatingMode !== "offline"}
-                webSearchDisabled={settings.operatingMode === "offline"}
-                  onToggleWebSearch={() =>
-                    updateSettings({
-                      enableWebSearch: !settings.enableWebSearch,
-                    })
                   }
                   autoPseudonymise={settings.autoPseudonymise}
                   onOpenPseudonymiser={() => setRightPanel("pseudonymiser")}

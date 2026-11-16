@@ -82,7 +82,6 @@ class RunRequest(BaseModel):
     extra_sensitive_terms: list[str] = []
     review_confirmed: bool = Field(False, description="user reviewed a low-confidence preview and accepts sending")
     depth: Literal["normal", "deep", "max"] = Field("normal", description="deep / max: a bounded deeper-search loop (judge the passages, search again) before the answer")
-    web: bool = Field(False, description="also search official Moroccan legal websites (Hybrid mode only); links shown apart from the answer")
 
 
 class SettingsUpdate(BaseModel):

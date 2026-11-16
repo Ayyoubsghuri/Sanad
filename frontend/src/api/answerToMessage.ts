@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
 import { CHAMBER, OUTCOME, T, answerLang, failureText, noteText, type ALang } from "./answerText";
 import { ArtifactKind, type ArtifactItem, type GroundingSource, type PdfSnippet } from "../types/agent";
-import type { AnswerRuling, AnswerRulings, NextSteps, QueryAnswer, RulingRef, SourceEntry, WebResults } from "./legalrag";
+import type { AnswerRuling, AnswerRulings, NextSteps, QueryAnswer, RulingRef, SourceEntry } from "./legalrag";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "Verified answer",
@@ -50,16 +50,6 @@ export function rulingsArtifact(r: AnswerRulings | null | undefined, L: ALang): 
 
 const rulingRefs = (rs: RulingRef[] | undefined, L: ALang) =>
   (rs ?? []).map((x) => `${T(L, "ruling")}${x.number ? " " + ltr(x.number) : ""}${x.date ? " · " + ltr(x.date) : ""}`).join("؛ ");
-
-/** Web research: links from official sites, after the law and the rulings, never numbered like the sources. */
-export function webBlock(w: WebResults | null | undefined, L: ALang): string {
-  if (!w || w.skipped === "offline") return "";
-  if (w.skipped === "identifier") return `_${T(L, "webIdentifier")}_`;
-  if (w.error) return `_${T(L, "webError")}_`;
-  if (!w.results?.length) return `_${T(L, "webNone")}_`;
-  const lines = w.results.map((r) => `- [${r.title.replace(/[[\]]/g, "")}](${r.url}) · \u2066${r.site}\u2069${r.snippet ? `\n  > ${r.snippet}` : ""}`);
-  return `**${T(L, "web")}**\n\n_${T(L, "webNote")}._\n\n${lines.join("\n")}`;
-}
 
 /** "What you can do now": the last part of an answer about a personal situation, built from the law, the time limits,
  *  the similar rulings and what is still unknown. [n] are the numbers of the answer's sources. */
@@ -194,8 +184,6 @@ export function answerToMessage(a: QueryAnswer, opts: { citizen?: boolean } = {}
   }
   const rul = rulingsBlock(a.rulings, L, !!opts.citizen);
   if (rul) parts.push(rul);
-  const web = webBlock(a.web, L);
-  if (web) parts.push(web);
   const todo = nextStepsBlock(a.next_steps, L, idx);
   if (todo) parts.push(todo);
   else if (a.next_steps_error) parts.push(`_${T(L, "nextFailed")}_`);
