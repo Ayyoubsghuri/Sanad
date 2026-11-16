@@ -2,6 +2,13 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.8
+
+- **Fixed: the window showed `{"detail":"Not Found"}`** when another Sanad backend was already running on port 8765
+  (for example `legalrag` started by hand for the web version). The app now uses its own backend on a free port in that
+  case, and its page always talks to its own backend.
+- When the practical steps cannot be written, the answer now says so in one line.
+
 ### New in 0.3.7
 
 - **Web research (the compass button next to Thinking) now works, and is off by default.** When you turn it on, Sanad

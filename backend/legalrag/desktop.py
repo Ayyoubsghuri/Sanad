@@ -55,6 +55,23 @@ def _healthy(url: str) -> bool:
         return False
 
 
+def _serves_page(url: str) -> bool:
+    """A backend started by hand for development (`legalrag`) answers /health but has no app page: it cannot be reused."""
+    try:
+        with urllib.request.urlopen(url + "/", timeout=3) as r:  # noqa: S310 - loopback only
+            return r.status == 200 and "text/html" in (r.headers.get("content-type") or "")
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _free_port() -> int:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sk:
+        sk.bind(("127.0.0.1", 0))
+        return sk.getsockname()[1]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="legalrag.desktop")
     ap.add_argument("--app-dir", help="the installed application folder (holds backend/pack_release.json and frontend/)")
@@ -86,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
 
     url = f"http://127.0.0.1:{s.port}"
     frameless = not a.native_frame
-    state: dict = {"server": None, "error": None}
+    state: dict = {"server": None, "error": None, "settings": s}
 
     def serve() -> None:
         try:
@@ -95,7 +112,8 @@ def main(argv: list[str] | None = None) -> int:
             from .main import create_app
             from .state import build_context
 
-            server = uvicorn.Server(uvicorn.Config(create_app(s, build_context(s)), host=s.host, port=s.port, log_level="info"))
+            cfg = state["settings"]
+            server = uvicorn.Server(uvicorn.Config(create_app(cfg, build_context(cfg)), host=cfg.host, port=cfg.port, log_level="info"))
             state["server"] = server
             server.run()
         except BaseException as e:  # noqa: BLE001 - shown in the window, the process must not die silently
@@ -105,8 +123,16 @@ def main(argv: list[str] | None = None) -> int:
             traceback.print_exc()
 
     def boot(window) -> None:
+        nonlocal url
         thread = None
-        if not _healthy(url):  # (a backend that is already running, e.g. started by hand, is simply reused)
+        if _healthy(url) and not _serves_page(url):
+            # another backend holds the port without the app page (e.g. `legalrag` started by hand for the web version):
+            # leave it alone and run Sanad's own on a free port, instead of showing {"detail": "Not Found"}
+            port = _free_port()
+            state["settings"] = s.model_copy(update={"port": port})
+            url = f"http://127.0.0.1:{port}"
+            print(f"port {s.port} is used by a backend without the app page: Sanad uses port {port}")
+        if not _healthy(url):  # (a backend that already serves the app, e.g. a second start, is simply reused)
             thread = threading.Thread(target=serve, daemon=True)
             thread.start()
         for _ in range(600):

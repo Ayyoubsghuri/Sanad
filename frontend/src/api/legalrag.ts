@@ -6,7 +6,19 @@
 
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 
-export const API_URL = (env.VITE_LEGALRAG_URL || "http://127.0.0.1:8765").replace(/\/$/, "");
+// The built app is served by its own backend (Windows desktop window): it talks to that same address, whatever the port,
+// so a second backend started by hand on 8765 is never used by mistake. The dev server (npm run dev) and Android keep 8765.
+function defaultApi(): string {
+  try {
+    const l = window.location;
+    if (!env.DEV && l.protocol === "http:" && (l.hostname === "127.0.0.1" || l.hostname === "localhost")) return l.origin;
+  } catch {
+    /* no window (tests) */
+  }
+  return "http://127.0.0.1:8765";
+}
+
+export const API_URL = (env.VITE_LEGALRAG_URL || defaultApi()).replace(/\/$/, "");
 
 export function getToken(): string {
   try {
