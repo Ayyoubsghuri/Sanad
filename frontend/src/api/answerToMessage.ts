@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
 import { CHAMBER, OUTCOME, T, answerLang, failureText, noteText, type ALang } from "./answerText";
 import { ArtifactKind, type ArtifactItem, type GroundingSource, type PdfSnippet } from "../types/agent";
-import type { AnswerRulings, NextSteps, QueryAnswer, SourceEntry } from "./legalrag";
+import type { AnswerRulings, NextSteps, QueryAnswer, SourceEntry, WebResults } from "./legalrag";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "Verified answer",
@@ -31,6 +31,16 @@ export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang): str
     return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
   });
   return `**${T(L, "rulings")}**\n\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
+}
+
+/** Web research: links from official sites, after the law and the rulings, never numbered like the sources. */
+export function webBlock(w: WebResults | null | undefined, L: ALang): string {
+  if (!w || w.skipped === "offline") return "";
+  if (w.skipped === "identifier") return `_${T(L, "webIdentifier")}_`;
+  if (w.error) return `_${T(L, "webError")}_`;
+  if (!w.results?.length) return `_${T(L, "webNone")}_`;
+  const lines = w.results.map((r) => `- [${r.title.replace(/[[\]]/g, "")}](${r.url}) · \u2066${r.site}\u2069${r.snippet ? `\n  > ${r.snippet}` : ""}`);
+  return `**${T(L, "web")}**\n\n_${T(L, "webNote")}._\n\n${lines.join("\n")}`;
 }
 
 /** "What you can do now": the last part of an answer about a personal situation. [n] are the numbers of the answer's sources. */
@@ -158,6 +168,8 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
   }
   const rul = rulingsBlock(a.rulings, L);
   if (rul) parts.push(rul);
+  const web = webBlock(a.web, L);
+  if (web) parts.push(web);
   const todo = nextStepsBlock(a.next_steps, L, idx);
   if (todo) parts.push(todo);
   if (a.research?.rounds?.length) {

@@ -2,6 +2,14 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.7
+
+- **Web research (the compass button next to Thinking) now works, and is off by default.** When you turn it on, Sanad
+  also searches official Moroccan websites (SGG, Adala, CSPJ, Parliament, Constitutional Court…) and lists the pages it
+  finds under the answer, apart from the law: they are links to open, not used to write the answer. Only a short query
+  made from the masked question is sent (names removed; nothing is sent if an ID card or phone number is still in it),
+  and each search appears in the outbound log. Not available in Offline mode.
+
 ### New in 0.3.6
 
 - **API keys in Offline mode:** online providers (OpenAI, Anthropic, others) are shown greyed out as "Disabled in Offline

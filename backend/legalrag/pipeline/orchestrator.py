@@ -27,6 +27,7 @@ from ..verify import renderer
 from ..verify.checks import VerificationReport, VerifyContext, verify_answer
 from . import conversation as conv
 from . import nextsteps as NEXT
+from . import websearch as WEB
 from . import plan as PLAN
 from .memory import get_memory
 from . import progress as PG
@@ -38,6 +39,7 @@ PLANNED_CALLS = {
     "offline": [],
     "hybrid": [{"kind": "generate", "where": "cloud", "sends": "pseudonymised question + public law passages"},
                {"kind": "claim_check", "where": "cloud-or-local", "sends": "each claim with its quote (pseudonymised)"},
+               {"kind": "web_search", "where": "DuckDuckGo", "sends": "a short search query from the masked question (only when web research is on)"},
                {"kind": "next_steps", "where": "cloud", "sends": "pseudonymised situation + public law passages (only when you describe your own situation)"}],
     "cloud_assisted": [{"kind": "embed", "where": "cloud", "sends": "pseudonymised question"}, {"kind": "rerank", "where": "cloud", "sends": "pseudonymised question + public law passages"},
                        {"kind": "generate", "where": "cloud", "sends": "pseudonymised question + public law passages"},
@@ -141,6 +143,7 @@ class QueryPipeline:
             return {"status": "review_required", "query_id": query_id, "confidence": pend["confidence"], "pseudonymised_text": text,
                     "reason": "low pseudonymisation confidence: review the text (or use Offline mode) before sending"}
         PG.begin(ctx.progress, query_id)
+        self._web = bool(req.web)
         out = self._answer(text, case_id, pend["options"], req, warnings, pend["confidence"])
         db.execute("DELETE FROM pending_query WHERE query_id=?", (query_id,))
         self._remember(pend["options"].get("session_id"), text, out, case_id, pend["options"].get("mask", True))
@@ -474,6 +477,12 @@ class QueryPipeline:
         llm = ctx.llm()
         if out.get("status") in ("answered", "partial", "extractive_only") and us.get("show_rulings_in_answers", True) and "rulings" not in out:
             out["rulings"] = self._rulings(out.get("search_query") or text)
+        if getattr(self, "_web", False) and out.get("status") in ("answered", "partial", "extractive_only", "abstained"):
+            pg = PG.current()
+            st = pg.start("Searching official websites", "search", "a short query from the masked question; links only, not used in the answer")
+            out["web"] = WEB.run(ctx, out.get("search_query") or text, case_id, client=getattr(self, "web_client", None))
+            w = out["web"]
+            pg.done(st, f"{len(w.get('results', []))} official page(s)" if "skipped" not in w else f"skipped ({w['skipped']})")
         trace = {
             "status": out["status"], "created_at": None, "pseudonymised_question": text if us["store_question_text"] else None,
             "as_of": out.get("as_of"), "as_of_source": out.get("as_of_source"), "mode": out.get("mode"), "language": out.get("language"),

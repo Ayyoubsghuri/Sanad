@@ -96,7 +96,7 @@ const DEFAULT_SETTINGS: WorkspaceSettings = {
   showRecentSidebar: true,
   thinkingMode: true,
   thinkingBudget: 8000,
-  enableWebSearch: true,
+  enableWebSearch: false,
   systemInstruction: "",
   autoPseudonymise: true,
   alwaysPreviewBeforeSend: false,
@@ -199,6 +199,7 @@ export function App() {
         }
         if (parsed.theme === "balloura") parsed.theme = ThemeId.Ember; // renamed theme
         if (parsed.operatingMode === "cloud-assisted") parsed.operatingMode = "hybrid"; // cloud-assisted mode is disabled
+        if (!parsed.webResearchV2) { parsed.enableWebSearch = false; parsed.webResearchV2 = true; } // the old button did nothing and was on: web research now starts off
         if (parsed.asOfDate === "2026-10-24") parsed.asOfDate = ""; // old built-in demo date: it hid every text published after it
         return { ...DEFAULT_SETTINGS, ...parsed };
       }
@@ -743,6 +744,7 @@ export function App() {
           approved: true,
           review_confirmed: settings.alwaysPreviewBeforeSend,
           // Deep (16K) and Maximum (32K) thinking budgets also switch on the deeper search (judge the passages, search again)
+          web: !!settings.enableWebSearch && settings.operatingMode !== "offline",
           depth: !settings.thinkingMode ? "normal" : (settings.thinkingBudget || 8000) >= 32000 ? "max" : (settings.thinkingBudget || 8000) >= 16000 ? "deep" : "normal",
         },
         controller.signal
@@ -1096,7 +1098,8 @@ export function App() {
                 onChangeThinkingBudget={(budget) =>
                   updateSettings({ thinkingBudget: budget })
                 }
-                enableWebSearch={settings.enableWebSearch}
+                enableWebSearch={settings.enableWebSearch && settings.operatingMode !== "offline"}
+                webSearchDisabled={settings.operatingMode === "offline"}
                 onToggleWebSearch={() =>
                   updateSettings({ enableWebSearch: !settings.enableWebSearch })
                 }
@@ -1596,7 +1599,8 @@ export function App() {
                   onChangeThinkingBudget={(budget) =>
                     updateSettings({ thinkingBudget: budget })
                   }
-                  enableWebSearch={settings.enableWebSearch}
+                  enableWebSearch={settings.enableWebSearch && settings.operatingMode !== "offline"}
+                webSearchDisabled={settings.operatingMode === "offline"}
                   onToggleWebSearch={() =>
                     updateSettings({
                       enableWebSearch: !settings.enableWebSearch,

@@ -35,6 +35,7 @@ interface ComposerProps {
   onChangeThinkingBudget?: (budget: number) => void;
   enableWebSearch: boolean;
   onToggleWebSearch: () => void;
+  webSearchDisabled?: boolean;
   autoPseudonymise?: boolean;
   onOpenPseudonymiser?: () => void;
   onOpenVault?: () => void;
@@ -74,6 +75,7 @@ export const Composer: React.FC<ComposerProps> = ({
   onChangeThinkingBudget,
   enableWebSearch,
   onToggleWebSearch,
+  webSearchDisabled = false,
   autoPseudonymise = true,
   onOpenPseudonymiser,
   onOpenVault,
@@ -387,12 +389,16 @@ export const Composer: React.FC<ComposerProps> = ({
           <button
             type="button"
             onClick={onToggleWebSearch}
+            disabled={webSearchDisabled}
+            aria-pressed={enableWebSearch}
             title={
-              enableWebSearch
-                ? tr("Web research active (Click to disable)")
-                : tr("Enable web research")
+              webSearchDisabled
+                ? tr("Web research is not available in Offline mode")
+                : enableWebSearch
+                ? tr("Web research on: links from official Moroccan sites are added under the answer (click to turn off)")
+                : tr("Web research off: click to also search official Moroccan sites (only a short masked query is sent)")
             }
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-150 cursor-pointer shrink-0 relative"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-150 cursor-pointer shrink-0 relative disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: enableWebSearch
                 ? "var(--bg-card)"

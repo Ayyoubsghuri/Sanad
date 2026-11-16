@@ -460,3 +460,37 @@ def test_a_personal_situation_ends_with_checked_next_steps(ctx):
     seen.clear()
     out, _ = ask(ctx, "Quelle est la durée de la période d'essai ?", as_of=D("2026-01-01"))
     assert "next_steps" not in out and not seen
+
+
+def test_web_research_is_off_by_default_masked_and_keeps_official_sites_only(ctx):
+    import httpx
+    from legalrag.pipeline import websearch as WEB
+    from legalrag.pipeline.orchestrator import QueryPipeline
+    page = """
+<div class="result"><a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.sgg.gov.ma%2Fcode-travail.pdf&amp;rut=x">Code du &lt;b&gt;travail&lt;/b&gt;</a>
+<a class="result__snippet" href="#">La période d'<b>essai</b> est fixée…</a></div>
+<div class="result"><a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fblog.example.com%2Fessai">Un blog</a>
+<a class="result__snippet" href="#">pas officiel</a></div>
+<div class="result"><a rel="nofollow" class="result__a" href="https://adala.justice.gov.ma/ar/loi">نص القانون</a></div>"""
+    sent = []
+
+    def handler(request):
+        sent.append(request.content.decode())
+        return httpx.Response(200, text=page)
+
+    ctx.llm_override = ScriptedProvider(faithful)
+    q = "Quelle est la durée de la période d'essai ?"
+    out, _ = ask(ctx, q, as_of=D("2026-01-01"))
+    assert "web" not in out                                   # off unless asked
+    pipe = QueryPipeline(ctx)
+    pipe.web_client = httpx.Client(transport=httpx.MockTransport(handler))
+    prep = pipe.prepare(PrepareRequest(question="M. Ahmed Benali : " + q, as_of=D("2026-01-01")))
+    out = pipe.run(prep["query_id"], RunRequest(web=True))
+    w = out["web"]
+    assert [r["site"] for r in w["results"]] == ["sgg.gov.ma", "adala.justice.gov.ma"]   # the blog is dropped
+    assert w["results"][0]["url"] == "https://www.sgg.gov.ma/code-travail.pdf" and w["results"][0]["title"] == "Code du travail"
+    assert sent and "Benali" not in sent[0] and "PERSON" not in sent[0]                   # only masked words leave
+    assert any(e["kind"] == "web_search" for e in ctx.db.list_outbound())               # logged like the model calls
+    assert WEB.make_query("CIN BK123456 licenciement abusif") is None                    # an identifier left: nothing is sent
+    ctx.db.set_settings({"mode": "offline"})
+    assert WEB.run(ctx, q, None) == {"skipped": "offline"}
