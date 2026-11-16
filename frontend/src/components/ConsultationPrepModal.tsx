@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { printOnAndroid } from "../platform";
 import { tr } from "../i18n";
 import {
   Printer,
@@ -36,7 +37,21 @@ export function ConsultationPrepModal({
     MOROCCAN_BAR_ASSOCIATIONS.find((b) => b.city === selectedBarCity) ||
     MOROCCAN_BAR_ASSOCIATIONS[0];
 
+  const sheetRef = useRef<HTMLDivElement>(null);
   const handlePrint = () => {
+    // Android's web view has no window.print(): the sheet goes to Android's print screen ("Save as PDF")
+    const el = sheetRef.current;
+    if (el) {
+      const text = el.cloneNode(true) as HTMLElement;
+      text.querySelectorAll("textarea").forEach((t, i) => {
+        const div = document.createElement("div");
+        div.style.whiteSpace = "pre-wrap";
+        div.textContent = (el.querySelectorAll("textarea")[i] as HTMLTextAreaElement).value;
+        t.replaceWith(div);
+      });
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:24px;color:#111}</style></head><body dir="auto">${text.innerHTML}</body></html>`;
+      if (printOnAndroid(tr("Consultation sheet"), html)) return;
+    }
     window.print();
   };
 
@@ -166,6 +181,7 @@ export function ConsultationPrepModal({
 
         {/* Printable 1-Page Content Container */}
         <div
+          ref={sheetRef}
           className="flex-1 overflow-y-auto p-8 space-y-6 print:p-0 print:m-0 print:bg-white print:text-black"
           style={{ backgroundColor: "var(--bg-surface)" }}
         >

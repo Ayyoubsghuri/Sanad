@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { printOnAndroid, saveFileOnAndroid } from "../platform";
+import { printOnAndroid, saveFileNative } from "../platform";
 import { PdfPageImage } from "./PdfPageImage";
 import { tr } from "../i18n";
 import {
@@ -86,6 +86,7 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
   >("all");
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const [downloadedFormat, setDownloadedFormat] = useState<string | null>(null);
+  const [savedTo, setSavedTo] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [bilingualView, setBilingualView] = useState<"dual" | "fr" | "ar">("dual");
 
@@ -662,11 +663,15 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
     }
 
     try {
-      const saved = await saveFileOnAndroid(`${safeName || "sanad"}.${fileExt}`, blob);
+      const saved = await saveFileNative(`${safeName || "sanad"}.${fileExt}`, blob);
       if (saved !== null) {
-        setDownloadedFormat(fileExt);
         setDownloadMenuOpen(false);
-        setTimeout(() => setDownloadedFormat(null), 2400);
+        if (saved) {   // "" = the user cancelled the Save dialog
+          setDownloadedFormat(fileExt);
+          setSavedTo(saved);
+          setTimeout(() => setDownloadedFormat(null), 2400);
+          setTimeout(() => setSavedTo(null), 8000);
+        }
         return;
       }
     } catch (e) {
@@ -851,6 +856,12 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
         borderColor: "var(--border-subtle)",
       }}
     >
+      {savedTo && (
+        <div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-[90vw] rounded-xl border px-4 py-2.5 text-xs shadow-xl"
+          style={{ backgroundColor: "var(--bg-surface)", borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>
+          {tr("Saved: {0}", [savedTo])}
+        </div>
+      )}
       {/* Top Workbench Header */}
       <div
         className="flex items-center justify-between gap-3 px-4 py-3 border-b"

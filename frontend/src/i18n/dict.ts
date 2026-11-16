@@ -870,4 +870,6 @@ export const DICT: Record<string, [string, string, string]> = {
   "Désactivé en mode Hors-Ligne": ["Disabled in Offline mode", "Désactivé en mode Hors-Ligne", "معطّل في الوضع دون اتصال"],
   "Utilisé en mode Hors-Ligne": ["Used in Offline mode", "Utilisé en mode Hors-Ligne", "مستعمل في الوضع دون اتصال"],
   "Utiliser en mode Hors-Ligne": ["Use in Offline mode", "Utiliser en mode Hors-Ligne", "استعمله في الوضع دون اتصال"],
+  "Saved: {0}": ["Saved: {0}", "Enregistré : {0}", "تم الحفظ: {0}"],
+  "Consultation sheet": ["Consultation sheet", "Fiche de consultation", "بطاقة الاستشارة"],
 };

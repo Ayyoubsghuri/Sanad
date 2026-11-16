@@ -46,6 +46,34 @@ class WindowApi:
     def close(self) -> None:
         self._window.destroy()
 
+    def save_file(self, name: str, base64_data: str) -> str:
+        """A file made by the page (Word, Markdown, PDF...): the window cannot download it itself, so Windows' "Save as"
+        dialog asks where, the file is written there and its folder is opened. Returns the path, "" if cancelled,
+        "error: ..." on failure."""
+        import base64
+
+        import webview
+
+        try:
+            safe = "".join("_" if c in '\\/:*?"<>|' else c for c in (name or "sanad")).strip() or "sanad"
+            downloads = Path.home() / "Downloads"
+            save = getattr(webview, "SAVE_DIALOG", None)
+            if save is None:  # pywebview 6 names it FileDialog.SAVE
+                save = webview.FileDialog.SAVE
+            got = self._window.create_file_dialog(save, directory=str(downloads if downloads.is_dir() else Path.home()),
+                                                  save_filename=safe)
+            if not got:
+                return ""
+            path = Path(got if isinstance(got, str) else got[0])
+            path.write_bytes(base64.b64decode(base64_data))
+            if sys.platform == "win32":
+                import subprocess
+
+                subprocess.Popen(["explorer", "/select,", str(path)])  # noqa: S603,S607 - shows the saved file in its folder
+            return str(path)
+        except Exception as e:  # noqa: BLE001 - shown in the page
+            return f"error: {e}"
+
 
 def _healthy(url: str) -> bool:
     try:

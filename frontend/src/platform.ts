@@ -20,21 +20,38 @@ interface FileBridge {
 const files = (): FileBridge | undefined =>
   typeof window !== "undefined" ? (window as unknown as { SanadNative?: FileBridge }).SanadNative : undefined;
 
-/** Android: the web view cannot download a file made in the page, so it is handed to the app (Downloads/Sanad, then opened).
- *  Returns where it was saved, or null when not in the Android app. Throws on failure. */
-export async function saveFileOnAndroid(name: string, blob: Blob): Promise<string | null> {
-  const n = files();
-  if (!n?.saveFile) return null;
-  const b64 = await new Promise<string>((resolve, reject) => {
+const toBase64 = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result).replace(/^data:[^,]*,/, ""));
     r.onerror = () => reject(r.error);
     r.readAsDataURL(blob);
   });
-  const res = n.saveFile(name, blob.type || "application/octet-stream", b64);
-  if (res.startsWith("error:")) throw new Error(res.slice(6));
-  return res.replace(/^ok:/, "");
+
+const desktop = (): { save_file?: (name: string, b64: string) => Promise<string> } | undefined =>
+  typeof window !== "undefined" ? (window as unknown as { pywebview?: { api?: { save_file?: (n: string, b: string) => Promise<string> } } }).pywebview?.api : undefined;
+
+/** The Android app and the Windows window cannot download a file made in the page: it is handed to the app.
+ *  Android: saved in Downloads/Sanad, then opened. Windows: the "Save as" dialog, then the folder is shown.
+ *  Returns where it was saved, "" when the user cancelled, or null in a normal browser (the page downloads it itself). */
+export async function saveFileNative(name: string, blob: Blob): Promise<string | null> {
+  const n = files();
+  if (n?.saveFile) {
+    const res = n.saveFile(name, blob.type || "application/octet-stream", await toBase64(blob));
+    if (res.startsWith("error:")) throw new Error(res.slice(6));
+    return res.replace(/^ok:/, "");
+  }
+  const d = desktop();
+  if (d?.save_file) {
+    const res = await d.save_file(name, await toBase64(blob));
+    if (res.startsWith("error:")) throw new Error(res.slice(6).trim());
+    return res;
+  }
+  return null;
 }
+
+/** Kept for older callers. */
+export const saveFileOnAndroid = saveFileNative;
 
 /** Android: opens Android's print screen for an HTML page ("Save as PDF"). Returns false when not in the Android app. */
 export function printOnAndroid(title: string, html: string): boolean {

@@ -4,8 +4,10 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **Web research removed.** The compass button next to Thinking is gone: the official websites block automated
-  searches, so it returned nothing useful. Nothing is sent to a search engine.
+- **Fixed: downloading a document did nothing.** In the Windows app, the download buttons of a document (Word, PDF,
+  Markdown…) now open Windows' "Save as" window, save the file where you choose and show it in its folder. On Android the
+  file goes to **Downloads/Sanad** and opens; on both, the app now says where the file was saved.
+- **Android:** "Print / PDF" on the consultation sheet now opens Android's print screen (choose "Save as PDF").
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 
