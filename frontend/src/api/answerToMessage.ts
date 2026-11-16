@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
 import { CHAMBER, OUTCOME, T, answerLang, failureText, noteText, type ALang } from "./answerText";
 import { ArtifactKind, type ArtifactItem, type GroundingSource, type PdfSnippet } from "../types/agent";
-import type { AnswerRulings, QueryAnswer, SourceEntry } from "./legalrag";
+import type { AnswerRulings, NextSteps, QueryAnswer, SourceEntry } from "./legalrag";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "Verified answer",
@@ -31,6 +31,22 @@ export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang): str
     return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
   });
   return `**${T(L, "rulings")}**\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
+}
+
+/** "What you can do now": the last part of an answer about a personal situation. [n] are the numbers of the answer's sources. */
+export function nextStepsBlock(n: NextSteps | null | undefined, L: ALang, idx: Map<string, number>): string {
+  if (!n?.steps?.length) return "";
+  const lines = n.steps.map((s, i) => {
+    const refs = (s.sources ?? []).map((id) => idx.get(id)).filter(Boolean).map((k) => `[${k}]`).join("");
+    const extra = [
+      s.deadline ? `   - **${T(L, "deadline")}:** ${s.deadline}` : "",
+      s.where ? `   - **${T(L, "where")}:** ${s.where}` : "",
+      s.documents?.length ? `   - **${T(L, "documents")}:** ${s.documents.join(L === "ar" ? "، " : ", ")}` : "",
+    ].filter(Boolean).join("\n");
+    return `${i + 1}. **${s.title}** ${refs}\n   ${s.text.replace(/\n+/g, " ")}${extra ? `\n${extra}` : ""}`;
+  });
+  const pro = n.professional ? `\n\n**${T(L, "whenPro")}:** ${n.professional}` : "";
+  return `**${T(L, "nextSteps")}**\n_${T(L, "nextNote")}._\n\n${lines.join("\n")}${pro}`;
 }
 
 /** Turns a backend answer into markdown + grounding sources for the chat bubble. */
@@ -142,6 +158,8 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
   }
   const rul = rulingsBlock(a.rulings, L);
   if (rul) parts.push(rul);
+  const todo = nextStepsBlock(a.next_steps, L, idx);
+  if (todo) parts.push(todo);
   if (a.research?.rounds?.length) {
     const more = a.research.rounds.reduce((n, r) => n + (r.added?.length ?? 0), 0);
     const tried = a.research.rounds.flatMap((r) => r.queries ?? []);

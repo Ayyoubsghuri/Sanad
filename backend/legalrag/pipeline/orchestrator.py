@@ -26,6 +26,7 @@ from ..text.citations import parse_citations
 from ..verify import renderer
 from ..verify.checks import VerificationReport, VerifyContext, verify_answer
 from . import conversation as conv
+from . import nextsteps as NEXT
 from . import plan as PLAN
 from .memory import get_memory
 from . import progress as PG
@@ -36,7 +37,8 @@ from . import understand as U
 PLANNED_CALLS = {
     "offline": [],
     "hybrid": [{"kind": "generate", "where": "cloud", "sends": "pseudonymised question + public law passages"},
-               {"kind": "claim_check", "where": "cloud-or-local", "sends": "each claim with its quote (pseudonymised)"}],
+               {"kind": "claim_check", "where": "cloud-or-local", "sends": "each claim with its quote (pseudonymised)"},
+               {"kind": "next_steps", "where": "cloud", "sends": "pseudonymised situation + public law passages (only when you describe your own situation)"}],
     "cloud_assisted": [{"kind": "embed", "where": "cloud", "sends": "pseudonymised question"}, {"kind": "rerank", "where": "cloud", "sends": "pseudonymised question + public law passages"},
                        {"kind": "generate", "where": "cloud", "sends": "pseudonymised question + public law passages"},
                        {"kind": "claim_check", "where": "cloud-or-local", "sends": "each claim with its quote (pseudonymised)"}],
@@ -329,7 +331,10 @@ class QueryPipeline:
         if verdict is None:
             self._gap("generation unavailable", u, text) if llm is not None else None
             return self._finish({**base, "status": "extractive_only", "claims": [], "assumptions": [u.as_of_assumption]}, case_id, text, ret, t_start, u)
-        return self._finish(self._compose(base, verdict, passages, case_id, u, lang, text), case_id, text, ret, t_start, u, verdict.get("report"))
+        out = self._compose(base, verdict, passages, case_id, u, lang, text)
+        if out.get("status") in ("answered", "partial") and us.get("next_steps_in_answers", True) and NEXT.is_case(text):
+            self._next_steps(out, llm, verdict, passages, headers, calcs, text, case_id, u, lang, masking, pg)
+        return self._finish(out, case_id, text, ret, t_start, u, verdict.get("report"))
 
     # ------------------------------------------------------------------------------------------------------------ generate + verify
     def _generate_and_verify(self, llm, payload_base, user_fields, passages, calcs, case_id, u, base) -> dict[str, Any] | None:
@@ -396,6 +401,33 @@ class QueryPipeline:
             out["notices"] = out["notices"] + ["Part of the answer could not be verified and was left out: rely on the quoted articles below."]
         return out
 
+    # ------------------------------------------------------------------------------------------------------------ what to do next
+    def _next_steps(self, out, llm, verdict, passages, headers, calcs, text, case_id, u, lang, masking, pg) -> None:
+        """Practical steps for a personal situation, from the articles of the answer; names restored after the checks."""
+        ctx = self.ctx
+        ok = verdict["report"].passed_claims
+        cited = [cid for c in ok for cid in c.cited_chunks if cid in passages]
+        ids = list(dict.fromkeys([*cited, *passages]))[:10]          # the cited articles first, then the best of the others
+        st = pg.start("Working out what you can do next", "analysis", f"from {len(ids)} article(s) of the answer")
+        try:
+            out["rulings"] = out.get("rulings") or (self._rulings(out.get("search_query") or text) if ctx.user_settings().get("show_rulings_in_answers", True) else None)
+            res = NEXT.build(llm, question=text, lang=lang, as_of=u.as_of.isoformat(), claims=[c.claim["text"] for c in ok],
+                             passages={i: {"source": headers.get(i, ""), "text": passages[i].chunk.body} for i in ids},
+                             calcs=[r.text() for r in calcs.values()], rulings=out["rulings"], case_id=case_id, scan=masking)
+        except Exception as e:  # noqa: BLE001 - the steps are an extra: the verified answer is never lost over them
+            out["fallbacks"] = out.get("fallbacks", []) + [f"next steps not written ({e.__class__.__name__})"]
+            pg.done(st, "not written: the answer is shown without them")
+            return
+        if not res:
+            pg.done(st, "none: a general question, or no step could be tied to an article")
+            return
+        R = lambda s: ctx.pseudo.restore(s, case_id)[0] if s else s  # noqa: E731
+        for x in res["steps"]:
+            x.update(title=R(x["title"]), text=R(x["text"]), deadline=R(x["deadline"]), where=R(x["where"]), documents=[R(d) for d in x["documents"]])
+        res["professional"] = R(res["professional"])
+        out["next_steps"] = res
+        pg.done(st, f"{len(res['steps'])} step(s), each checked against its articles")
+
     # ------------------------------------------------------------------------------------------------------------ helpers
     def _rulings(self, text: str) -> dict[str, Any] | None:
         """Similar Court of Cassation rulings, searched on this computer only (rulings.db, when it is installed)."""
@@ -440,7 +472,7 @@ class QueryPipeline:
         ctx = self.ctx
         us = ctx.user_settings()
         llm = ctx.llm()
-        if out.get("status") in ("answered", "partial", "extractive_only") and us.get("show_rulings_in_answers", True):
+        if out.get("status") in ("answered", "partial", "extractive_only") and us.get("show_rulings_in_answers", True) and "rulings" not in out:
             out["rulings"] = self._rulings(out.get("search_query") or text)
         trace = {
             "status": out["status"], "created_at": None, "pseudonymised_question": text if us["store_question_text"] else None,

@@ -38,7 +38,14 @@ public final class Engine {
             + "5. Do not assume facts about the user (who they are, whether the other party agrees); say which rule fits which situation. No advice on what to choose.\n"
             + "6. Answer in the language of the question: Moroccan Darija if it is written in Darija, French if French, English if English, otherwise formal Arabic. Quotes stay in the language of the passage.\n"
             + "7. Name the law and the article in words when you use them (for example: المادة 82 من مدونة الأسرة).\n"
-            + "8. Finish with one short line saying this is legal information, not legal advice.";
+            + "8. When the user describes their OWN situation (not a general question about the law), end with a section titled \"What you can do now\" in the "
+            + "language of the answer (ما يمكنك فعله الآن / Ce que vous pouvez faire maintenant): 3 to 6 numbered steps in the order to do them, the most urgent "
+            + "first. Each step is one concrete action: who does what, where (the court or office the passages name), with which papers, within which time limit, "
+            + "and ends with the number of the passage it rests on, like [3]. A time limit, an amount, a court or an authority may appear only if a passage you cite "
+            + "states it; if the passages give no time limit, say it must be checked with the clerk's office. A step that only organises the person (gather the "
+            + "papers, keep the proof) needs no passage but must contain no number. Add one line saying when a lawyer or another professional is needed. "
+            + "For a general question, do not add this section.\n"
+            + "9. Finish with one short line saying this is legal information, not legal advice.";
 
     private final Prefs prefs;
     private final Pack pack;

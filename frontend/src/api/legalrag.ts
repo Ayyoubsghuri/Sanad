@@ -188,8 +188,22 @@ export interface AnswerRulings {
   items: AnswerRuling[];
 }
 
+export interface NextStep {
+  title: string;
+  text: string;
+  deadline?: string;
+  where?: string;
+  documents?: string[];
+  sources?: string[];
+}
+export interface NextSteps {
+  steps: NextStep[];
+  professional?: string;
+}
+
 export interface QueryAnswer {
   rulings?: AnswerRulings | null;
+  next_steps?: NextSteps | null;
   status:
     | "answered" | "partial" | "extractive_only" | "abstained" | "needs_clarification"
     | "needs_input" | "review_required" | "unavailable" | "payload_preview" | "cancelled";

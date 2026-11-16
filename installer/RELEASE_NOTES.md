@@ -2,6 +2,13 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.3
+
+- **What you can do now:** when you describe your own situation, the answer now ends with practical steps in the order to
+  take them: what to do, where, which papers to prepare, within which time limit, and when to see a professional. On
+  Windows every step is checked: it can only cite the articles of the answer, and a step giving a time limit or a number
+  that no cited article contains is removed. A general question about the law gets no such section. (Windows and Android.)
+
 ### New in 0.3.2
 
 - **Similar court rulings under every answer:** once the court rulings are downloaded (Professional Toolkit →

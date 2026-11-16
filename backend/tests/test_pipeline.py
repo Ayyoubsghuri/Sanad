@@ -428,3 +428,35 @@ def test_french_question_is_searched_as_formal_arabic_and_answered_in_french(ctx
     assert seen["rewrite"]["question"].startswith("Quelle est la durée") and out.get("search_query") == "ما هي مدة التجربة في عقد الشغل؟"
     assert seen["question"].startswith("Quelle est la durée") and seen["lang"] == "fr"  # the answer step still gets the user's words and language
     assert out["status"] in ("answered", "partial")
+
+
+def test_a_personal_situation_ends_with_checked_next_steps(ctx):
+    from legalrag.pipeline import nextsteps as NEXT
+    q = "Mon employeur refuse : quelle est la durée de la période d'essai ?"
+    assert NEXT.is_case(q) and not NEXT.is_case("Quelle est la durée de la période d'essai ?")
+    seen = []
+
+    def script(req: GenRequest):
+        if req.kind != "next_steps":
+            return faithful(req)
+        seen.append(req)
+        ps = req.payload["passages"]
+        return {"is_case": True, "professional": "Un avocat est utile devant le tribunal.", "steps": [
+            {"title": "Rassembler les preuves", "text": "Gardez le contrat et les bulletins de paie.", "documents": ["contrat"], "passages": []},
+            {"title": "Demander vos droits", "text": "Appuyez-vous sur cet article.", "passages": [ps[0]["id"], "C999999"]},
+            {"title": "Agir vite", "text": "Saisissez le tribunal.", "deadline": "dans 9731 jours", "passages": [ps[0]["id"]]},   # invented number
+            {"title": "Délai sans article", "text": "Agissez.", "deadline": "rapidement", "passages": []},                        # time limit, no article
+        ]}
+
+    ctx.llm_override = ScriptedProvider(script)
+    out, _ = ask(ctx, q, as_of=D("2026-01-01"))
+    assert out["status"] in ("answered", "partial")
+    steps = out["next_steps"]["steps"]
+    assert [s["title"] for s in steps] == ["Rassembler les preuves", "Demander vos droits"]
+    assert steps[1]["sources"] == [seen[0].payload["passages"][0]["id"]]          # the invented id is gone
+    assert steps[1]["sources"][0] in {s["id"] for s in out["sources"] + out["related"]}
+    assert out["next_steps"]["professional"]
+    # a general question: the model is not even asked
+    seen.clear()
+    out, _ = ask(ctx, "Quelle est la durée de la période d'essai ?", as_of=D("2026-01-01"))
+    assert "next_steps" not in out and not seen

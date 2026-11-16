@@ -22,7 +22,7 @@ from .patterns import DIRECT_IDENTIFIER_KINDS, detect_patterns
 
 # which call kinds each operating mode may make
 _TEXT_KINDS = {"understand", "generate", "claim_check", "error_report", "rewrite", "summary", "research", "plan",
-               "guide", "contract_check", "line", "open_procedure"}
+               "guide", "contract_check", "line", "open_procedure", "next_steps"}
 MODE_ALLOWS = {
     "offline": set(),
     "hybrid": set(_TEXT_KINDS),
