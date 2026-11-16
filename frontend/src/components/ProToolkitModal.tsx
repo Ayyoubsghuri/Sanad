@@ -7,7 +7,8 @@ import {
 import { tr, useI18n } from "../i18n";
 import {
   ArticleSource, Argument, CourtroomOutput, L3, ProCatalog, ProJob, ProResult, ProTool, ReportOutput, RulingCard,
-  getJob, prepareJob, proCatalog, runJob,
+  getJob, prepareJob, proCatalog, runJob, RulingsJob, RulingsUpdate,
+  rulingsUpdateCancel, rulingsUpdateCheck, rulingsUpdateJob, rulingsUpdateStart,
 } from "../api/pro";
 import { ArtifactItem, ArtifactKind } from "../types/agent";
 import { IS_ANDROID } from "../platform";
@@ -139,6 +140,7 @@ export function ProToolkitModal({ isOpen, onClose, asOfDate, onOpenArtifact }: P
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
           {loadErr && <ErrorBox text={loadErr} />}
           {!catalog && !loadErr && <Spinner text={tr("Loading…")} />}
+          {catalog && !tool && !IS_ANDROID && <RulingsBar onInstalled={() => proCatalog().then(setCatalog).catch(() => undefined)} />}
           {catalog && !tool && <ToolHome catalog={catalog} pick={pick} onOpen={openTool} />}
 
           {catalog && tool && !job && (
@@ -241,6 +243,63 @@ export function ProToolkitModal({ isOpen, onClose, asOfDate, onOpenArtifact }: P
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------- rulings download
+function RulingsBar({ onInstalled }: { onInstalled: () => void }) {
+  const [info, setInfo] = useState<RulingsUpdate | null>(null);
+  const [job, setJob] = useState<RulingsJob | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    rulingsUpdateCheck().then((r) => { setInfo(r); if (r.job && (r.job.state === "running" || r.job.state === "queued")) setJob(r.job); }).catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    if (!job || (job.state !== "running" && job.state !== "queued")) return;
+    const t = setInterval(() => {
+      rulingsUpdateJob().then((j) => {
+        setJob(j);
+        if (j.state === "done") { onInstalled(); rulingsUpdateCheck().then(setInfo).catch(() => undefined); }
+      }).catch(() => undefined);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [job?.state]);
+  if (!info) return null;
+  const running = job && (job.state === "running" || job.state === "queued");
+  const mb = (b?: number) => (b ? `${Math.round(b / 1e6)} MB` : "");
+  const offer = info.update_available && info.published_version;
+  if (!running && !offer && !(job && job.state === "error") && !err) return null;
+  const start = async () => {
+    setErr(null);
+    try { setJob(await rulingsUpdateStart()); } catch (e: any) { setErr(String(e?.message || e)); }
+  };
+  return (
+    <div className="mb-5 rounded-2xl border p-4 flex flex-wrap items-center gap-3" style={{ borderColor: "rgba(90,70,160,.35)", backgroundColor: "rgba(90,70,160,.06)" }}>
+      <Library className="w-5 h-5 shrink-0" style={{ color: "#5a46a0" }} />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium" style={{ color: "var(--text-heading)" }}>
+          {info.installed_version ? tr("A newer set of Court of Cassation rulings is available") : tr("Court of Cassation rulings")}
+        </div>
+        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          {running
+            ? tr("Downloading… {0} / {1}", [mb(job!.done_bytes) || "0 MB", mb(job!.total_bytes) || mb(info.size_bytes)])
+            : tr("{0} rulings · {1} · used by the Courtroom, the Case Analyzer and the Jurisprudence Finder", [info.rulings ?? "?", mb(info.size_bytes)])}
+        </div>
+        {running && (
+          <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-subtle)" }}>
+            <div className="h-full transition-all" style={{ width: `${Math.round((job!.progress || 0) * 100)}%`, backgroundColor: "#5a46a0" }} />
+          </div>
+        )}
+        {(err || (job && job.state === "error")) && <div className="text-[11px] mt-1" style={{ color: "#a23a30" }}>{err || job!.error}</div>}
+      </div>
+      {running ? (
+        <button type="button" onClick={() => rulingsUpdateCancel().then(() => rulingsUpdateJob().then(setJob))} className="px-3 py-1.5 rounded-lg border text-xs cursor-pointer"
+          style={{ borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>{tr("Stop")}</button>
+      ) : offer ? (
+        <button type="button" onClick={start} className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+          style={{ backgroundColor: "#5a46a0", color: "#fff" }}>{info.installed_version ? tr("Update") : tr("Download court rulings")}</button>
+      ) : null}
     </div>
   );
 }

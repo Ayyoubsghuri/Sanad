@@ -10,6 +10,7 @@ from ..deps import get_ctx, require_pack, require_token
 from ..pro import catalog as C
 from ..pro import engine as E
 from ..pro.rulings import open_store, rulings_path
+from ..pro.rulings_update import RulingsError, updater
 from ..state import AppContext
 
 router = APIRouter(prefix="/v1/pro", dependencies=[Depends(require_token)], tags=["pro"])
@@ -69,6 +70,30 @@ def rulings_stats(ctx: AppContext = Depends(get_ctx)) -> dict:
     if st is None:
         return {"available": False, "path": str(rulings_path(ctx.settings.data_dir))}
     return {"available": True, **st.stats()}
+
+
+@router.get("/rulings/update")
+def rulings_update_check(ctx: AppContext = Depends(get_ctx)) -> dict:
+    """Installed rulings version vs the published one (manifest.json on Hugging Face), and the download job if any."""
+    return updater(ctx).check()
+
+
+@router.post("/rulings/update")
+def rulings_update_start(ctx: AppContext = Depends(get_ctx)) -> dict:
+    try:
+        return updater(ctx).start()
+    except RulingsError as e:
+        raise HTTPException(409, {"code": "rulings_update", "message": str(e)})
+
+
+@router.post("/rulings/update/cancel")
+def rulings_update_cancel(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return {"cancelled": updater(ctx).cancel()}
+
+
+@router.get("/rulings/update/job")
+def rulings_update_job(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return updater(ctx).job or {"state": "idle"}
 
 
 @router.get("/rulings/search")

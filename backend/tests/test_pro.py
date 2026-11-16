@@ -246,3 +246,54 @@ def test_toolkit_through_the_real_gateway_hybrid_cloud_and_offline_local(tmp_pat
         assert j["result"]["output"]["judge"]["chance_of_success"] == 60
     finally:
         c.close()
+
+
+def test_rulings_download_installs_only_a_matching_file(client, ctx, monkeypatch, tmp_path):
+    import hashlib
+
+    import httpx
+
+    from legalrag.pro import rulings_update as RU
+    from legalrag.pro.rulings import installed_version, open_store
+
+    src = tmp_path / "pub"
+    src.mkdir()
+    ctx_dir = ctx.settings.data_dir
+    make_rulings(ctx)                                      # build a db in the data dir, then move it to the "server"
+    db_bytes = (ctx_dir / "rulings" / "rulings.db").read_bytes()
+    (ctx_dir / "rulings" / "rulings.db").unlink()
+    good = {"version": "2026.11.20.1200", "db_url": "https://hf.example/rulings.db", "size_bytes": len(db_bytes),
+            "sha256": hashlib.sha256(db_bytes).hexdigest(), "rulings": 3}
+    manifest = dict(good)
+
+    def handler(req: httpx.Request):
+        if req.url.path.endswith("manifest.json"):
+            return httpx.Response(200, json=manifest)
+        return httpx.Response(200, content=db_bytes)
+
+    real = httpx.Client
+    monkeypatch.setattr(RU.httpx, "Client", lambda *a, **k: real(*a, **{**k, "transport": httpx.MockTransport(handler)}))
+    ctx.db.set_settings({"mode": "hybrid"})
+    RU._UPDATERS.clear()
+
+    chk = client.get("/v1/pro/rulings/update", headers=H).json()
+    assert chk["installed_version"] is None and chk["update_available"] is True and chk["rulings"] == 3
+
+    def run():
+        client.post("/v1/pro/rulings/update", headers=H)
+        for _ in range(200):
+            j = client.get("/v1/pro/rulings/update/job", headers=H).json()
+            if j["state"] in ("done", "error", "cancelled"):
+                return j
+            time.sleep(0.05)
+
+    manifest["sha256"] = "0" * 64                          # a damaged download is refused
+    assert run()["state"] == "error" and installed_version(ctx_dir) is None
+    manifest.update(good)
+    j = run()
+    assert j["state"] == "done", j
+    assert (ctx_dir / "rulings" / "current.txt").read_text() == "rulings-2026.11.20.1200.db"
+    assert open_store(ctx_dir).stats()["total"] == 3
+    assert client.get("/v1/pro/catalog", headers=H).json()["rulings_available"] is True
+    ctx.db.set_settings({"mode": "offline"})
+    assert client.post("/v1/pro/rulings/update", headers=H).status_code == 409

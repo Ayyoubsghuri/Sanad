@@ -2,7 +2,17 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
-### New: Professional Toolkit (Pro Lawyer mode)
+### New in 0.3.1
+
+- **Court rulings download:** the Professional Toolkit now offers **Download court rulings** (about 26,000 Court of
+  Cassation decisions, 2008–2025). The file is checked (SHA-256) before it is installed; **Update** appears when a newer
+  set is published. Stopped downloads continue where they left off.
+- **Offline mode with a local model:** in API keys, add a **Local model** (Ollama or LM Studio, found automatically) and
+  pick it for Offline mode: answers and the toolkit then run entirely on this computer.
+- **Fixed:** in Hybrid mode the toolkit, the guides and the contract check were refused by the privacy gateway.
+- Rulings now show every outcome (cassation, rejected, inadmissible, lapsed, withdrawn, reversed, affirmed, corrected).
+
+### Professional Toolkit (Pro Lawyer mode)
 
 Switch the sidebar's audience button to **Pro Lawyer**, then open **Professional Toolkit**:
 

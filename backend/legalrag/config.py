@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     allow_unsigned_pack: bool = False  # dev only: serve an unsigned pack, flagged on every answer
     pack_max_age_days: int = 45
     pack_release_url: str = "https://raw.githubusercontent.com/Ayyoubsghuri/Sanad/main/backend/pack_release.json"  # the published pack (checked by "Law pack" in the app)
+    rulings_manifest_url: str = "https://huggingface.co/datasets/Xdnh00p/sanad-lawpack/resolve/main/rulings/manifest.json"  # Court of Cassation rulings (Professional Toolkit)
 
     # ---- operating mode default (user can change at runtime) -------------------
     default_mode: Mode = "hybrid"

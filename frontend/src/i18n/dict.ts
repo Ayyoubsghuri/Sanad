@@ -864,4 +864,9 @@ export const DICT: Record<string, [string, string, string]> = {
   "Trouver les modèles installés": ["Find installed models", "Trouver les modèles installés", "البحث عن النماذج المثبتة"],
   "Le serveur répond mais aucun modèle n'est installé.": ["The server answers but no model is installed.", "Le serveur répond mais aucun modèle n'est installé.", "الخادم يستجيب لكن لا يوجد نموذج مثبت."],
   "Réponses rédigées par un modèle local (Ollama, LM Studio) si vous en ajoutez un dans Clés API": ["Answers written by a local model (Ollama, LM Studio) if you add one in API keys", "Réponses rédigées par un modèle local (Ollama, LM Studio) si vous en ajoutez un dans Clés API", "أجوبة يكتبها نموذج محلي (Ollama، LM Studio) إن أضفته في مفاتيح API"],
+  "A newer set of Court of Cassation rulings is available": ["A newer set of Court of Cassation rulings is available", "Une version plus récente des arrêts de la Cour de cassation est disponible", "تتوفر نسخة أحدث من قرارات محكمة النقض"],
+  "Court of Cassation rulings": ["Court of Cassation rulings", "Arrêts de la Cour de cassation", "قرارات محكمة النقض"],
+  "Downloading… {0} / {1}": ["Downloading… {0} / {1}", "Téléchargement… {0} / {1}", "جارٍ التنزيل… {0} / {1}"],
+  "{0} rulings · {1} · used by the Courtroom, the Case Analyzer and the Jurisprudence Finder": ["{0} rulings · {1} · used by the Courtroom, the Case Analyzer and the Jurisprudence Finder", "{0} arrêts · {1} · utilisés par le Tribunal IA, l'Analyse de dossier et la Recherche de jurisprudence", "{0} قرار · {1} · تستعملها المحكمة الافتراضية ومحلل القضايا والباحث في الاجتهاد"],
+  "Download court rulings": ["Download court rulings", "Télécharger les arrêts", "تنزيل القرارات القضائية"],
 };

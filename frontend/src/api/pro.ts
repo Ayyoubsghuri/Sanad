@@ -139,3 +139,27 @@ export const runJob = (id: string, edited?: Record<string, string>) =>
   call<ProJob>(`/v1/pro/jobs/${id}/run`, { method: "POST", body: JSON.stringify({ edited: edited || null }) });
 export const getJob = (id: string, signal?: AbortSignal) => call<ProJob>(`/v1/pro/jobs/${id}`, {}, signal);
 export const getRuling = (id: string) => call<RulingCard & { full_text: string }>(`/v1/pro/rulings/${encodeURIComponent(id)}`);
+
+export interface RulingsUpdate {
+  installed_version: string | null;
+  published_version?: string;
+  size_bytes?: number;
+  rulings?: number;
+  period?: { from?: string; to?: string };
+  update_available?: boolean;
+  problem?: string;
+  error?: string;
+  job: RulingsJob | null;
+}
+export interface RulingsJob {
+  state: "idle" | "queued" | "running" | "done" | "error" | "cancelled";
+  step?: string;
+  progress?: number;
+  done_bytes?: number;
+  total_bytes?: number;
+  error?: string | null;
+}
+export const rulingsUpdateCheck = () => call<RulingsUpdate>("/v1/pro/rulings/update");
+export const rulingsUpdateStart = () => call<RulingsJob>("/v1/pro/rulings/update", { method: "POST" });
+export const rulingsUpdateJob = () => call<RulingsJob>("/v1/pro/rulings/update/job");
+export const rulingsUpdateCancel = () => call<{ cancelled: boolean }>("/v1/pro/rulings/update/cancel", { method: "POST" });

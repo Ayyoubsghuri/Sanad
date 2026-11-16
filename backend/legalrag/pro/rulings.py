@@ -151,8 +151,36 @@ _CACHE: dict[str, Any] = {}
 
 
 def rulings_path(data_dir: Path) -> Path:
+    """LEGALRAG_RULINGS_PATH, else the version the app downloaded (rulings/current.txt names it), else rulings/rulings.db
+    (copied by hand). Each download gets its own file name, so Windows never has to replace a file that is open."""
     env = os.environ.get("LEGALRAG_RULINGS_PATH")
-    return Path(env) if env else data_dir / "rulings" / "rulings.db"
+    if env:
+        return Path(env)
+    folder = data_dir / "rulings"
+    cur = folder / "current.txt"
+    if cur.exists():
+        name = cur.read_text(encoding="utf-8").strip()
+        if name and "/" not in name and "\\" not in name and (folder / name).exists():
+            return folder / name
+    return folder / "rulings.db"
+
+
+def installed_version(data_dir: Path) -> str | None:
+    p = rulings_path(data_dir)
+    if not p.exists():
+        return None
+    m = re.match(r"^rulings-(.+)\.db$", p.name)
+    if m:                       # downloaded by the app: the version is in the name
+        return m.group(1)
+    try:
+        con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+        try:
+            row = con.execute("SELECT value FROM meta WHERE key='version'").fetchone()
+        finally:
+            con.close()
+        return row[0] if row else "local"
+    except sqlite3.Error:
+        return "local"
 
 
 def open_store(data_dir: Path) -> RulingsStore | None:
