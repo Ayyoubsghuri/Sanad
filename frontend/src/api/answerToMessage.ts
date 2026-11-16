@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
 import { CHAMBER, OUTCOME, T, answerLang, failureText, noteText, type ALang } from "./answerText";
 import { ArtifactKind, type ArtifactItem, type GroundingSource, type PdfSnippet } from "../types/agent";
-import type { AnswerRulings, NextSteps, QueryAnswer, SourceEntry, WebResults } from "./legalrag";
+import type { AnswerRuling, AnswerRulings, NextSteps, QueryAnswer, RulingRef, SourceEntry, WebResults } from "./legalrag";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "Verified answer",
@@ -16,22 +16,40 @@ function srcUri(s: SourceEntry): string {
 }
 
 /** Similar Court of Cassation rulings: a block of its own after the law, never numbered like the law's sources. */
-export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang): string {
+const ltr = (x: string) => `\u2066${x.replace(/-/g, "\u2011")}\u2069`;  // numbers and dates stay left-to-right inside Arabic
+
+function rulingCard(x: AnswerRuling, L: ALang): string {
+  const head = [x.number ? `${T(L, "ruling")} ${ltr(x.number)}` : T(L, "ruling"), x.date ? ltr(x.date) : "",
+    x.chamber && CHAMBER[x.chamber] ? `${T(L, "chamber")} ${CHAMBER[x.chamber][L]}` : "",
+    x.applies?.length ? `${T(L, "appliesArt")} ${x.applies.map(ltr).join("، ")}` : ""].filter(Boolean).join(" · ");
+  const outcome = (OUTCOME[x.outcome || "unknown"] ?? OUTCOME.other)[L];
+  const about = (x.principle || x.keywords || "").replace(/\s+/g, " ").trim();
+  const link = x.source_url ? ` [${T(L, "pdf")}](${x.source_url})` : "";
+  return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
+}
+
+/** Similar Court of Cassation rulings: a block of its own after the law, never numbered like the law's sources.
+ *  Professionals see the cards here; citizens see the summary line and open the cards from the rulings card. */
+export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang, citizen = false): string {
   if (!r?.items?.length) return "";
-  const ltr = (x: string) => `\u2066${x.replace(/-/g, "\u2011")}\u2069`;  // numbers and dates stay left-to-right inside Arabic
   const counts = Object.entries(r.by_outcome).sort((x, y) => y[1] - x[1])
     .map(([o, n]) => `${n} ${(OUTCOME[o] ?? OUTCOME.other)[L]}`).join(" · ");
-  const lines = r.items.map((x) => {
-    const head = [x.number ? `${T(L, "ruling")} ${ltr(x.number)}` : T(L, "ruling"), x.date ? ltr(x.date) : "",
-      x.chamber && CHAMBER[x.chamber] ? (L === "ar" ? `${T(L, "chamber")} ${CHAMBER[x.chamber][L]}` : `${T(L, "chamber")} ${CHAMBER[x.chamber][L]}`) : ""]
-      .filter(Boolean).join(" · ");
-    const outcome = (OUTCOME[x.outcome || "unknown"] ?? OUTCOME.other)[L];
-    const about = (x.principle || x.keywords || "").replace(/\s+/g, " ").trim();
-    const link = x.source_url ? ` [${T(L, "pdf")}](${x.source_url})` : "";
-    return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
-  });
-  return `**${T(L, "rulings")}**\n\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
+  const body = citizen ? `_${T(L, "rulingsCard").replace("{0}", String(r.items.length))}_` : r.items.map((x) => rulingCard(x, L)).join("\n");
+  return `**${T(L, "rulings")}**\n\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${body}`;
 }
+
+/** The rulings as a card that opens in the side panel (always made, so they can be read at length). */
+export function rulingsArtifact(r: AnswerRulings | null | undefined, L: ALang): ArtifactItem | null {
+  if (!r?.items?.length) return null;
+  return {
+    id: `rulings-${Date.now()}`, title: `${T(L, "rulingsTitle")} (${r.items.length})`, kind: ArtifactKind.Markdown, language: L,
+    summary: T(L, "rulingsNote"), content: `# ${T(L, "rulingsTitle")}\n\n_${T(L, "rulingsNote")}._\n\n${r.items.map((x) => rulingCard(x, L)).join("\n\n")}`,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+const rulingRefs = (rs: RulingRef[] | undefined, L: ALang) =>
+  (rs ?? []).map((x) => `${T(L, "ruling")}${x.number ? " " + ltr(x.number) : ""}${x.date ? " · " + ltr(x.date) : ""}`).join("؛ ");
 
 /** Web research: links from official sites, after the law and the rulings, never numbered like the sources. */
 export function webBlock(w: WebResults | null | undefined, L: ALang): string {
@@ -43,20 +61,28 @@ export function webBlock(w: WebResults | null | undefined, L: ALang): string {
   return `**${T(L, "web")}**\n\n_${T(L, "webNote")}._\n\n${lines.join("\n")}`;
 }
 
-/** "What you can do now": the last part of an answer about a personal situation. [n] are the numbers of the answer's sources. */
+/** "What you can do now": the last part of an answer about a personal situation, built from the law, the time limits,
+ *  the similar rulings and what is still unknown. [n] are the numbers of the answer's sources. */
 export function nextStepsBlock(n: NextSteps | null | undefined, L: ALang, idx: Map<string, number>): string {
   if (!n?.steps?.length) return "";
+  const parts: string[] = [`**${T(L, "nextSteps")}**`, `_${T(L, "nextNote")}._`];
+  if (n.court_insights?.length) {
+    parts.push(`**${T(L, "insights")}:**\n` + n.court_insights.map((x) => `- ${x.text} _(${rulingRefs(x.rulings, L)})_`).join("\n"));
+  }
   const lines = n.steps.map((s, i) => {
     const refs = (s.sources ?? []).map((id) => idx.get(id)).filter(Boolean).map((k) => `[${k}]`).join("");
+    const court = s.rulings?.length ? ` _(${rulingRefs(s.rulings, L)})_` : "";
     const extra = [
       s.deadline ? `   - **${T(L, "deadline")}:** ${s.deadline}` : "",
       s.where ? `   - **${T(L, "where")}:** ${s.where}` : "",
       s.documents?.length ? `   - **${T(L, "documents")}:** ${s.documents.join(L === "ar" ? "، " : ", ")}` : "",
     ].filter(Boolean).join("\n");
-    return `${i + 1}. **${s.title}** ${refs}\n   ${s.text.replace(/\n+/g, " ")}${extra ? `\n${extra}` : ""}`;
+    return `${i + 1}. **${s.title}** ${refs}${court}\n   ${s.text.replace(/\n+/g, " ")}${extra ? `\n${extra}` : ""}`;
   });
-  const pro = n.professional ? `\n\n**${T(L, "whenPro")}:** ${n.professional}` : "";
-  return `**${T(L, "nextSteps")}**\n\n_${T(L, "nextNote")}._\n\n${lines.join("\n")}${pro}`;
+  parts.push(`**${T(L, "steps")}:**\n` + lines.join("\n"));
+  if (n.to_clarify?.length) parts.push(`**${T(L, "clarify")}:**\n` + n.to_clarify.map((c) => `- ${c}`).join("\n"));
+  if (n.professional) parts.push(`**${T(L, "whenPro")}:** ${n.professional}`);
+  return parts.join("\n\n");
 }
 
 /** Turns a backend answer into markdown + grounding sources for the chat bubble. */
@@ -104,7 +130,7 @@ export function evidenceArtifact(a: QueryAnswer): ArtifactItem | null {
   };
 }
 
-export function answerToMessage(a: QueryAnswer): { content: string; sources: GroundingSource[]; artifacts: ArtifactItem[] } {
+export function answerToMessage(a: QueryAnswer, opts: { citizen?: boolean } = {}): { content: string; sources: GroundingSource[]; artifacts: ArtifactItem[] } {
   const L = answerLang(a.language);
   const sources = a.sources ?? [];
   const idx = new Map(sources.map((s, i) => [s.id, i + 1]));
@@ -147,7 +173,7 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
     if (sources.length) {
       // Only the articles the verified claims rest on are listed here, with the numbers used in the answer ([5] stays 5).
       // Everything else that was retrieved is in the "Preuves" card; with no cited source (quoted-articles-only answers) the first ones are listed.
-      const citedIds = new Set((a.claims ?? []).flatMap((c) => c.sources));
+      const citedIds = new Set([...(a.claims ?? []).flatMap((c) => c.sources), ...(a.next_steps?.steps ?? []).flatMap((x) => x.sources ?? [])]);
       const pick = sources.map((s, i) => ({ s, n: i + 1 })).filter(({ s }) => citedIds.has(s.id));
       const byRelevance = sources.map((s, i) => ({ s, n: i + 1 })).sort((x, y) => (y.s.relevance ?? 0) - (x.s.relevance ?? 0));
       const shown = pick.length ? pick : byRelevance.slice(0, 5);
@@ -166,7 +192,7 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
       );
     }
   }
-  const rul = rulingsBlock(a.rulings, L);
+  const rul = rulingsBlock(a.rulings, L, !!opts.citizen);
   if (rul) parts.push(rul);
   const web = webBlock(a.web, L);
   if (web) parts.push(web);
@@ -193,6 +219,10 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
         .slice(0, 6)
         .map((s) => ({ title: `${s.law}, ${s.article}`, uri: srcUri(s) }));
     })(),
-    artifacts: ((): ArtifactItem[] => { const e = evidenceArtifact(a); return e ? [e] : []; })(),
+    artifacts: ((): ArtifactItem[] => {
+      const e = evidenceArtifact(a);
+      const r = rulingsArtifact(a.rulings, L);
+      return [...(e ? [e] : []), ...(r ? [r] : [])];
+    })(),
   };
 }

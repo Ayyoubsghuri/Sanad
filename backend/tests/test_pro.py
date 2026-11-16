@@ -324,3 +324,49 @@ def test_chat_answer_lists_similar_rulings_apart_from_the_law(ctx):
     assert not any(s.get("ruling_id") for s in out["sources"])  # rulings never mixed into the law sources
     ctx.db.set_settings({"show_rulings_in_answers": False})
     assert ask(q).get("rulings") is None                   # switched off in the settings
+
+
+def test_rulings_that_apply_the_answers_articles_come_first(ctx):
+    from legalrag.pro.rulings import related_for_answer
+    make_rulings(ctx)
+    db = sqlite3.connect(ctx.settings.data_dir / "rulings" / "rulings.db")
+    db.execute("""UPDATE ruling SET articles_json='[{"article": "41", "law": "مدونة الشغل"}]' WHERE ruling_id='102'""")
+    db.commit()
+    db.close()
+    st = open_store(ctx.settings.data_dir)
+    q = "التعويض عن الطرد التعسفي للأجير دون إخطار"
+    assert related_for_answer(st, q)["items"][0]["ruling_id"] == "101"                    # by subject alone
+    got = related_for_answer(st, q, articles={"41"})["items"]
+    assert got[0]["ruling_id"] == "102" and got[0]["applies"] == ["41"]                   # same article as the answer: first
+
+
+def test_plan_uses_rulings_only_through_checked_references(ctx):
+    from legalrag.pipeline import nextsteps as NEXT
+    make_rulings(ctx)
+    st = open_store(ctx.settings.data_dir)
+    from legalrag.pro.rulings import related_for_answer
+    rulings = related_for_answer(st, "التعويض عن الطرد التعسفي للأجير دون إخطار")
+    passages = {"C1": {"source": "مدونة الشغل", "text": "يحق للطرف المتضرر المطالبة بالتعويض. يجب رفع الدعوى داخل أجل تسعين يوما 90"},
+                "C2": {"source": "مدونة الشغل", "text": "الصلح التمهيدي لدى مفتش الشغل"}}
+
+    def script(req):
+        rid = req.payload["similar_rulings"][0]["id"]
+        assert req.payload["passages_on_time_limits"][0]["id"] == "C1"
+        return {"is_case": True, "professional": "محام", "to_clarify": ["ما نوع العقد؟", "هل توصلت بمقرر 777 ؟"],
+                "court_insights": [
+                    {"text": "قضت المحكمة بأن الأجير المطرود دون إخطار يستحق التعويض", "rulings": [rid]},
+                    {"text": "قضت المحكمة بتعويض 500000 درهم", "rulings": [rid]},          # a number the ruling does not contain
+                    {"text": "قاعدة بلا قرار", "rulings": ["R9"]}],                        # a ruling that was not given
+                "steps": [
+                    {"title": "ارفع الدعوى", "text": "داخل الأجل", "deadline": "90 يوما", "passages": ["C1"], "rulings": [rid, "R9"]},
+                    {"title": "احتفظ بالأدلة", "text": "اجمع الوثائق", "deadline": "عندك", "where": "", "passages": []},
+                    {"title": "اطلب الصلح", "text": "لدى مفتش الشغل", "where": "مفتشية الشغل", "passages": ["C2"]}]}
+
+    res = NEXT.build(ScriptedProvider(script), question="طردني المشغل ديالي بلا إنذار", lang="ar", as_of="2026-01-01", claims=[],
+                     passages=passages, calcs=[], rulings=rulings, case_id=None, deadline_ids=["C1"])
+    assert [x["text"] for x in res["court_insights"]] == ["قضت المحكمة بأن الأجير المطرود دون إخطار يستحق التعويض"]
+    assert res["court_insights"][0]["rulings"][0]["ruling_id"] == "101"
+    s0 = res["steps"][0]
+    assert s0["deadline"] == "90 يوما" and s0["sources"] == ["C1"] and [r["ruling_id"] for r in s0["rulings"]] == ["101"]
+    assert res["steps"][1]["deadline"] == ""                     # filler is not shown as a time limit
+    assert res["to_clarify"] == ["ما نوع العقد؟"]                  # an invented number is dropped

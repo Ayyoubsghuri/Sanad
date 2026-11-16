@@ -452,7 +452,8 @@ def test_a_personal_situation_ends_with_checked_next_steps(ctx):
     out, _ = ask(ctx, q, as_of=D("2026-01-01"))
     assert out["status"] in ("answered", "partial")
     steps = out["next_steps"]["steps"]
-    assert [s["title"] for s in steps] == ["Rassembler les preuves", "Demander vos droits"]
+    # the invented number goes; a time limit without a number ("rapidement") may stand without an article
+    assert [s["title"] for s in steps] == ["Rassembler les preuves", "Demander vos droits", "Délai sans article"]
     assert steps[1]["sources"] == [seen[0].payload["passages"][0]["id"]]          # the invented id is gone
     assert steps[1]["sources"][0] in {s["id"] for s in out["sources"] + out["related"]}
     assert out["next_steps"]["professional"]

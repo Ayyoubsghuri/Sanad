@@ -29,6 +29,21 @@ def _norm(w: str) -> str:
     return w.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا").replace("ة", "ه").replace("ى", "ي")
 
 
+def _articles(raw: str | None) -> list[str]:
+    """The article numbers a ruling cites ("41", "51"), in order, without repeats."""
+    try:
+        items = json.loads(raw or "[]")
+    except ValueError:
+        return []
+    out: list[str] = []
+    for a in items if isinstance(items, list) else []:
+        n = str(a.get("article") if isinstance(a, dict) else a or "").strip()
+        m = re.match(r"\d+", n)
+        if m and m.group(0) not in out:
+            out.append(m.group(0))
+    return out
+
+
 class RulingsStore:
     def __init__(self, path: Path):
         self.path = path
@@ -142,24 +157,34 @@ class RulingsStore:
             "keywords": r["keywords"], "principle": cut(r["principle"] or "", 900), "facts": cut(r["facts"] or "", 1200),
             "grounds": [{"ground": cut(g.get("ground", ""), 700), "answer": cut(g.get("answer", ""), 900), "accepted": g.get("accepted")} for g in grounds[:6]],
             "verdict": cut(r["verdict"] or "", 500), "quality": r["text_quality"], "ocr": bool(r["ocr"]),
+            "articles": _articles(r["articles_json"]),
             "source_url": f"https://pub-ecd37824be8e4b1da4aa7297a0ed1619.r2.dev/juriscassation_documents/{r['ruling_id']}.pdf"
             if str(r["ruling_id"]).isdigit() else None,
         }
 
 
-def related_for_answer(store: RulingsStore, text: str, k: int = 3, pool: int = 20) -> dict[str, Any] | None:
+def related_for_answer(store: RulingsStore, text: str, k: int = 3, pool: int = 20, articles: set[str] | None = None) -> dict[str, Any] | None:
     """Court of Cassation rulings on the same subject as a chat question, shown under the answer, apart from the law.
+    Rulings that apply the same articles as the answer come first (`articles`: the article numbers the answer rests on).
     by_outcome counts the outcomes among the most similar rulings found (at most `pool`)."""
     found = store.search(text, k=pool)
     if not found:
         return None
+    arts = {a for a in (articles or set()) if a}
+    for r in found:
+        r["applies"] = [a for a in r.get("articles") or [] if a in arts]
+    if arts:   # same subject AND same articles first; the search order is kept inside each group
+        found = sorted(found, key=lambda r: 0 if r["applies"] else 1)
     by_outcome: dict[str, int] = {}
     for r in found:
         o = r.get("outcome") or "unknown"
         by_outcome[o] = by_outcome.get(o, 0) + 1
-    items = [{key: r.get(key) for key in ("ruling_id", "number", "date", "file_number", "chamber", "outcome", "outcome_ar",
-                                           "keywords", "source_url")}
-             | {"principle": (r.get("principle") or "")[:400] + ("…" if len(r.get("principle") or "") > 400 else "")}
+    keys = ("ruling_id", "number", "date", "file_number", "chamber", "outcome", "outcome_ar", "keywords", "source_url", "applies")
+    items = [{key: r.get(key) for key in keys}
+             | {"principle": (r.get("principle") or "")[:400] + ("…" if len(r.get("principle") or "") > 400 else ""),
+                "ocr": r.get("ocr"), "full_principle": (r.get("principle") or "")[:1500],
+                "grounds": [{"ground": g.get("ground", "")[:300], "answer": g.get("answer", "")[:400], "accepted": g.get("accepted")}
+                            for g in (r.get("grounds") or [])[:3]]}
              for r in found[:k]]
     return {"similar": len(found), "by_outcome": by_outcome, "items": items}
 

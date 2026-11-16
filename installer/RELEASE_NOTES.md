@@ -2,6 +2,23 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.9
+
+- **The end of an answer is now a plan built from everything Sanad found.** When you describe your own situation,
+  "What you can do now" brings together the law, the time limits, the similar Court of Cassation rulings and what is still
+  unknown:
+  - **What the Court of Cassation decided in similar cases:** one or two plain sentences, each naming its ruling.
+  - **The steps, in order:** the most urgent first (a running time limit, keeping proof), each citing its articles and,
+    where it helps, a ruling.
+  - **What could change the answer:** the facts you did not give that matter (type of contract, reason given…).
+- **Time limits:** before writing the plan, Sanad also searches the same laws for their time limits and limitation
+  periods, so the most urgent step can give the deadline with its article.
+- **Better rulings:** rulings that apply the same articles as the answer come first, and each card says which article it
+  applies. In Citizen mode the rulings open from a card («قرارات محكمة النقض») instead of filling the answer; Pro Lawyer
+  mode keeps them in the answer.
+- Every point is checked in code: a sentence or step may only name the articles and rulings it was given, and a number
+  that none of them contains removes it. Empty "where" or "time limit" lines are no longer shown.
+
 ### New in 0.3.8
 
 - **Fixed: the window showed `{"detail":"Not Found"}`** when another Sanad backend was already running on port 8765

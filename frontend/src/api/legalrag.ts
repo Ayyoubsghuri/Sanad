@@ -193,6 +193,8 @@ export interface AnswerRuling {
   keywords?: string | null;
   principle?: string | null;
   source_url?: string | null;
+  applies?: string[] | null;
+  ocr?: boolean | null;
 }
 export interface AnswerRulings {
   similar: number;
@@ -200,7 +202,9 @@ export interface AnswerRulings {
   items: AnswerRuling[];
 }
 
+export interface RulingRef { ruling_id: string; number?: string | null; date?: string | null }
 export interface NextStep {
+  rulings?: RulingRef[];
   title: string;
   text: string;
   deadline?: string;
@@ -209,6 +213,8 @@ export interface NextStep {
   sources?: string[];
 }
 export interface NextSteps {
+  court_insights?: { text: string; rulings: RulingRef[] }[];
+  to_clarify?: string[];
   steps: NextStep[];
   professional?: string;
 }

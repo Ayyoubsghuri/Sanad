@@ -7,6 +7,7 @@ verifier passes. Any cloud failure degrades to quoted passages instead of failin
 """
 from __future__ import annotations
 
+import re
 import time
 import uuid
 from datetime import date
@@ -405,18 +406,50 @@ class QueryPipeline:
         return out
 
     # ------------------------------------------------------------------------------------------------------------ what to do next
+    def _deadline_passages(self, passages, ids, query: str, u, case_id: str) -> dict[str, Candidate]:
+        """Articles on time limits and limitation in the same laws as the answer: the most urgent part of a plan, and often
+        not among the articles found for the question itself ("how long do I have to sue?")."""
+        insts = list(dict.fromkeys(passages[i].chunk.instrument_id for i in ids if i in passages))[:3]
+        if not insts or self.ctx.engine is None:
+            return {}
+        try:
+            res = self.ctx.engine.retrieve(RetrievalRequest(
+                query=f"{query[:300]} أجل رفع الدعوى التقادم الآجال", as_of=u.as_of, today=self.ctx.today_fn(), lang="ar",
+                case_id=case_id, focus_instruments=insts, expand=False, keep=12))
+        except Exception:  # noqa: BLE001 - the plan is written without it
+            return {}
+        out: dict[str, Candidate] = {}
+        for c in res.candidates:
+            cid = f"C{c.chunk.chunk_id}"
+            if cid in passages or c.chunk.instrument_id not in insts or not NEXT.DEADLINE_WORDS.search(c.chunk.body):
+                continue
+            out[cid] = c
+            if len(out) >= 3:
+                break
+        return out
+
     def _next_steps(self, out, llm, verdict, passages, headers, calcs, text, case_id, u, lang, masking, pg) -> None:
-        """Practical steps for a personal situation, from the articles of the answer; names restored after the checks."""
+        """The plan for a personal situation, from the articles of the answer, the articles on time limits, the calculators
+        and the similar rulings; names restored after the checks."""
         ctx = self.ctx
         ok = verdict["report"].passed_claims
         cited = [cid for c in ok for cid in c.cited_chunks if cid in passages]
         ids = list(dict.fromkeys([*cited, *passages]))[:10]          # the cited articles first, then the best of the others
-        st = pg.start("Working out what you can do next", "analysis", f"from {len(ids)} article(s) of the answer")
+        st = pg.start("Working out what you can do next", "analysis", f"from {len(ids)} article(s) of the answer, the time limits and the similar rulings")
         try:
-            out["rulings"] = out.get("rulings") or (self._rulings(out.get("search_query") or text) if ctx.user_settings().get("show_rulings_in_answers", True) else None)
+            query = out.get("search_query") or text
+            extra = self._deadline_passages(passages, ids, query, u, case_id)
+            if extra:   # shown with the sources, so the steps' [n] point at them
+                shown = {x["id"] for x in out.get("sources", [])}
+                out["sources"] = out.get("sources", []) + [
+                    {**renderer.source_entry(ctx.pack, c, lang, u.as_of, cid), "role": "deadline"} for cid, c in extra.items() if cid not in shown]
+            heads = {**headers, **self._headers(extra)}
+            allp = {**{i: passages[i] for i in ids}, **extra}
+            out["rulings"] = out.get("rulings") or (self._rulings(query, out) if ctx.user_settings().get("show_rulings_in_answers", True) else None)
             res = NEXT.build(llm, question=text, lang=lang, as_of=u.as_of.isoformat(), claims=[c.claim["text"] for c in ok],
-                             passages={i: {"source": headers.get(i, ""), "text": passages[i].chunk.body} for i in ids},
-                             calcs=[r.text() for r in calcs.values()], rulings=out["rulings"], case_id=case_id, scan=masking)
+                             passages={i: {"source": heads.get(i, ""), "text": c.chunk.body} for i, c in allp.items()},
+                             calcs=[r.text() for r in calcs.values()], rulings=out["rulings"], case_id=case_id, scan=masking,
+                             deadline_ids=list(extra))
         except Exception as e:  # noqa: BLE001 - the steps are an extra: the verified answer is never lost over them
             out["fallbacks"] = out.get("fallbacks", []) + [f"next steps not written ({e.__class__.__name__})"]
             out["next_steps_error"] = e.__class__.__name__
@@ -428,17 +461,28 @@ class QueryPipeline:
         R = lambda s: ctx.pseudo.restore(s, case_id)[0] if s else s  # noqa: E731
         for x in res["steps"]:
             x.update(title=R(x["title"]), text=R(x["text"]), deadline=R(x["deadline"]), where=R(x["where"]), documents=[R(d) for d in x["documents"]])
+        for x in res["court_insights"]:
+            x["text"] = R(x["text"])
+        res["to_clarify"] = [R(c) for c in res["to_clarify"]]
         res["professional"] = R(res["professional"])
         out["next_steps"] = res
-        pg.done(st, f"{len(res['steps'])} step(s), each checked against its articles")
+        pg.done(st, f"{len(res['steps'])} step(s), {len(res['court_insights'])} point(s) from the rulings"
+                    + (f", {len(extra)} article(s) on time limits" if extra else "") + ", each checked against its sources")
 
     # ------------------------------------------------------------------------------------------------------------ helpers
-    def _rulings(self, text: str) -> dict[str, Any] | None:
+    @staticmethod
+    def _answer_articles(out: dict[str, Any]) -> set[str]:
+        """The article numbers the answer rests on: the sources its verified claims cite, else the sources shown."""
+        cited = {sid for c in out.get("claims") or [] for sid in c.get("sources", [])}
+        srcs = [x for x in out.get("sources") or [] if not cited or x.get("id") in cited]
+        return {m.group(0) for x in srcs for m in [re.search(r"\d+", str(x.get("article") or ""))] if m}
+
+    def _rulings(self, text: str, out: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Similar Court of Cassation rulings, searched on this computer only (rulings.db, when it is installed)."""
         from ..pro.rulings import open_store, related_for_answer
         try:
             store = open_store(self.ctx.settings.data_dir)
-            return related_for_answer(store, text) if store else None
+            return related_for_answer(store, text, articles=self._answer_articles(out or {})) if store else None
         except Exception:  # noqa: BLE001 - the rulings are an extra: never fail an answer over them
             return None
 
@@ -477,7 +521,7 @@ class QueryPipeline:
         us = ctx.user_settings()
         llm = ctx.llm()
         if out.get("status") in ("answered", "partial", "extractive_only") and us.get("show_rulings_in_answers", True) and "rulings" not in out:
-            out["rulings"] = self._rulings(out.get("search_query") or text)
+            out["rulings"] = self._rulings(out.get("search_query") or text, out)
         if getattr(self, "_web", False) and out.get("status") in ("answered", "partial", "extractive_only", "abstained"):
             pg = PG.current()
             st = pg.start("Searching official websites", "search", "a short query from the masked question; links only, not used in the answer")

@@ -754,7 +754,7 @@ export function App() {
       }
 
       if (answer.trace_id) lastTraceIdRef.current = answer.trace_id;
-      const { content: answerText, sources, artifacts: evidenceArtifacts } = answerToMessage(answer);
+      const { content: answerText, sources, artifacts: evidenceArtifacts } = answerToMessage(answer, { citizen: (settings.audienceMode || "citizen") === "citizen" });
       const content = skipped.length
         ? `${answerText}\n\n_Not sent (could not be read locally): ${skipped.join(", ")}_`
         : answerText;
