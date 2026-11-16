@@ -2,6 +2,23 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New: Professional Toolkit (Pro Lawyer mode)
+
+Switch the sidebar's audience button to **Pro Lawyer**, then open **Professional Toolkit**:
+
+- **AI Courtroom**: Lawyer A builds your client's case, Lawyer B attacks it, and an independent judge weighs both: the
+  issues and which side each favours, risks, what to do, and an estimated chance of success.
+- **Case Analyzer**: the legal issues of a file, the law in force on the date, what similar rulings decided and which
+  arguments won or lost there.
+- **Jurisprudence Finder**: comparable Court of Cassation rulings with their outcome and accepted or rejected grounds.
+- 24 tools for lawyers, judges and researchers, notaries, company legal departments and judicial officers (defence
+  memorandum, contract review, appeal grounds, comparing decisions, inheritance checklist, compliance, notices,
+  execution checklist and more).
+
+Every point cites its articles and rulings; citations the model invents are removed. On Windows the text is masked
+before it is sent and shown to you first. Court rulings appear once the rulings database is installed; until then the
+tools rely on the law alone.
+
 ### Downloads
 
 | File | For |
@@ -13,8 +30,8 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 **Windows:** the first start downloads the law pack and the local models (about 7 GB) and then opens Sanad in its own window.
 
-**Android:** open the `.apk` on the phone and allow installing from that source. If an older Sanad is installed,
-uninstall it first (each build is signed with a different key, so Android refuses to update over it).
+**Android:** open the `.apk` on the phone and allow installing from that source. If Android refuses to install over an
+older Sanad, uninstall that one first (it was signed with another key).
 On first start the app asks for the AI service (OpenAI, Gemini or Claude) and its key, and for a Cloudflare account ID and
 API token (search by meaning), then downloads the phone's law pack (use Wi-Fi).
 
