@@ -2,6 +2,10 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.4
+
+- The titles of "What you can do now" and "Similar Court of Cassation rulings" are now on their own line.
+
 ### New in 0.3.3
 
 - **What you can do now:** when you describe your own situation, the answer now ends with practical steps in the order to

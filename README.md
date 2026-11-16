@@ -30,7 +30,10 @@ on the device before anything is sent to a language model, and the app can also 
 |---|---|
 | **Answers with sources** | Date-aware hybrid search (dense + keyword + reranker) over the law pack. Each answer cites articles, and unsupported claims are removed or the answer falls back to quoted passages. |
 | **Privacy first** | The backend listens on `127.0.0.1` only. Personal data is pseudonymised locally; you see exactly what would be sent before it leaves. |
-| **Two operating modes** | Offline (no network calls) and Hybrid (pseudonymised text to the model you choose). |
+| **What to do next** | When you describe your own situation, the answer ends with practical steps in order: what to do, where, which papers to prepare, within which time limit, and when to see a professional. A step whose time limit or number is not in the articles it cites is removed. |
+| **Court rulings** | About 26,000 Court of Cassation rulings (2008–2025), downloaded from inside the app. The closest ones appear under each answer, apart from the law, with their outcome and a link to the PDF. |
+| **Professional toolkit** | In Pro Lawyer mode: AI Courtroom (two lawyers and a judge), Case Analyzer, Jurisprudence Finder and 24 tools for lawyers, judges, notaries, companies and judicial officers. |
+| **Two operating modes** | Offline (no network calls, or a model running on your own computer with Ollama or LM Studio) and Hybrid (pseudonymised text to the model you choose). |
 | **Legal tools** | Calculators (SMIG/SMAG, severance, deadlines, inheritance…), citizen situation guides, statute browser with the version in force on a given date, concordance tables, contract check. |
 | **Signed law pack** | The laws and their embeddings ship as one signed file. A pack that is not signed by the publisher is refused. |
 | **Stays current** | "Update BO" shows the installed and the published law pack and installs a newer one (checked against the publisher's signature), and finds new Official Bulletin issues and adds them to your local pack. |
@@ -49,6 +52,14 @@ The screenshots below were taken with the small synthetic test pack (texts marke
 
 <div align="center">
 <img src="docs/screenshots/calculators.png" width="620" alt="Verified legal calculators">
+</div>
+
+| What to do next, at the end of an answer | Professional Toolkit |
+|---|---|
+| <img src="docs/screenshots/next-steps.png" alt="An answer ending with the steps to take, the papers to prepare and when to see a professional"> | <img src="docs/screenshots/pro-toolkit.png" alt="Professional Toolkit: AI Courtroom, Case Analyzer, Jurisprudence Finder and the tools of each profession"> |
+
+<div align="center">
+<img src="docs/screenshots/courtroom.png" width="820" alt="AI Courtroom: the judge's assessment with the estimated chance of success, and the tabs of Lawyer A, Lawyer B and the judge">
 </div>
 
 ## Professional toolkit (Pro Lawyer mode)
@@ -72,8 +83,31 @@ the date and similar rulings are found locally; the model may cite only those so
 removed and the point is marked "no source"); names are restored on the device; any result opens as a document to
 export. Without a model (Offline mode) the tools list the articles and rulings found.
 
-Rulings come from `rulings.db`, built by the publisher from Court of Cassation PDFs and installed in
-`%USERPROFILE%\.moroccan-legal-rag\rulings\rulings.db`. Without it the tools use the law alone and say so.
+### Court rulings
+
+The toolkit's home screen offers **Download court rulings**: about 26,000 Court of Cassation rulings (2008–2025, 800 MB),
+each with its number, date, chamber, outcome, principle, and the grounds that were accepted or rejected. The file is
+checked against its published SHA-256 before it is installed, a stopped download continues where it left off, and
+**Update** appears when a newer set is published. Without the rulings the tools use the law alone and say so.
+
+Once installed, the rulings are also used in the normal chat, in Citizen and Pro Lawyer mode: each answer lists the
+closest rulings and how the most similar ones were decided. They are searched on the computer (nothing is sent) and
+shown apart from the law, as an aid to interpretation.
+
+## What to do next
+
+A question about the law in general ("what is the notice period?") gets the articles and their explanation. When you
+describe **your own situation** ("my employer dismissed me without notice after eight years…"), the answer also ends
+with **What you can do now**:
+
+- 3 to 6 steps in the order to take them, the most urgent first;
+- for each step: where to go, the papers to prepare, the time limit, and the article it rests on;
+- one line saying when a lawyer or another professional is needed.
+
+The steps are written from the same articles as the answer and then checked in code: a step can only cite those
+articles, and a step that gives a time limit with no article, or a number found neither in its articles nor in your
+question, is removed. Fewer than two valid steps: the section is left out. On Android the section is written by the
+model without this automatic check.
 
 ## Install on Windows
 
@@ -206,6 +240,9 @@ understand ──► date-aware hybrid retrieval ──► rerank ──► gene
                     answer ◄── restore names locally ◄── verify each claim against the cited articles
                                                          (regenerate once, else verified claims only,
                                                           else quoted passages only)
+                       │
+                       ├─ similar Court of Cassation rulings (searched locally, shown apart from the law)
+                       └─ what to do next (personal situations only; each step checked against its articles)
 ```
 
 | Folder | Contents |
@@ -220,5 +257,8 @@ understand ──► date-aware hybrid retrieval ──► rerank ──► gene
 - The calculators are labelled *unverified* unless they were checked against an official worked example.
 - Pseudonymisation is based on patterns, dictionaries and an optional Arabic NER model. Review the send preview for
   unusual names.
+- The court rulings were read from PDFs, partly by OCR: about one ruling in ten has an unclear outcome and some have no
+  date. Open the PDF for anything you rely on. The chance of success in the AI Courtroom is an estimate, not a prediction.
+- "What you can do now" guides you; it does not replace a professional who has read your file.
 - The consolidated texts are built from public sources. Check the Official Bulletin for anything you rely on.
 - More details in [`backend/README.md`](backend/README.md#honest-limitations).

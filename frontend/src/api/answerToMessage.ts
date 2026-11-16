@@ -30,7 +30,7 @@ export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang): str
     const link = x.source_url ? ` [${T(L, "pdf")}](${x.source_url})` : "";
     return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
   });
-  return `**${T(L, "rulings")}**\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
+  return `**${T(L, "rulings")}**\n\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
 }
 
 /** "What you can do now": the last part of an answer about a personal situation. [n] are the numbers of the answer's sources. */
@@ -46,7 +46,7 @@ export function nextStepsBlock(n: NextSteps | null | undefined, L: ALang, idx: M
     return `${i + 1}. **${s.title}** ${refs}\n   ${s.text.replace(/\n+/g, " ")}${extra ? `\n${extra}` : ""}`;
   });
   const pro = n.professional ? `\n\n**${T(L, "whenPro")}:** ${n.professional}` : "";
-  return `**${T(L, "nextSteps")}**\n_${T(L, "nextNote")}._\n\n${lines.join("\n")}${pro}`;
+  return `**${T(L, "nextSteps")}**\n\n_${T(L, "nextNote")}._\n\n${lines.join("\n")}${pro}`;
 }
 
 /** Turns a backend answer into markdown + grounding sources for the chat bubble. */
