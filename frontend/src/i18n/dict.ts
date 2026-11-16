@@ -869,4 +869,7 @@ export const DICT: Record<string, [string, string, string]> = {
   "Downloading… {0} / {1}": ["Downloading… {0} / {1}", "Téléchargement… {0} / {1}", "جارٍ التنزيل… {0} / {1}"],
   "{0} rulings · {1} · used by the Courtroom, the Case Analyzer and the Jurisprudence Finder": ["{0} rulings · {1} · used by the Courtroom, the Case Analyzer and the Jurisprudence Finder", "{0} arrêts · {1} · utilisés par le Tribunal IA, l'Analyse de dossier et la Recherche de jurisprudence", "{0} قرار · {1} · تستعملها المحكمة الافتراضية ومحلل القضايا والباحث في الاجتهاد"],
   "Download court rulings": ["Download court rulings", "Télécharger les arrêts", "تنزيل القرارات القضائية"],
+  "Désactivé en mode Hors-Ligne": ["Disabled in Offline mode", "Désactivé en mode Hors-Ligne", "معطّل في الوضع دون اتصال"],
+  "Utilisé en mode Hors-Ligne": ["Used in Offline mode", "Utilisé en mode Hors-Ligne", "مستعمل في الوضع دون اتصال"],
+  "Utiliser en mode Hors-Ligne": ["Use in Offline mode", "Utiliser en mode Hors-Ligne", "استعمله في الوضع دون اتصال"],
 };

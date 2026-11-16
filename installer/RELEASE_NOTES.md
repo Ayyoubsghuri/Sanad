@@ -2,6 +2,12 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.6
+
+- **API keys in Offline mode:** online providers (OpenAI, Anthropic, others) are shown greyed out as "Disabled in Offline
+  mode" and can no longer be tested, edited or selected; only a local model can be added and chosen. The button on a
+  local model now reads "Use in Offline mode" / "Used in Offline mode".
+
 ### New in 0.3.5
 
 - **One law pack on disk:** updating the law pack no longer keeps the old one as `previous.db`. The copy left by earlier

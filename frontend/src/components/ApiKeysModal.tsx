@@ -48,6 +48,12 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
   useEffect(() => {
     if (isOpen) load();
   }, [isOpen, load]);
+  useEffect(() => {   // in Offline mode the form opens on the local model: the online presets are disabled
+    if (isOpen && state?.mode === "offline" && kind !== "local" && !editingId) {
+      const lp = state.presets.find((x) => x.kind === "local");
+      setKind("local"); setLabel(tr("Modèle local")); setModel(lp?.models[0] ?? ""); setBaseUrl(lp?.base_url ?? "http://127.0.0.1:11434/v1"); setFound(null); setApiKey("");
+    }
+  }, [isOpen, state?.mode]);
 
   // a key that was typed but not saved must not outlive the window
   useEffect(() => {
@@ -59,6 +65,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
 
   if (!isOpen) return null;
 
+  const off = state?.mode === "offline";   // Offline mode: online providers are never called, only a local model can be used
   const preset = state?.presets.find((p) => p.kind === kind);
   const pickKind = (k: ProviderKind) => {
     setKind(k);
@@ -151,10 +158,11 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               </p>
             )}
             {state?.providers.map((p) => {
-              const isActive = state.active === p.id;
+              const unused = !!off && p.kind !== "local";       // an online provider while the app is in Offline mode
+              const isActive = off ? state.offline === p.id : state.active === p.id;
               const t = tests[p.id];
               return (
-                <div key={p.id} className="rounded-xl border p-3 space-y-2" style={{ borderColor: isActive ? "var(--accent-primary)" : "var(--border-subtle)", backgroundColor: isActive ? "var(--bg-card)" : "var(--bg-canvas)" }}>
+                <div key={p.id} className="rounded-xl border p-3 space-y-2" style={{ borderColor: isActive ? "var(--accent-primary)" : "var(--border-subtle)", backgroundColor: isActive ? "var(--bg-card)" : "var(--bg-canvas)", opacity: unused ? 0.55 : 1 }}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate" style={{ color: "var(--text-heading)" }}>
@@ -167,23 +175,26 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button type="button" onClick={() => edit(p)} className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer hover:opacity-85" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>{tr("Modifier")}</button>
-                      <button type="button" onClick={() => test(p.id)} disabled={busy === `test-${p.id}`} className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer hover:opacity-85 inline-flex items-center gap-1" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>
+                      <button type="button" onClick={() => edit(p)} disabled={unused} className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer hover:opacity-85 disabled:cursor-not-allowed" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>{tr("Modifier")}</button>
+                      <button type="button" onClick={() => test(p.id)} disabled={unused || busy === `test-${p.id}`} className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer hover:opacity-85 inline-flex items-center gap-1 disabled:cursor-not-allowed" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>
                         {busy === `test-${p.id}` ? <Loader2 className="w-3 h-3 animate-spin" /> : null}{tr("Tester")}
                       </button>
                       <button type="button" aria-label={tr("Supprimer")} onClick={() => run(`del-${p.id}`, () => deleteProvider(p.id))} className="p-1.5 rounded-lg hover:opacity-75 cursor-pointer" style={{ color: "var(--text-muted)" }}><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--text-heading)" }}>
+                    {unused && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border" style={{ borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}>{tr("Désactivé en mode Hors-Ligne")}</span>}
+                    {!off && (<>
                     <button type="button" onClick={() => run("active", () => setActiveProvider(isActive ? null : p.id))} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer" style={{ borderColor: isActive ? "var(--accent-primary)" : "var(--border-strong)", backgroundColor: isActive ? "var(--accent-primary)" : "transparent", color: isActive ? "var(--accent-primary-fg)" : "var(--text-heading)" }}>
                       {isActive ? <Check className="w-3 h-3" /> : null}{isActive ? tr("Utilisé pour répondre") : tr("Utiliser pour répondre")}
                     </button>
                     <button type="button" onClick={() => run("checker", () => setCheckerProvider(state.checker === p.id ? null : p.id))} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer" style={{ borderColor: state.checker === p.id ? "var(--accent-primary)" : "var(--border-strong)" }} title={tr("Un second modèle relit chaque affirmation face à sa source. Choisissez un modèle différent de celui qui rédige.")}>
                       {state.checker === p.id ? <Check className="w-3 h-3" /> : null}{tr("Vérificateur")}
                     </button>
+                    </>)}
                     {p.kind === "local" && (
                       <button type="button" onClick={() => run("offline", () => setOfflineProvider(state.offline === p.id ? null : p.id))} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer" style={{ borderColor: state.offline === p.id ? "var(--accent-primary)" : "var(--border-strong)" }} title={tr("En mode Hors-Ligne, ce modèle rédige les réponses. Rien ne quitte l'ordinateur.")}>
-                        {state.offline === p.id ? <Check className="w-3 h-3" /> : null}{tr("Mode Hors-Ligne")}
+                        {state.offline === p.id ? <Check className="w-3 h-3" /> : null}{state.offline === p.id ? tr("Utilisé en mode Hors-Ligne") : tr("Utiliser en mode Hors-Ligne")}
                       </button>
                     )}
                     {t && <span style={{ color: t.ok ? "var(--accent-primary)" : "#c0392b" }}>{t.text}</span>}
@@ -197,11 +208,11 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
           <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--border-subtle)" }}>
             <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--text-heading)" }}>
               <Plus className="w-4 h-4" />{editingId ? tr("Modifier le fournisseur") : tr("Ajouter un fournisseur")}
-              {editingId && <button type="button" onClick={() => pickKind("openai")} className="ml-auto text-xs underline cursor-pointer" style={{ color: "var(--text-muted)" }}>{tr("Annuler")}</button>}
+              {editingId && <button type="button" onClick={() => pickKind(off ? "local" : "openai")} className="ml-auto text-xs underline cursor-pointer" style={{ color: "var(--text-muted)" }}>{tr("Annuler")}</button>}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(state?.presets ?? []).map((p) => (
-                <button key={p.kind} type="button" disabled={!!editingId} onClick={() => pickKind(p.kind)} className="px-3 py-1.5 rounded-lg border text-xs cursor-pointer disabled:opacity-60" style={{ borderColor: kind === p.kind ? "var(--accent-primary)" : "var(--border-strong)", backgroundColor: kind === p.kind ? "var(--bg-card)" : "transparent", color: "var(--text-heading)" }}>
+                <button key={p.kind} type="button" disabled={!!editingId || (!!off && p.kind !== "local")} title={off && p.kind !== "local" ? tr("Désactivé en mode Hors-Ligne") : undefined} onClick={() => pickKind(p.kind)} className="px-3 py-1.5 rounded-lg border text-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" style={{ borderColor: kind === p.kind ? "var(--accent-primary)" : "var(--border-strong)", backgroundColor: kind === p.kind ? "var(--bg-card)" : "transparent", color: "var(--text-heading)" }}>
                   {p.kind === "openai_compat" ? tr("Autre (compatible OpenAI)") : p.kind === "local" ? tr("Modèle local (Ollama, LM Studio)") : p.label}
                 </button>
               ))}
