@@ -212,6 +212,7 @@ export interface QueryAnswer {
   web?: WebResults | null;
   rulings?: AnswerRulings | null;
   next_steps?: NextSteps | null;
+  next_steps_error?: string | null;
   status:
     | "answered" | "partial" | "extractive_only" | "abstained" | "needs_clarification"
     | "needs_input" | "review_required" | "unavailable" | "payload_preview" | "cancelled";

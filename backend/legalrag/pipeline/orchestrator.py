@@ -419,6 +419,7 @@ class QueryPipeline:
                              calcs=[r.text() for r in calcs.values()], rulings=out["rulings"], case_id=case_id, scan=masking)
         except Exception as e:  # noqa: BLE001 - the steps are an extra: the verified answer is never lost over them
             out["fallbacks"] = out.get("fallbacks", []) + [f"next steps not written ({e.__class__.__name__})"]
+            out["next_steps_error"] = e.__class__.__name__
             pg.done(st, "not written: the answer is shown without them")
             return
         if not res:

@@ -172,6 +172,7 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
   if (web) parts.push(web);
   const todo = nextStepsBlock(a.next_steps, L, idx);
   if (todo) parts.push(todo);
+  else if (a.next_steps_error) parts.push(`_${T(L, "nextFailed")}_`);
   if (a.research?.rounds?.length) {
     const more = a.research.rounds.reduce((n, r) => n + (r.added?.length ?? 0), 0);
     const tried = a.research.rounds.flatMap((r) => r.queries ?? []);
