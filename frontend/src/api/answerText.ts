@@ -15,6 +15,14 @@ const TXT = {
   why: R("Why", "Pourquoi", "السبب"),
   lawAsOf: R("Law as of", "Loi à la date du", "القانون المعمول به بتاريخ"),
   sources: R("Sources", "Sources", "المصادر"),
+  rulings: R("Similar Court of Cassation rulings", "Arrêts similaires de la Cour de cassation", "قرارات مشابهة لمحكمة النقض"),
+  rulingsNote: R("how the Court has decided similar cases: an aid to interpretation, not the law itself, and every case depends on its facts",
+    "comment la Cour a tranché des affaires proches : une aide à l'interprétation, pas la loi, et chaque affaire dépend de ses faits",
+    "كيف قضت المحكمة في قضايا قريبة: وسيلة للفهم وليست نصا قانونيا، وكل قضية تتوقف على وقائعها"),
+  rulingsAmong: R("Among the {0} most similar rulings found", "Parmi les {0} arrêts les plus proches trouvés", "من بين {0} قرارا الأقرب التي وُجدت"),
+  ruling: R("Ruling", "Arrêt", "القرار"),
+  chamber: R("chamber", "chambre", "الغرفة"),
+  pdf: R("PDF", "PDF", "PDF"),
   more: R("other retrieved passage(s): see the evidence card.", "autre(s) passage(s) retrouvé(s) : voir la carte de preuves.", "مقاطع أخرى تم العثور عليها: انظر بطاقة الأدلة."),
   notInForce: R("not in force on that date", "non en vigueur à cette date", "غير ساري في ذلك التاريخ"),
   contested: R("contested", "contesté", "محل نزاع"),
@@ -35,6 +43,26 @@ const TXT = {
   ),
 };
 export type Key = keyof typeof TXT;
+
+/** Outcome of a Court of Cassation ruling, with what it means for the decision that was appealed. */
+export const OUTCOME: Record<string, Row> = {
+  cassation: R("set aside (cassation)", "cassation (décision annulée)", "نقض (أُلغي القرار المطعون فيه)"),
+  partial_cassation: R("partly set aside", "cassation partielle", "نقض جزئي"),
+  rejected: R("appeal rejected (the decision stands)", "pourvoi rejeté (la décision est maintenue)", "رفض الطلب (بقي القرار قائما)"),
+  inadmissible: R("appeal inadmissible", "pourvoi irrecevable", "عدم قبول الطلب"),
+  reversed: R("judgment reversed", "jugement infirmé", "إلغاء الحكم المستأنف"),
+  affirmed: R("judgment affirmed", "jugement confirmé", "تأييد الحكم المستأنف"),
+  rectified: R("clerical error corrected", "erreur matérielle rectifiée", "إصلاح خطأ مادي"),
+  lapsed: R("appeal lapsed", "déchéance du pourvoi", "سقوط الطلب"),
+  withdrawn: R("withdrawn", "désistement", "تنازل / تشطيب"),
+  other: R("other", "autre", "أخرى"),
+  unknown: R("outcome unclear", "issue non déterminée", "منطوق غير واضح"),
+};
+export const CHAMBER: Record<string, Row> = {
+  civil: R("civil", "civile", "المدنية"), family: R("family", "statut personnel", "الأحوال الشخصية"),
+  commercial: R("commercial", "commerciale", "التجارية"), administrative: R("administrative", "administrative", "الإدارية"),
+  social: R("social", "sociale", "الاجتماعية"), criminal: R("criminal", "pénale", "الجنائية"), real_estate: R("real estate", "immobilière", "العقارية"),
+};
 export const T = (l: ALang, k: Key): string => TXT[k][l];
 
 const CHECK: Record<string, Row> = {

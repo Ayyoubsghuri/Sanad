@@ -2,6 +2,13 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.2
+
+- **Similar court rulings under every answer:** once the court rulings are downloaded (Professional Toolkit →
+  Download court rulings), each answer ends with the closest Court of Cassation rulings: number, date, chamber, outcome,
+  the principle and a link to the PDF, plus how the most similar rulings were decided. They are shown apart from the law,
+  as an aid to interpretation, and searched on this computer only (nothing is sent).
+
 ### New in 0.3.1
 
 - **Court rulings download:** the Professional Toolkit now offers **Download court rulings** (about 26,000 Court of

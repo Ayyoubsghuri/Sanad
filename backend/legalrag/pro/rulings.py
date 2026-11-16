@@ -147,6 +147,23 @@ class RulingsStore:
         }
 
 
+def related_for_answer(store: RulingsStore, text: str, k: int = 3, pool: int = 20) -> dict[str, Any] | None:
+    """Court of Cassation rulings on the same subject as a chat question, shown under the answer, apart from the law.
+    by_outcome counts the outcomes among the most similar rulings found (at most `pool`)."""
+    found = store.search(text, k=pool)
+    if not found:
+        return None
+    by_outcome: dict[str, int] = {}
+    for r in found:
+        o = r.get("outcome") or "unknown"
+        by_outcome[o] = by_outcome.get(o, 0) + 1
+    items = [{key: r.get(key) for key in ("ruling_id", "number", "date", "file_number", "chamber", "outcome", "outcome_ar",
+                                           "keywords", "source_url")}
+             | {"principle": (r.get("principle") or "")[:400] + ("…" if len(r.get("principle") or "") > 400 else "")}
+             for r in found[:k]]
+    return {"similar": len(found), "by_outcome": by_outcome, "items": items}
+
+
 _CACHE: dict[str, Any] = {}
 
 

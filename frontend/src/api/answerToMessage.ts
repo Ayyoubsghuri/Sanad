@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
-import { T, answerLang, failureText, noteText } from "./answerText";
+import { CHAMBER, OUTCOME, T, answerLang, failureText, noteText, type ALang } from "./answerText";
 import { ArtifactKind, type ArtifactItem, type GroundingSource, type PdfSnippet } from "../types/agent";
-import type { QueryAnswer, SourceEntry } from "./legalrag";
+import type { AnswerRulings, QueryAnswer, SourceEntry } from "./legalrag";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "Verified answer",
@@ -13,6 +13,24 @@ const STATUS_LABEL: Record<string, string> = {
 function srcUri(s: SourceEntry): string {
   if (s.source && typeof s.source === "object" && s.source.url) return s.source.url;
   return `legalrag://${s.id}`;
+}
+
+/** Similar Court of Cassation rulings: a block of its own after the law, never numbered like the law's sources. */
+export function rulingsBlock(r: AnswerRulings | null | undefined, L: ALang): string {
+  if (!r?.items?.length) return "";
+  const ltr = (x: string) => `\u2066${x.replace(/-/g, "\u2011")}\u2069`;  // numbers and dates stay left-to-right inside Arabic
+  const counts = Object.entries(r.by_outcome).sort((x, y) => y[1] - x[1])
+    .map(([o, n]) => `${n} ${(OUTCOME[o] ?? OUTCOME.other)[L]}`).join(" · ");
+  const lines = r.items.map((x) => {
+    const head = [x.number ? `${T(L, "ruling")} ${ltr(x.number)}` : T(L, "ruling"), x.date ? ltr(x.date) : "",
+      x.chamber && CHAMBER[x.chamber] ? (L === "ar" ? `${T(L, "chamber")} ${CHAMBER[x.chamber][L]}` : `${T(L, "chamber")} ${CHAMBER[x.chamber][L]}`) : ""]
+      .filter(Boolean).join(" · ");
+    const outcome = (OUTCOME[x.outcome || "unknown"] ?? OUTCOME.other)[L];
+    const about = (x.principle || x.keywords || "").replace(/\s+/g, " ").trim();
+    const link = x.source_url ? ` [${T(L, "pdf")}](${x.source_url})` : "";
+    return `- **${head}** — ${outcome}${link}${about ? `\n  > ${about}` : ""}`;
+  });
+  return `**${T(L, "rulings")}**\n_${T(L, "rulingsNote")}._\n\n_${T(L, "rulingsAmong").replace("{0}", String(r.similar))}: ${counts}._\n\n${lines.join("\n")}`;
 }
 
 /** Turns a backend answer into markdown + grounding sources for the chat bubble. */
@@ -122,6 +140,8 @@ export function answerToMessage(a: QueryAnswer): { content: string; sources: Gro
       );
     }
   }
+  const rul = rulingsBlock(a.rulings, L);
+  if (rul) parts.push(rul);
   if (a.research?.rounds?.length) {
     const more = a.research.rounds.reduce((n, r) => n + (r.added?.length ?? 0), 0);
     const tried = a.research.rounds.flatMap((r) => r.queries ?? []);

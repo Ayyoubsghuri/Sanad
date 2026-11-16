@@ -297,3 +297,30 @@ def test_rulings_download_installs_only_a_matching_file(client, ctx, monkeypatch
     assert client.get("/v1/pro/catalog", headers=H).json()["rulings_available"] is True
     ctx.db.set_settings({"mode": "offline"})
     assert client.post("/v1/pro/rulings/update", headers=H).status_code == 409
+
+
+def test_chat_answer_lists_similar_rulings_apart_from_the_law(ctx):
+    from datetime import date
+    from legalrag.pipeline.orchestrator import QueryPipeline
+    from legalrag.schemas import PrepareRequest, RunRequest
+    from test_pipeline import faithful
+
+    def ask(q):
+        pipe = QueryPipeline(ctx)
+        prep = pipe.prepare(PrepareRequest(question=q, as_of=date(2026, 1, 1)))
+        return pipe.run(prep["query_id"], RunRequest())
+
+    ctx.llm_override = ScriptedProvider(faithful)
+    q = "ما هو التعويض عن الطرد التعسفي للأجير دون إخطار ؟"
+    out = ask(q)
+    assert out["status"] in ("answered", "partial", "extractive_only")
+    assert out.get("rulings") is None                      # no rulings.db: nothing, and no error
+    make_rulings(ctx)
+    out = ask(q)
+    r = out["rulings"]
+    assert r["items"][0]["ruling_id"] == "101" and r["items"][0]["outcome_ar"] == "نقض"
+    assert "103" not in {x["ruling_id"] for x in r["items"]}   # family ruling on maintenance: another subject
+    assert sum(r["by_outcome"].values()) == r["similar"]
+    assert not any(s.get("ruling_id") for s in out["sources"])  # rulings never mixed into the law sources
+    ctx.db.set_settings({"show_rulings_in_answers": False})
+    assert ask(q).get("rulings") is None                   # switched off in the settings

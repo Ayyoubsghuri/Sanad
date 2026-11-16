@@ -170,7 +170,26 @@ export interface AnswerClaim {
   verified: boolean;
 }
 
+export interface AnswerRuling {
+  ruling_id: string;
+  number?: string | null;
+  date?: string | null;
+  file_number?: string | null;
+  chamber?: string | null;
+  outcome?: string | null;
+  outcome_ar?: string | null;
+  keywords?: string | null;
+  principle?: string | null;
+  source_url?: string | null;
+}
+export interface AnswerRulings {
+  similar: number;
+  by_outcome: Record<string, number>;
+  items: AnswerRuling[];
+}
+
 export interface QueryAnswer {
+  rulings?: AnswerRulings | null;
   status:
     | "answered" | "partial" | "extractive_only" | "abstained" | "needs_clarification"
     | "needs_input" | "review_required" | "unavailable" | "payload_preview" | "cancelled";

@@ -397,6 +397,15 @@ class QueryPipeline:
         return out
 
     # ------------------------------------------------------------------------------------------------------------ helpers
+    def _rulings(self, text: str) -> dict[str, Any] | None:
+        """Similar Court of Cassation rulings, searched on this computer only (rulings.db, when it is installed)."""
+        from ..pro.rulings import open_store, related_for_answer
+        try:
+            store = open_store(self.ctx.settings.data_dir)
+            return related_for_answer(store, text) if store else None
+        except Exception:  # noqa: BLE001 - the rulings are an extra: never fail an answer over them
+            return None
+
     def _headers(self, passages: dict[str, Candidate]) -> dict[str, str]:
         """What a reader sees above an article: the text's title (with its own date and number) and the bulletin that published it.
         Sent with each passage and used by the checks, so "the order of 2 January 2026, BO 7475" can be quoted and verified."""
@@ -431,6 +440,8 @@ class QueryPipeline:
         ctx = self.ctx
         us = ctx.user_settings()
         llm = ctx.llm()
+        if out.get("status") in ("answered", "partial", "extractive_only") and us.get("show_rulings_in_answers", True):
+            out["rulings"] = self._rulings(out.get("search_query") or text)
         trace = {
             "status": out["status"], "created_at": None, "pseudonymised_question": text if us["store_question_text"] else None,
             "as_of": out.get("as_of"), "as_of_source": out.get("as_of_source"), "mode": out.get("mode"), "language": out.get("language"),
