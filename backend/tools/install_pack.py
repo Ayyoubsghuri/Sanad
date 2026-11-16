@@ -3,7 +3,7 @@
     py tools\install_pack.py                 # uses pack_release.json from the repository
     py tools\install_pack.py --db current.db --sig current.db.sig --key <public key hex>     # files you already downloaded
 
-It checks the SHA-256 and the publisher's signature BEFORE anything is replaced, keeps the old pack as previous.db, then installs the new one in
+It checks the SHA-256 and the publisher's signature BEFORE anything is replaced, then installs the new one (it replaces the old one) in
 the app's data folder (~\.moroccan-legal-rag\lawpack).  Restart the backend afterwards."""
 from __future__ import annotations
 
@@ -100,8 +100,8 @@ def main() -> int:
         LawPack(db).close()  # opens it and reads the meta: catches a corrupted file
         dest = Settings().resolved_lawpack_path()
         dest.parent.mkdir(parents=True, exist_ok=True)
-        if dest.exists():
-            shutil.copy2(dest, dest.with_name("previous.db"))
+        for old in (dest.with_name("previous.db"), dest.with_name("previous.db.sig")):   # left by earlier versions: one pack is kept
+            old.unlink(missing_ok=True)
         (shutil.move if db.parent == tmp else shutil.copy2)(str(db), str(dest))  # a downloaded 2 GB file is moved, not copied twice
         shutil.copy2(sig, dest.with_suffix(dest.suffix + ".sig"))
         shutil.rmtree(tmp, ignore_errors=True)

@@ -64,7 +64,7 @@ def test_check_then_install(setup):
     job = _wait(u)
     assert job["state"] == "done", job
     assert ctx.pack.version == info["pack_version"] and ctx.pack_usable()
-    assert (ctx.settings.resolved_lawpack_path().with_name("previous.db")).exists()
+    assert not (ctx.settings.resolved_lawpack_path().with_name("previous.db")).exists()   # one pack on disk
     assert u.check()["update_available"] is False
 
 

@@ -185,7 +185,7 @@ def test_job_downloads_extracts_indexes_and_installs(job_env):
     assert d["added"]["articles"] >= 4 and d["found"][0]["name"] == "BO_7499_Ar"
     assert c.pack.version != old_version and c.pack_usable()
     assert c.pack.meta.get("last_bo_check")
-    assert (c.settings.resolved_lawpack_path().with_name("previous.db")).exists()  # rollback copy
+    assert not (c.settings.resolved_lawpack_path().with_name("previous.db")).exists()  # one pack on disk
     # run again: nothing new, nothing changes
     again = u.start(); _wait(u)
     assert again.to_dict()["state"] == "done" and again.to_dict()["added"] == {}

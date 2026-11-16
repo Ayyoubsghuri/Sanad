@@ -1,7 +1,7 @@
 """The "check for new Bulletin Officiel" job: find -> download -> extract -> parse -> embed -> install, with live progress.
 
 One job at a time, in a background thread (the UI polls GET /v1/bo/update).  The running pack is never modified: new text is appended to a
-COPY of it, which is signed (when the pack is signed) and verified before install_pack swaps it in, keeping previous.db for rollback."""
+COPY of it, which is signed (when the pack is signed) and verified before install_pack puts it in place of the current one."""
 from __future__ import annotations
 
 import json
@@ -353,7 +353,7 @@ class BoUpdater:
             work.unlink(missing_ok=True)
             return
 
-        # 5. install (verify + atomic swap, previous.db kept) --------------------------------------------------------------------------------
+        # 5. install (verify + replace in one step) --------------------------------------------------------------------------------
         st = self._begin(job, "install", total=1)
         self._check_cancel(job)
         try:

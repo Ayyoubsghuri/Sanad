@@ -130,7 +130,7 @@ export function PackUpdatePanel({ onInstalled, busy }: { onInstalled?: () => voi
       {!running && job?.state === "done" && (
         <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-heading)" }}>
           <CheckCircle2 className="w-4 h-4" style={{ color: "var(--accent-primary)" }} />
-          {tr("Law pack {0} installed. The previous one is kept as previous.db.", [job.installed_version ?? ""])}
+          {tr("Law pack {0} installed.", [job.installed_version ?? ""])}
         </div>
       )}
       {!running && job?.state === "error" && job.error && <div className="text-xs" style={{ color: "#c0392b" }}>{job.error}</div>}

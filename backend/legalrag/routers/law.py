@@ -84,34 +84,13 @@ async def pack_import(pack: UploadFile = File(...), signature: UploadFile | None
     if signature:
         with open(s, "wb") as f:
             shutil.copyfileobj(signature.file, f)
-    old_path = ctx.settings.resolved_lawpack_path()
-    try:
-        old = LawPack(old_path) if old_path.exists() else None
-    except PackError:
-        old = None
     try:
         res = install_pack(ctx, p, s if signature else None)
     except PackError as e:
         raise HTTPException(422, str(e))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    res["changes"] = st.pack_changes(ctx.pack, old) if ctx.pack else None
-    if old:
-        old.close()
     return res
-
-
-@router.get("/pack/changes", tags=["pack"])
-def pack_changes(ctx: AppContext = Depends(require_pack)) -> dict:
-    """Articles that changed between the previous pack and this one (before-and-after notes)."""
-    prev = ctx.settings.resolved_lawpack_path().with_name("previous.db")
-    if not prev.exists():
-        return {"previous_pack": None, "changes": []}
-    old = LawPack(prev)
-    try:
-        return st.pack_changes(ctx.pack, old)
-    finally:
-        old.close()
 
 
 # ------------------------------------------------------------------------------------------------ instruments & provisions

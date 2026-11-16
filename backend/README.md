@@ -74,8 +74,8 @@ with the laws and their embeddings), published as a file of a GitHub Release.
 py tools\install_pack.py
 ```
 
-This downloads the pack named in `pack_release.json`, checks its SHA-256 and the publisher's signature **before** replacing anything, keeps the old
-one as `previous.db` and installs the new one in `~\.moroccan-legal-rag\lawpack`. Then set the publisher's key (printed at the end, also in
+This downloads the pack named in `pack_release.json`, checks its SHA-256 and the publisher's signature **before** replacing anything, and installs the new one (only one pack is kept
+on disk) in `~\.moroccan-legal-rag\lawpack`. Then set the publisher's key (printed at the end, also in
 `pack_release.json`) and restart the backend:
 
 ```

@@ -2,6 +2,11 @@
 
 Sanad answers questions on Moroccan law from the official texts, with the articles it relies on.
 
+### New in 0.3.5
+
+- **One law pack on disk:** updating the law pack no longer keeps the old one as `previous.db`. The copy left by earlier
+  versions is deleted at the next start, which frees about 2 GB.
+
 ### New in 0.3.4
 
 - The titles of "What you can do now" and "Similar Court of Cassation rulings" are now on their own line.

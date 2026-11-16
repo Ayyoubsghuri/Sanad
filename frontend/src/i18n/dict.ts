@@ -22,7 +22,7 @@ export const DICT: Record<string, [string, string, string]> = {
   "Checking the SHA-256 and the publisher's signature": ["Checking the SHA-256 and the publisher's signature", "Vérification du SHA-256 et de la signature de l'éditeur", "التحقق من SHA-256 ومن توقيع الناشر"],
   "Installing the law pack": ["Installing the law pack", "Installation du pack de lois", "تثبيت حزمة القوانين"],
   "The published pack is signed with a different key than the one this app trusts: it will not be installed.": ["The published pack is signed with a different key than the one this app trusts: it will not be installed.", "Le pack publié est signé avec une autre clé que celle à laquelle l'application fait confiance : il ne sera pas installé.", "الحزمة المنشورة موقّعة بمفتاح غير الذي يثق به التطبيق: لن تُثبَّت."],
-  "Law pack {0} installed. The previous one is kept as previous.db.": ["Law pack {0} installed. The previous one is kept as previous.db.", "Pack de lois {0} installé. L'ancien est conservé sous previous.db.", "تم تثبيت حزمة القوانين {0}. احتُفظ بالسابقة باسم previous.db."],
+  "Law pack {0} installed.": ["Law pack {0} installed.", "Pack de lois {0} installé.", "تم تثبيت حزمة القوانين {0}."],
   "Stopped. Click again to continue the download.": ["Stopped. Click again to continue the download.", "Arrêté. Cliquez à nouveau pour reprendre le téléchargement.", "توقف. انقر مرة أخرى لمتابعة التنزيل."],
   "Your law pack is up to date.": ["Your law pack is up to date.", "Votre pack de lois est à jour.", "حزمة القوانين لديك محدّثة."],
   "A newer law pack is available.": ["A newer law pack is available.", "Un pack de lois plus récent est disponible.", "تتوفر حزمة قوانين أحدث."],

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import secrets
+import os
 import shutil
 from dataclasses import dataclass, field
 from typing import Callable
@@ -243,25 +244,42 @@ def build_context(settings: Settings, transport: httpx.BaseTransport | None = No
     ctx.load_pack()
     db.purge_expired()
     db.purge_old_traces(settings.trace_retention_days)
+    for old in ("previous.db", "previous.db.sig"):       # earlier versions kept a second copy of the pack: free that space
+        try:
+            settings.resolved_lawpack_path().with_name(old).unlink(missing_ok=True)
+        except OSError:
+            pass
     return ctx
 
 
 def install_pack(ctx: AppContext, new_db: Path, new_sig: Path | None) -> dict[str, Any]:
-    """Verify a downloaded / imported pack, swap it in atomically, keep the previous one for rollback + change notes."""
+    """Verify a downloaded / imported pack, put it in place of the current one (only one pack is kept on disk)."""
     dest = ctx.settings.resolved_lawpack_path()
     dest.parent.mkdir(parents=True, exist_ok=True)
     trust = verify_pack(new_db, effective_public_key(ctx.settings), new_sig)
     if not trust.ok and not (ctx.settings.allow_unsigned_pack and trust.state in ("unsigned", "no_public_key")):
         raise PackError(f"pack rejected: {trust.state} {trust.detail}")
     LawPack(new_db).close()  # opens and reads meta: catches corruption
-    prev = dest.with_name("previous.db")
-    if dest.exists():
-        shutil.copy2(dest, prev)
-        sig = dest.with_suffix(dest.suffix + ".sig")
-        if sig.exists():
-            shutil.copy2(sig, prev.with_suffix(".db.sig"))
-    shutil.copy2(new_db, dest)
+    # one pack on disk: the new file is copied next to the old one, then takes its place in one step, so a copy that
+    # fails (disk full, power cut) leaves the old pack untouched; no "previous.db" is kept (it doubled the disk space)
+    tmp = dest.with_name(dest.name + ".new")
+    shutil.copy2(new_db, tmp)
+    if ctx.pack:                      # Windows cannot replace a file that is open
+        ctx.pack.close()
+        ctx.pack = None
+    try:
+        os.replace(tmp, dest)
+    except OSError:
+        tmp.unlink(missing_ok=True)
+        if dest.exists():
+            ctx.load_pack(dest)       # the old pack goes back in service
+        raise
+    sig_dest = dest.with_suffix(dest.suffix + ".sig")
     if new_sig and new_sig.exists():
-        shutil.copy2(new_sig, dest.with_suffix(dest.suffix + ".sig"))
+        shutil.copy2(new_sig, sig_dest)
+    else:
+        sig_dest.unlink(missing_ok=True)
+    for old in (dest.with_name("previous.db"), dest.with_name("previous.db.sig")):   # left by earlier versions
+        old.unlink(missing_ok=True)
     ctx.load_pack(dest)
     return {"installed": True, "pack_version": ctx.pack.version if ctx.pack else None, "trust": trust.state}

@@ -3,8 +3,8 @@
 The published pack is described by pack_release.json on the repository's main branch (version, size, SHA-256, download
 addresses, publisher key). A download is only installed when its SHA-256 matches AND its signature verifies against the
 publisher key this machine already trusts (LEGALRAG_LAWPACK_PUBLIC_KEY_HEX); a different key in the published file is
-refused, so a changed web page cannot make the app accept a pack from someone else. The previous pack is kept as
-previous.db. An interrupted download continues where it stopped the next time."""
+refused, so a changed web page cannot make the app accept a pack from someone else. Only one pack is kept on disk:
+the new one replaces the old one. An interrupted download continues where it stopped the next time."""
 from __future__ import annotations
 
 import re
@@ -171,7 +171,7 @@ class PackUpdater:
                 raise PackError("the download does not match the published SHA-256: not installed (click again to download it again)")
             if self._cancel.is_set():
                 raise InterruptedError
-            self._set(step="install", detail="replacing the law pack (the old one is kept as previous.db)", progress=0.92)
+            self._set(step="install", detail="replacing the law pack", progress=0.92)
             if ctx.pack:  # Windows cannot overwrite an open file
                 ctx.pack.close()
                 ctx.pack = None
