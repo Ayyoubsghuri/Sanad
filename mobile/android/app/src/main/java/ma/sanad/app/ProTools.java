@@ -41,7 +41,7 @@ final class ProTools {
     ProTools(Api.Host host) { this.host = host; }
 
     private synchronized JSONObject kit() throws Exception {
-        if (kit == null) kit = new JSONObject(host.asset("pro_toolkit.json"));
+        if (kit == null) kit = new JSONObject(host.webAsset("pro_toolkit.json"));
         return kit;
     }
 

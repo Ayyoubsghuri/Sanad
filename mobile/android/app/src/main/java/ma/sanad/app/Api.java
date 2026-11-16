@@ -26,7 +26,7 @@ final class Api {
         Engine engine();          // null while the law pack is not installed
         Pack pack();
         Prefs prefs();
-        String asset(String name) throws Exception;   // a file of the bundled web folder (assets/web)
+        String webAsset(String name) throws Exception;   // a file of the bundled web folder (assets/web)
     }
 
     private static final class Query {
