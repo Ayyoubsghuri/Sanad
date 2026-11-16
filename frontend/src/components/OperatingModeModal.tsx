@@ -70,6 +70,7 @@ export function OperatingModeModal({
         tr("Calculs de SMIG, indemnités et droits de mutation 100% locaux"),
         tr("Consultation bilingue exacte des lois 58.25, 03.23, DOC et 65-99"),
         tr("Fonctionne sans connexion Internet"),
+        tr("Réponses rédigées par un modèle local (Ollama, LM Studio) si vous en ajoutez un dans Clés API"),
       ],
     },
     {

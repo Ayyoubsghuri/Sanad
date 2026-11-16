@@ -9,6 +9,8 @@ import {
   listProviders,
   saveProvider,
   setActiveProvider,
+  setOfflineProvider,
+  localModels,
   setCheckerProvider,
   testProvider,
 } from "../api/providers";
@@ -33,6 +35,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
   const [baseUrl, setBaseUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [found, setFound] = useState<{ models: string[]; error?: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,9 +63,10 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
   const pickKind = (k: ProviderKind) => {
     setKind(k);
     const p = state?.presets.find((x) => x.kind === k);
-    setLabel(k === "openai" ? "OpenAI" : k === "anthropic" ? "Anthropic" : tr("Autre fournisseur"));
+    setLabel(k === "openai" ? "OpenAI" : k === "anthropic" ? "Anthropic" : k === "local" ? tr("Modèle local") : tr("Autre fournisseur"));
     setModel(p?.models[0] ?? "");
-    setBaseUrl("");
+    setBaseUrl(k === "local" ? p?.base_url ?? "http://127.0.0.1:11434/v1" : "");
+    setFound(null);
     setEditingId(null);
     setApiKey("");
   };
@@ -89,11 +93,19 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
   const save = () =>
     run("save", async () => {
       const id = editingId ?? slug(label);
-      await saveProvider(id, { kind, label: label.trim(), model: model.trim(), base_url: kind === "openai_compat" ? baseUrl.trim() : null, api_key: apiKey.trim() || null });
+      await saveProvider(id, { kind, label: label.trim(), model: model.trim(), base_url: kind === "openai_compat" || kind === "local" ? baseUrl.trim() : null, api_key: kind === "local" ? null : apiKey.trim() || null });
+      if (kind === "local" && !state?.offline) await setOfflineProvider(id);   // the first local model is the one Offline mode uses
       setApiKey("");
       setEditingId(null);
     });
-  const canSave = label.trim() && model.trim() && (editingId || kind === "openai_compat" || apiKey.trim().length >= 8) && (kind !== "openai_compat" || /^https?:\/\//.test(baseUrl.trim()));
+  const canSave = label.trim() && model.trim() && (editingId || kind === "openai_compat" || kind === "local" || apiKey.trim().length >= 8) && (kind !== "openai_compat" || /^https?:\/\//.test(baseUrl.trim()))
+    && (kind !== "local" || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?/.test(baseUrl.trim()));
+  const findModels = () =>
+    run("find", async () => {
+      const r = await localModels(baseUrl.trim() || "http://127.0.0.1:11434/v1");
+      setFound({ models: r.models, error: r.ok ? undefined : r.error });
+      if (r.models.length && !model.trim()) setModel(r.models[0]);
+    });
   const test = (id: string) =>
     run(`test-${id}`, async () => {
       const r = await testProvider(id);
@@ -123,7 +135,9 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
           {state?.mode === "offline" && (
             <div className="flex items-start gap-2 rounded-xl border p-3 text-xs" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-card)", color: "var(--text-heading)" }}>
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--accent-warm)" }} />
-              {tr("Le mode Hors-Ligne est actif : aucun fournisseur n'est appelé. Passez en mode Hybride pour utiliser votre clé.")}
+              {state.offline
+                ? tr("Mode Hors-Ligne : les réponses sont rédigées par votre modèle local ({0}). Rien ne quitte l'ordinateur.", [state.providers.find((p) => p.id === state.offline)?.model ?? ""])
+                : tr("Le mode Hors-Ligne est actif : aucun fournisseur en ligne n'est appelé. Ajoutez un modèle local (Ollama, LM Studio) pour obtenir des réponses rédigées sans connexion.")}
             </div>
           )}
           {err && <div className="rounded-xl border p-3 text-xs" style={{ borderColor: "#c0392b", color: "#c0392b" }}>{err}</div>}
@@ -148,7 +162,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                       </div>
                       <div className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
                         <ShieldCheck className="w-3 h-3" />
-                        {p.has_key ? tr("Clé enregistrée (jamais réaffichée)") : p.kind === "openai_compat" ? tr("Sans clé") : tr("Clé manquante")}
+                        {p.kind === "local" ? tr("Sur cet ordinateur · sans clé") : p.has_key ? tr("Clé enregistrée (jamais réaffichée)") : p.kind === "openai_compat" ? tr("Sans clé") : tr("Clé manquante")}
                         {p.base_url ? <span className="font-code truncate">· {p.base_url}</span> : null}
                       </div>
                     </div>
@@ -167,6 +181,11 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                     <button type="button" onClick={() => run("checker", () => setCheckerProvider(state.checker === p.id ? null : p.id))} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer" style={{ borderColor: state.checker === p.id ? "var(--accent-primary)" : "var(--border-strong)" }} title={tr("Un second modèle relit chaque affirmation face à sa source. Choisissez un modèle différent de celui qui rédige.")}>
                       {state.checker === p.id ? <Check className="w-3 h-3" /> : null}{tr("Vérificateur")}
                     </button>
+                    {p.kind === "local" && (
+                      <button type="button" onClick={() => run("offline", () => setOfflineProvider(state.offline === p.id ? null : p.id))} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer" style={{ borderColor: state.offline === p.id ? "var(--accent-primary)" : "var(--border-strong)" }} title={tr("En mode Hors-Ligne, ce modèle rédige les réponses. Rien ne quitte l'ordinateur.")}>
+                        {state.offline === p.id ? <Check className="w-3 h-3" /> : null}{tr("Mode Hors-Ligne")}
+                      </button>
+                    )}
                     {t && <span style={{ color: t.ok ? "var(--accent-primary)" : "#c0392b" }}>{t.text}</span>}
                   </div>
                 </div>
@@ -183,7 +202,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
             <div className="flex flex-wrap gap-1.5">
               {(state?.presets ?? []).map((p) => (
                 <button key={p.kind} type="button" disabled={!!editingId} onClick={() => pickKind(p.kind)} className="px-3 py-1.5 rounded-lg border text-xs cursor-pointer disabled:opacity-60" style={{ borderColor: kind === p.kind ? "var(--accent-primary)" : "var(--border-strong)", backgroundColor: kind === p.kind ? "var(--bg-card)" : "transparent", color: "var(--text-heading)" }}>
-                  {p.kind === "openai_compat" ? tr("Autre (compatible OpenAI)") : p.label}
+                  {p.kind === "openai_compat" ? tr("Autre (compatible OpenAI)") : p.kind === "local" ? tr("Modèle local (Ollama, LM Studio)") : p.label}
                 </button>
               ))}
             </div>
@@ -198,12 +217,40 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                 <datalist id="provider-models">{(preset?.models ?? []).map((m) => (<option key={m} value={m} />))}</datalist>
               </label>
             </div>
+            {kind === "local" && (
+              <div className="space-y-2">
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  {tr("Le modèle tourne sur votre ordinateur : rien ne quitte l'ordinateur, et il fonctionne en mode Hors-Ligne. Installez Ollama (ollama.com) puis, par exemple, « ollama pull qwen2.5:7b », ou chargez un modèle dans LM Studio et démarrez son serveur local.")}
+                </p>
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="text-xs space-y-1 flex-1 min-w-[220px]" style={{ color: "var(--text-muted)" }}>
+                    {tr("Adresse du serveur local")}
+                    <input className={field + " font-code"} style={fstyle} value={baseUrl} onChange={(e) => { setBaseUrl(e.target.value); setFound(null); }} spellCheck={false} />
+                  </label>
+                  <button type="button" onClick={() => { setBaseUrl("http://127.0.0.1:11434/v1"); setFound(null); }} className="px-2.5 py-2 rounded-lg border text-xs cursor-pointer" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>Ollama</button>
+                  <button type="button" onClick={() => { setBaseUrl("http://127.0.0.1:1234/v1"); setFound(null); }} className="px-2.5 py-2 rounded-lg border text-xs cursor-pointer" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>LM Studio</button>
+                  <button type="button" onClick={findModels} disabled={busy === "find"} className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs cursor-pointer" style={{ borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }}>
+                    {busy === "find" ? <Loader2 className="w-3 h-3 animate-spin" /> : null}{tr("Trouver les modèles installés")}
+                  </button>
+                </div>
+                {found && found.error && <p className="text-[11px]" style={{ color: "#c0392b" }}>{found.error}</p>}
+                {found && !found.error && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {found.models.length === 0 && <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>{tr("Le serveur répond mais aucun modèle n'est installé.")}</span>}
+                    {found.models.map((m) => (
+                      <button key={m} type="button" onClick={() => setModel(m)} className="px-2 py-1 rounded-lg border text-[11px] font-code cursor-pointer" style={{ borderColor: model === m ? "var(--accent-primary)" : "var(--border-strong)", backgroundColor: model === m ? "var(--bg-card)" : "transparent", color: "var(--text-heading)" }}>{m}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {kind === "openai_compat" && (
               <label className="text-xs space-y-1 block" style={{ color: "var(--text-muted)" }}>
                 {tr("Adresse de l'API (base URL)")}
                 <input className={field + " font-code"} style={fstyle} value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://openrouter.ai/api/v1" spellCheck={false} />
               </label>
             )}
+            {kind !== "local" && (<>
             <label className="text-xs space-y-1 block" style={{ color: "var(--text-muted)" }}>
               {tr("Clé API")}{editingId ? " " + tr("(laisser vide pour garder la clé actuelle)") : kind === "openai_compat" ? " " + tr("(facultative)") : ""}
               <div className="relative">
@@ -216,6 +263,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
             <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
               {tr("La clé est envoyée une seule fois au serveur local et rangée dans le trousseau de votre système ({0}). Elle n'est jamais renvoyée à l'écran ni incluse dans l'application.", [state?.key_storage ?? "…"])}
             </p>
+            </>)}
             <div className="flex justify-end">
               <button type="button" onClick={save} disabled={!canSave || busy === "save"} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed" style={{ backgroundColor: "var(--accent-primary)", color: "var(--accent-primary-fg)" }}>
                 {busy === "save" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}

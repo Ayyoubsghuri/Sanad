@@ -105,7 +105,8 @@ class QueryPipeline:
             "query_id": qid, "case_id": case_id, "mode": mode, "pseudonymised_text": res_text,
             "highlights": [{"placeholder": e.placeholder, "kind": e.kind, "start": e.start, "end": e.end} for e in ents],
             "entity_counts": counts, "confidence": conf, "warnings": warns, "requires_review": needs_review,
-            "requires_approval": not us["auto_approve_send"], "strict": strict, "planned_outbound_calls": PLANNED_CALLS[mode],
+            "requires_approval": not us["auto_approve_send"], "strict": strict, "planned_outbound_calls": PLANNED_CALLS[mode] if not (mode == "offline" and ctx.offline_provider_id()) else [
+                {"kind": "generate", "where": "this computer", "sends": "nothing leaves the computer (local model)"}],
             "note": "Nothing has left the device. Only this pseudonymised text and public law passages can be sent.",
         }
         if needs_review:

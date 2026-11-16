@@ -159,7 +159,7 @@ class ReminderIn(BaseModel):
 
 
 class ProviderIn(BaseModel):
-    kind: Literal["openai", "anthropic", "openai_compat"]
+    kind: Literal["openai", "anthropic", "openai_compat", "local"]
     label: str = Field(..., min_length=1, max_length=60)
     model: str = Field(..., min_length=1, max_length=100)
     base_url: str | None = Field(None, max_length=300)  # openai_compat only (OpenRouter, Azure, a local server...); the OpenAI / Anthropic presets need none

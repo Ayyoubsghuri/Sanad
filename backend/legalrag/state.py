@@ -147,6 +147,7 @@ class AppContext:
 
     # ---- providers chosen in the app (Settings > API keys) -------------------------------------------------------------
     PRESET_BASE = {"openai": "https://api.openai.com/v1", "anthropic": "https://api.anthropic.com"}
+    LOCAL_BASE = "http://127.0.0.1:11434/v1"   # Ollama; LM Studio is http://127.0.0.1:1234/v1
 
     def provider_secret_name(self, pid: str) -> str:
         return f"llm_p_{pid}"
@@ -161,18 +162,35 @@ class AppContext:
         kind, base = cfg.get("kind"), (cfg.get("base_url") or self.PRESET_BASE.get(cfg.get("kind", ""), "")).rstrip("/")
         if kind == "anthropic":
             return AnthropicProvider(self.gateway, cfg["model"], key, base or None, self.settings.cloud_timeout_s)
+        if kind == "local":
+            base = base or self.LOCAL_BASE
         if not base:
             return None
-        prov = OpenAICompatProvider(self.gateway, cfg["model"], key, base, self.settings.cloud_timeout_s)
-        prov.name = "openai" if kind == "openai" else "openai_compat"
+        # a model on this computer can take minutes for a long answer on an ordinary CPU
+        prov = OpenAICompatProvider(self.gateway, cfg["model"], key, base, 900.0 if kind == "local" else self.settings.cloud_timeout_s)
+        prov.name = {"openai": "openai", "local": "local"}.get(kind, "openai_compat")
         return prov
+
+    def is_local_provider(self, pid: str | None) -> bool:
+        cfg = (self.user_settings().get("llm_providers") or {}).get(pid or "")
+        return bool(cfg) and cfg.get("kind") == "local"
+
+    def offline_provider_id(self) -> str | None:
+        """The local model used in Offline mode: the one chosen for it, else the active provider if it is local."""
+        st = self.user_settings()
+        for pid in (st.get("llm_offline"), st.get("llm_active")):
+            if pid and self.is_local_provider(pid):
+                return pid
+        return None
 
     def llm(self) -> LLMProvider | None:
         if self.llm_override is not None:
             return self.llm_override if self.mode != "offline" else None
+        if self.mode == "offline":   # only a model on this computer, never a cloud one
+            return self._provider_from_settings(self.offline_provider_id())
         chosen = self._provider_from_settings(self.user_settings().get("llm_active"))
         if chosen is not None:
-            return chosen if self.mode != "offline" else None
+            return chosen
         s = self.settings
         if self.mode == "offline" or s.llm_provider == "none" or not s.llm_model:
             return None
