@@ -15,7 +15,7 @@ from typing import Any
 from ..text import stopwords
 
 OUTCOME_AR = {"cassation": "نقض", "partial_cassation": "نقض جزئي", "rejected": "رفض الطلب", "inadmissible": "عدم القبول",
-              "reversed": "إلغاء الحكم المستأنف", "affirmed": "تأييد الحكم المستأنف", "rectified": "إصلاح خطأ مادي", "other": "أخرى"}
+              "reversed": "إلغاء الحكم المستأنف", "affirmed": "تأييد الحكم المستأنف", "rectified": "إصلاح خطأ مادي", "lapsed": "سقوط الطلب", "withdrawn": "تنازل / تشطيب", "other": "أخرى"}
 CHAMBERS = ("civil", "family", "commercial", "administrative", "social", "criminal", "real_estate")
 _WORD = re.compile(r"[ء-ي]{3,}|[A-Za-zÀ-ÿ]{4,}")
 _PREFIX = re.compile(r"^(?:وال|بال|فال|كال|لل|ال|و|ف|ب)(?=[ء-ي]{3,})")
