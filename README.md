@@ -270,7 +270,7 @@ understand ──► date-aware hybrid retrieval ──► rerank ──► gene
 | [`backend/`](backend/) | FastAPI backend (`legalrag`): retrieval, verification, pseudonymisation, calculators, pack builder, tests |
 | [`frontend/`](frontend/) | React + Vite interface |
 | [`installer/`](installer/) | Windows installers (`.exe` with NSIS, `.msi` with WiX), the `Sanad.exe` launcher and the first-start setup |
-| [`blueprint/`](blueprint/) | The design document in English, French and Arabic |
+| [`blueprint/`](blueprint/) | The design document in English, French and Arabic; the first pages are the November 2026 revision (rulings, Professional Toolkit, next steps, local model, amended rules and risks) |
 
 ## Limitations
 
