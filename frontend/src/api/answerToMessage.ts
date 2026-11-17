@@ -75,6 +75,25 @@ export function nextStepsBlock(n: NextSteps | null | undefined, L: ALang, idx: M
   return parts.join("\n\n");
 }
 
+interface CalcView { tool: string; result?: Record<string, number>; legal_basis?: string[]; [k: string]: unknown }
+
+/** A calculator result in words; the dismissal figures (hours and months of wage) get their own sentences. */
+function calcLine(c: CalcView, L: ALang): string {
+  if (c.tool === "dismissal_figures" && c.result) {
+    const art = (i: number) => {
+      const n = (c.legal_basis ?? []).map((b) => (b.match(/\d+/) || [""])[0])[i];
+      return n ? `${L === "fr" ? "art." : L === "en" ? "art." : "المادة"} \u2066${n}\u2069` : "";
+    };
+    const out: string[] = [];
+    let i = 0;
+    if (c.result.severance_hours != null) out.push(`- ${T(L, "sevHours").replace("{0}", `\u2066${c.result.severance_hours}\u2069`).replace("{1}", art(i++))}`);
+    if (c.result.damages_months != null) out.push(`- ${T(L, "dmgMonths").replace("{0}", `\u2066${c.result.damages_months}\u2069`).replace("{1}", art(i++))}`);
+    out.push(`  _${T(L, "figuresNote").replace("{0}", String(c.result.years_of_service ?? ""))}._`);
+    return out.join("\n");
+  }
+  return `- ${c.tool}: \`${JSON.stringify(c)}\``;
+}
+
 /** Turns a backend answer into markdown + grounding sources for the chat bubble. */
 /** PDF evidence: the articles the answer rests on, each WHOLE (never the retrieval chunk), with the page of the official bulletin.
  *  Articles the verified claims cite come first; if nothing is cited (quoted-articles-only answers) every retrieved article is shown. */
@@ -159,7 +178,7 @@ export function answerToMessage(a: QueryAnswer, opts: { citizen?: boolean } = {}
         parts.push(T(L, "bring") + "\n" + a.abstain.bring_to_professional.map((b) => `- ${b}`).join("\n"));
     }
     const calcs = (a.calculators ?? []).filter((c) => c.status === "ok");
-    if (calcs.length) parts.push(`**${T(L, "calculations")}**\n` + calcs.map((c) => `- ${c.tool}: \`${JSON.stringify(c)}\``).join("\n"));
+    if (calcs.length) parts.push(`**${T(L, "calculations")}**\n` + calcs.map((c) => calcLine(c as unknown as CalcView, L)).join("\n"));
     if (sources.length) {
       // Only the articles the verified claims rest on are listed here, with the numbers used in the answer ([5] stays 5).
       // Everything else that was retrieved is in the "Preuves" card; with no cited source (quoted-articles-only answers) the first ones are listed.

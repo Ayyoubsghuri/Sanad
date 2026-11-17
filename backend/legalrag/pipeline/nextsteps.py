@@ -50,7 +50,11 @@ Rules:
 - to_clarify: 0 to 4 facts the person did not give that would change what applies (e.g. the type of contract, the reason the employer gave).
   Short questions to ask oneself, no numbers.
 - "professional": one sentence saying when a lawyer (or adoul, notary, labour inspector, as fits) is needed for this situation.
-- Do not repeat the answer. Do not invent names: keep the placeholders exactly as written (e.g. [PERSON_1]).
+- Do not repeat the answer: "verified_answer" is already shown above the plan. A step never restates a rule; it says what to DO, where, with
+  which papers, by when. A point the answer already made appears in a step only as an action (e.g. "ask the employer for the written dismissal
+  decision", not "the employer must give a written decision"). Keep each step to one or two short sentences: it is read on a phone.
+- Use the calculator results (hours or months of wage) in the step where the person claims them, with the condition they depend on.
+- Do not invent names: keep the placeholders exactly as written (e.g. [PERSON_1]).
 - Write in the language given in "language"."""
 
 SCHEMA: dict[str, Any] = {

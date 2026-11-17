@@ -700,7 +700,7 @@ export const ArtifactWorkbench: React.FC<ArtifactWorkbenchProps> = ({
     <div
       className={`absolute ${
         align === "top" ? "bottom-full mb-2" : "top-full mt-2"
-      } right-0 w-72 rounded-xl border p-2 shadow-2xl z-50`}
+      } end-0 w-72 max-w-[calc(100vw-2rem)] rounded-xl border p-2 shadow-2xl z-50`}
       style={{
         backgroundColor: "var(--bg-surface)",
         borderColor: "var(--border-subtle)",

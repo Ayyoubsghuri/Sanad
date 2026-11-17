@@ -46,6 +46,29 @@ PLANNED_CALLS = {
 }
 
 
+_YEAR_WORDS = {"سنة": 1, "عام": 1, "سنتين": 2, "عامين": 2, "ثلاث": 3, "ثلاثة": 3, "اربع": 4, "اربعة": 4, "خمس": 5, "خمسة": 5, "ست": 6, "ستة": 6,
+               "سبع": 7, "سبعة": 7, "ثمان": 8, "ثماني": 8, "ثمانية": 8, "تمن": 8, "تسع": 9, "تسعة": 9, "عشر": 10, "عشرة": 10,
+               "un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 6, "sept": 7, "huit": 8, "neuf": 9, "dix": 10,
+               "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+_YEARS_RE = re.compile(r"(\d{1,2}|[ء-ي]+|[a-zéè]+)\s*(?:ديال\s*)?(?:سنوات|سنين|سنة|سنه|اعوام|عاما|عام|ans?|années?|years?)(?!\w)", re.I)
+
+
+def _service_years(text: str) -> int | None:
+    """"طردني بعد 8 سنين ديال الخدمة", "après huit ans", "after 8 years" -> 8; None when no length of service is given."""
+    from ..text.arabic import normalize
+    for m in _YEARS_RE.finditer(normalize(text)):
+        w = m.group(1).lower()
+        around = normalize(text)[max(0, m.start() - 12): m.end() + 14]
+        if re.search(r"عمر|(?<!\w)age(?!\w)|âgé|agé|years old|ans révolus", around):   # "عمري 30 سنة", "âgé de 30 ans": an age, not years of service
+            continue
+        n = int(w) if w.isdigit() else _YEAR_WORDS.get(w)
+        if n and 1 <= n <= 60:
+            return n
+    if re.search(r"(?<!\w)(?:سنتين|عامين)(?!\w)", normalize(text)):
+        return 2
+    return None
+
+
 def _strict_question(issue: str, facts: list, lang_hint: str = "fr") -> str:
     """Deterministic text from a glossary issue id + typed facts: no free text."""
     entry = next((e for e in terms_svc.glossary() if e["id"] == issue), None)
@@ -219,6 +242,17 @@ class QueryPipeline:
                     return self._finish({**base, "status": "needs_input", "needs_input": {"tool": c["tool"], "message": e.message, "missing": e.missing}}, case_id, text, None, t_start, u)
         base["calculators"] += [{"id": k, **r.to_dict(), "status": "ok"} for k, r in calcs.items()]
 
+        # -- dismissed after N years: the severance hours and damages months come from the calculator, never from the model --
+        yrs = _service_years(text) if any(e["id"] == "dismissal" for e in terms_svc.match_entries(text)) else None
+        if yrs and not any(r.tool == "dismissal_figures" for r in calcs.values()):
+            try:
+                from ..calc.tools import dismissal_figures
+                k = f"K{len(calcs) + 1}"
+                calcs[k] = dismissal_figures(pack, yrs, u.as_of)
+                base["calculators"].append({"id": k, **calcs[k].to_dict(), "status": "ok"})
+            except CalcError:
+                pass
+
         # -- plan: a long story holds several legal issues; search each on its own ----------------------------------------------------------
         if PLAN.worth_planning(text) and not u.exact_refs:
             llm_p = ctx.llm()
@@ -241,6 +275,13 @@ class QueryPipeline:
                 domains = list(dict.fromkeys([*u.domains, *(e["domain"] for e in terms_svc.match_entries(q_ar))]))
                 base["search_query"] = q_ar
                 pg.done(st_q, q_ar)
+
+        # -- topics whose decisive articles are rarely in the user's words (dismissal: the disciplinary procedure, who must prove
+        #    the reason, the time limit to sue): searched too, as extra sub-questions ("also_search" in data/glossary.json) --------------
+        if not u.exact_refs:
+            extra_qs = [q for e in terms_svc.match_entries(f"{text} {search_text}") for q in e.get("also_search", [])]
+            if extra_qs:
+                sub_qs = list(dict.fromkeys([*(sub_qs or [text]), *extra_qs]))[: s.max_subquestions + len(extra_qs)]
 
         # -- retrieval ---------------------------------------------------------------------------------------------------------------------
         rreq = RetrievalRequest(

@@ -36,8 +36,9 @@ NEW = [("المادة", 1, "تسري أحكام هذا القانون على ج�
        ("المادة", 5, "تحدد مدة التقادم في الدعاوى المدنية بخمس سنوات من تاريخ الحق.")]
 LAB1 = [("المادة", 1, "يستحق الأجير المرتبط بعقد شغل غير محدد المدة تعويضا عند فصله بعد قضائه ستة أشهر من الشغل داخل نفس المقاولة."),
         ("المادة", 2, "يعادل مبلغ التعويض عن الفصل عن كل سنة ما يلي: 96 ساعة من الأجرة في الخمس سنوات الأولى و 144 ساعة بين السنة السادسة والعاشرة و 192 ساعة بين الحادية عشرة والخامسة عشرة و 240 ساعة بعد ذلك."),
-        ("المادة", 3, "تدخل ضمن مدد الشغل الفعلي فترات العطلة السنوية المؤدى عنها.")]
-LAB2 = [("المادة", 1, LAB1[0][2]), ("المادة", 2, LAB1[1][2].replace("96 ساعة", "98 ساعة")), ("المادة", 3, LAB1[2][2])]
+        ("المادة", 3, "تدخل ضمن مدد الشغل الفعلي فترات العطلة السنوية المؤدى عنها."),
+        ("المادة", 4, "إذا ثبت للمحكمة أن فصل الأجير كان تعسفيا يحدد مبلغ التعويض عن الضرر على أساس أجر شهر ونصف عن كل سنة عمل أو جزء من السنة على ألا يتعدى سقف 36 شهرا.")]
+LAB2 = [("المادة", 1, LAB1[0][2]), ("المادة", 2, LAB1[1][2].replace("96 ساعة", "98 ساعة")), ("المادة", 3, LAB1[2][2]), ("المادة", 4, LAB1[3][2])]
 
 
 @pytest.fixture(scope="module")
@@ -268,3 +269,40 @@ def test_install_pack_download_resumes_and_checks_hash(tmp_path, pack_path, keys
     srv.shutdown()
     assert r.returncode == 0, r.stdout + r.stderr
     assert (udir / "lawpack" / "current.db").read_bytes() == data and calls["n"] == 1
+
+
+def test_dismissal_figures_from_years_of_service(tctx):
+    from legalrag.calc.tools import dismissal_figures
+
+    r = dismissal_figures(tctx.pack, 8, date(2026, 10, 27))           # the 2026 edition: 98 hours for the first five years
+    assert r.result["severance_hours"] == 5 * 98 + 3 * 144 and r.result["damages_months"] == 12
+    assert "5 x 98 = 490" in r.text() and "8 x 1.5 = 12 months" in r.text()
+    assert dismissal_figures(tctx.pack, 30, date(2026, 10, 27)).result["damages_months"] == 36   # the cap
+    assert dismissal_figures(tctx.pack, 8, date(2025, 1, 1)).result["severance_hours"] == 5 * 96 + 3 * 144
+
+
+def test_dismissal_question_gets_figures_and_extra_searches(tctx):
+    from legalrag.llm.providers import ScriptedProvider
+    from legalrag.pipeline.orchestrator import QueryPipeline
+    from legalrag.schemas import PrepareRequest, RunRequest
+    seen = []
+
+    def script(req):
+        seen.append(req)
+        return {"assumptions": [], "claims": []}
+
+    searched = []
+    real = tctx.engine.retrieve
+    tctx.engine.retrieve = lambda rreq: (searched.append(rreq), real(rreq))[1]
+    tctx.llm_override = ScriptedProvider(script)
+    try:
+        pipe = QueryPipeline(tctx)
+        prep = pipe.prepare(PrepareRequest(question="طردني المشغل ديالي بلا إنذار بعد 8 سنين ديال الخدمة، شنو حقوقي؟", as_of=date(2026, 10, 27)))
+        out = pipe.run(prep["query_id"], RunRequest())
+    finally:
+        tctx.llm_override = None
+    calc = next(c for c in out["calculators"] if c.get("tool") == "dismissal_figures")
+    assert calc["result"]["severance_hours"] == 5 * 98 + 3 * 144 and calc["result"]["damages_months"] == 12
+    gen = next(r for r in seen if r.kind == "generate")
+    assert any(t["calc_id"] == calc["id"] and "12 months" in t["text"] for t in gen.payload["tool_outputs"])   # the model gets the figures
+    assert any("عبء إثبات" in q for q in searched[0].sub_questions)                                            # and searches the burden of proof

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-PROMPT_VERSION = "gen-2026-11-f"
+PROMPT_VERSION = "gen-2026-11-g"
 
 ANSWER_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -63,6 +63,11 @@ Rules (a program re-checks every one of them; violations are discarded):
 18. When a passage marked as a definition (role "definition") defines a term that another passage uses (e.g. "سن الرشد القانوني"), read the term as defined there and quote the definition too.
 19. A passage with role "prior_version" whose valid_to is before the as_of date is a text that is NO LONGER in force (repealed or replaced). If the user cites it, say plainly that this article stopped applying on that date and quote what it said, as history. Then, if another passage in force states the same rule (often under a different article number in the new law), give that one as the rule in force today. Never present an ended text as current, and never present an unrelated article that merely has the same number as its replacement.
 20. When "question_kind" is "open_procedure" (the user asks how to do something and no single article answers it), organise the claims as: (a) first the ROUTES the passages offer, one claim each, with the condition that decides it (who asks, why, by agreement or not), (b) then the STEPS in the order the law gives them (where to file, what the request contains, the attempt at reconciliation, the court's permission or judgment, the consequences for the spouse and children), each with its own quote. List every route the passages contain; never say a route is missing when a passage describes it. Do not assume the user's situation (who they are, whether the other party agrees): say which route fits which situation. Still no advice on what to choose.
+21. When a passage puts the burden of proof on one party (e.g. "يقع على المشغل عبء إثبات") or makes a procedure mandatory before a decision
+    (a hearing, a written decision, a time limit), say plainly in an "application" claim what that means on the user's facts, quoting it
+    (e.g. it is the employer who must prove the reason given). Do not write that the facts "do not show" something the law makes the other party prove.
+22. When a tool output (K1...) gives figures for the user's facts (hours or months of wage, amounts), state them in an "application" claim,
+    quoting the tool output, with the condition each depends on.
 Return JSON matching the schema, nothing else."""
 
 REWRITE_SYSTEM = """You turn the last message of a chat about Moroccan law into ONE self-contained question that can be understood without the chat.

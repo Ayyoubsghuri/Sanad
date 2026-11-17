@@ -554,3 +554,45 @@ EXAMPLES: dict[str, list[dict]] = {
          "official": False, "source": "hand-derived from the fixed-share rules (not an official worked example)"},
     ],
 }
+
+
+# =============================================================== dismissal figures from the years of service (no wage needed)
+def dismissal_figures(pack: LawPack, years: int, on: date) -> CalcResult:
+    """What the years of service give, in HOURS and MONTHS of wage, read from the Labour Code in force on `on`:
+    the severance (hours per year by band) and the cap of the damages for abusive dismissal (a month and a half per year).
+    Used when someone says "dismissed after 8 years": the wage is often not given, the hours and months still are."""
+    from .basis import damages_from_law, severance_from_law
+
+    if years < 1 or years > 60:
+        raise CalcError("needs_input", "years of service must be between 1 and 60", ["years"])
+    sev, dmg = severance_from_law(pack, on), damages_from_law(pack, on)
+    if not sev and not dmg:
+        raise CalcError("unavailable", "the Labour Code articles on severance and damages were not found in the law pack")
+    result: dict[str, Any] = {"years_of_service": years}
+    steps: list[str] = []
+    basis: list[str] = []
+    arts: list[dict[str, Any]] = []
+    if sev:
+        bands = list(zip(((1, 5), (6, 10), (11, 15), (16, None)), sev["hours"]))
+        total, parts = 0, []
+        for (a, b), h in bands:
+            n = max(0, min(years, b if b is not None else years) - a + 1)
+            if n:
+                total += n * h
+                parts.append(f"{n} x {h} = {n * h}")
+        result["severance_hours"] = total
+        steps.append(f"severance (article {sev['articles']['amount']}): " + " + ".join(parts) + f" = {total} hours of wage")
+        if sev.get("min_months"):
+            steps.append(f"severance is due only after {sev['min_months']} months of work and not for serious misconduct (article {sev['articles'].get('right')})")
+        basis.append(f"Labour Code art. {sev['articles']['amount']}")
+    if dmg:
+        months = min(years * dmg["months_per_year"], dmg["cap_months"])
+        result["damages_months"] = months
+        steps.append(f"damages if the court finds the dismissal abusive (article {dmg['article']}): {years} x 1.5 = {years * 1.5:g} months"
+                     + (f", capped at {dmg['cap_months']} months" if years * 1.5 > dmg["cap_months"] else "") + f" = {months:g} months of wage")
+        basis.append(f"Labour Code art. {dmg['article']}")
+        arts.append({"number": dmg["article"], "text": dmg["text"]})
+    steps.append("multiply by the hourly wage (severance) and the monthly wage (damages) to get amounts")
+    return CalcResult("dismissal_figures", {"years": years, "on": on.isoformat()}, result,
+                      "severance hours = sum of the hours set for each year's band; damages = 1.5 months per year, within the cap",
+                      basis, [], steps, ["unverified: computed from the articles in the law pack; whole years only"], False, on.isoformat(), arts)

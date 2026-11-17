@@ -100,3 +100,19 @@ def severance_from_law(pack: LawPack, on: date) -> dict[str, Any] | None:
             out["min_months"] = int(m.group(1))
         out["articles"]["right"] = right[0]["number"]
     return out
+
+
+def damages_from_law(pack: LawPack, on: date) -> dict[str, Any] | None:
+    """{"months_per_year": 1.5, "cap_months": 36, "article": "41", "text": ...}: the damages for abusive dismissal as the
+    Labour Code in force on `on` words them ("أجر شهر ونصف عن كل سنة عمل أو جزء من السنة على ألا يتعدى سقف 36 شهرا")."""
+    from ..services.tools import articles_with_phrase
+
+    got = articles_with_phrase(pack, "LAW_65.99", ["شهر ونصف", "سقف"], on, prefer="41")
+    if not got:
+        return None
+    t = re.sub(r"\s+", " ", got[0]["text"])
+    cap = re.search(r"سقف\s*(\d{1,3})\s*شهر", t)
+    if not cap:
+        return None
+    return {"months_per_year": 1.5, "cap_months": int(cap.group(1)), "article": got[0]["number"], "text": got[0]["text"],
+            "fraction_counts": "أو جزء من السنة" in t}
