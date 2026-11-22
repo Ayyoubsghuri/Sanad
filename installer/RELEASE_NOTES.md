@@ -4,16 +4,11 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **Choose how Sanad searches by meaning before anything is downloaded.** The first start now checks the computer's
-  memory:
-  - **Less than 16 GB:** Sanad uses **Cloudflare Workers AI** for search by meaning and does not install the local
-    models (about 2.5 GB to download instead of 7 GB, and much lighter on memory).
-  - **16 GB or more:** you choose **Install the models on this computer** or **Cloudflare Workers AI**.
-- **Cloudflare account:** with Cloudflare, open **API keys → Search by meaning** and enter your account ID and an API
-  token (Workers AI permission); **Test** checks it. A reminder appears until it is set. It uses the same bge-m3 model as
-  the law pack's vectors, so no new law pack is needed. Only the masked search text is sent and every call is in the
-  outbound log; Offline mode searches by keywords only.
-- **Switch later** with **Sanad - repair setup** in the Start menu.
+- **A small model to sort the results, for computers that use Cloudflare.** In the setup window, the Cloudflare option now
+  has **Also install a small model that sorts the results by meaning** (ticked by default, about 1 GB). It is a
+  multilingual model (mMiniLM, trained on 14 languages including Arabic) that runs on an ordinary laptop, offline too,
+  and puts the most relevant articles first; without it the results are sorted by keywords. **Sanad - repair setup**
+  adds or removes it later; **API keys → Search by meaning** shows which one is in use.
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 

@@ -101,6 +101,22 @@ class CrossEncoderReranker:
         return [float(x) for x in raw]
 
 
+class BlendedReranker:
+    """The small reranker (Cloudflare option): a light cross-encoder blended with the lexical score. The abstention threshold
+    (coverage_min_top_score) was set on lexical-like scores; the blend keeps the scores on that scale while the model reorders
+    the passages by meaning."""
+    location = "local"
+
+    def __init__(self, model: "CrossEncoderReranker", weight: float = 0.6):
+        self.model, self.weight, self.lex = model, weight, LexicalReranker()
+        self.name = f"{model.name}+lexical"
+
+    def score(self, query: str, passages: list[str], case_id: str | None = None) -> list[float]:
+        m = self.model.score(query, passages, case_id)
+        lx = self.lex.score(query, passages, case_id)
+        return [round(self.weight * a + (1 - self.weight) * b, 4) for a, b in zip(m, lx)]
+
+
 class CloudReranker:
     location = "cloud"
 

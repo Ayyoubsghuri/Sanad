@@ -84,6 +84,9 @@ class Settings(BaseSettings):
     reranker_local_model: str = "BAAI/bge-reranker-v2-m3"  # multilingual cross-encoder (Apache-2.0, ~570M parameters, same family as the bge-m3 embedder); a folder <data_dir>/models/bge-reranker-v2-m3 is used first (offline)
     reranker_max_length: int = 1024  # tokens of question + passage; 512 is faster, the model was trained up to 3072
     reranker_batch_size: int = 8
+    # the small reranker offered with search by meaning through Cloudflare (computers under 16 GB): multilingual MiniLM trained on
+    # mMARCO (14 languages, Arabic included), ~120M parameters, Apache-2.0; <data_dir>/models/mmarco-mMiniLMv2-L12-H384-v1
+    reranker_small_model: str = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
     reranker_trust_remote_code: bool = False
     reranker_cloud_url: str | None = None  # Jina/TEI/Cohere-style /rerank endpoint
     reranker_cloud_model: str | None = None
@@ -137,6 +140,9 @@ class Settings(BaseSettings):
 
     def resolved_embed_model_dir(self, model: str) -> Path:
         return self.bo_embed_model_dir or (self.data_dir / "models" / model.split("/")[-1])
+
+    def small_reranker_dir(self) -> Path:
+        return self.data_dir / "models" / self.reranker_small_model.split("/")[-1]
 
     def resolved_reranker_model(self) -> str:
         """The local copy (python -m legalrag.fetch_models) when it exists, else the model name (downloaded from Hugging Face on first use)."""

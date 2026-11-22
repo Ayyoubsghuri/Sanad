@@ -94,6 +94,11 @@ export function SearchByMeaningPanel({ onChanged }: { onChanged?: (s: ComputeSta
             </a>
           </div>
           {st.offline && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{tr("Offline mode: nothing is sent to Cloudflare, Sanad searches by keywords.")}</p>}
+          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            {st.small_reranker_installed
+              ? tr("Sorting the results: a small model on this computer (works offline).")
+              : tr("Sorting the results: by keywords. For better sorting, start «Sanad - repair setup» and tick «Also install a small model» (about 1 GB).")}
+          </p>
         </div>
       )}
       {msg && <p className="text-xs" style={{ color: msg.ok ? "var(--accent-primary)" : "#c0392b" }}>{msg.text}</p>}

@@ -3,6 +3,7 @@
     python -m legalrag.fetch_models                 # the reranker (BAAI/bge-reranker-v2-m3, ~2.3 GB)
     python -m legalrag.fetch_models --test          # also scores two sample pairs to prove it loads
     python -m legalrag.fetch_models --pack-embedder # also the embedding model of the INSTALLED law pack (e.g. BAAI/bge-m3, ~2.3 GB)
+    python -m legalrag.fetch_models --small-reranker # ONLY the small multilingual reranker (~0.5 GB), for search by meaning through Cloudflare
 """
 from __future__ import annotations
 
@@ -51,10 +52,11 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="legalrag.fetch_models")
     ap.add_argument("--test", action="store_true", help="load the model and score two sample pairs")
     ap.add_argument("--pack-embedder", action="store_true", help="also download the embedding model named by the installed law pack")
+    ap.add_argument("--small-reranker", action="store_true", help="only the small reranker (computers that search by meaning through Cloudflare)")
     a = ap.parse_args(argv)
     s = Settings()
-    name = s.reranker_local_model
-    dest = s.data_dir / "models" / name.split("/")[-1]
+    name = s.reranker_small_model if a.small_reranker else s.reranker_local_model
+    dest = s.small_reranker_dir() if a.small_reranker else s.data_dir / "models" / name.split("/")[-1]
     try:
         from huggingface_hub import snapshot_download
     except ImportError:
@@ -62,15 +64,23 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     dest.mkdir(parents=True, exist_ok=True)
     print(f"Downloading {name} -> {dest}  (first time only, a few minutes)")
-    snapshot_download(repo_id=name, local_dir=str(dest), allow_patterns=["*.json", "*.safetensors", "*.model", "*.txt", "tokenizer*", "sentencepiece*"],
-                      ignore_patterns=["*.onnx", "onnx/*", "*.bin", "*.h5", "*.msgpack"])
+    weights = ["*.safetensors"]
+    try:   # an older repository may only have pytorch_model.bin: take it then, never both
+        from huggingface_hub import HfApi
+
+        if not any(f.endswith(".safetensors") for f in HfApi().list_repo_files(name)):
+            weights = ["pytorch_model.bin"]
+    except Exception:  # noqa: BLE001 - offline listing failure: try the usual files
+        pass
+    snapshot_download(repo_id=name, local_dir=str(dest), allow_patterns=["*.json", *weights, "*.model", "*.txt", "tokenizer*", "sentencepiece*"],
+                      ignore_patterns=["*.onnx", "onnx/*", "*.h5", "*.msgpack", "*.ot"])
     print("Downloaded.")
-    if a.pack_embedder and fetch_pack_embedder(s, snapshot_download):
+    if a.pack_embedder and not a.small_reranker and fetch_pack_embedder(s, snapshot_download):
         return 1
     if a.test:
         from .retrieval.rerankers import CrossEncoderReranker
 
-        r = CrossEncoderReranker(str(dest), s.reranker_max_length, False, s.reranker_batch_size)
+        r = CrossEncoderReranker(str(dest), 512 if a.small_reranker else s.reranker_max_length, False, s.reranker_batch_size)
         q = "ابتداء من أي تاريخ تفقد الأوراق البنكية قوتها الإبرائية؟"
         sc = r.score(q, ["يوافق على سحب الأوراق البنكية التالية والتي تفقد قوتها الإبرائية ابتداء من فاتح يناير 2026", "تتمم أحكام الكمبيالة المسحوبة على مؤسسة بنكية"])
         print("relevant: %.3f   unrelated: %.3f" % (sc[0], sc[1]))

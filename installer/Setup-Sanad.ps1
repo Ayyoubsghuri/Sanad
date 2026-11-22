@@ -39,7 +39,7 @@ if (Test-Path $Choice) { try { $previous = (Get-Content $Choice -Raw | ConvertFr
 
 $ask = New-Object System.Windows.Forms.Form
 $ask.Text = 'Sanad - setup'
-$ask.ClientSize = New-Object System.Drawing.Size(560, 380)
+$ask.ClientSize = New-Object System.Drawing.Size(560, 440)
 $ask.StartPosition = 'CenterScreen'
 $ask.FormBorderStyle = 'FixedDialog'
 $ask.MaximizeBox = $false
@@ -64,34 +64,42 @@ $api = New-Object System.Windows.Forms.RadioButton
 $api.Text = 'Use the Cloudflare Workers AI API' + $(if ($lowRam) { '  (recommended)' } else { '' })
 $api.Font = $bold; $api.Location = New-Object System.Drawing.Point(24, 86); $api.Size = New-Object System.Drawing.Size(512, 24)
 $ask.Controls.Add($api)
-$null = Add-AskLabel "No models to install: about 2.5 GB to download instead of 7 GB, and light on memory. You need a free Cloudflare account: after the setup, enter its account ID and an API token in Sanad (API keys). The masked search text is sent to Cloudflare; in Offline mode Sanad searches by keywords only." 44 112 492 72 $null $greyA
+$null = Add-AskLabel "No big models to install: about 2.5 GB to download instead of 7 GB, and light on memory. You need a free Cloudflare account: after the setup, enter its account ID and an API token in Sanad (API keys). The masked search text is sent to Cloudflare; in Offline mode Sanad searches by keywords only." 44 112 492 72 $null $greyA
+$small = New-Object System.Windows.Forms.CheckBox
+$small.Text = 'Also install a small model that sorts the results by meaning (about 1 GB, works offline)'
+$small.Location = New-Object System.Drawing.Point(44, 186); $small.Size = New-Object System.Drawing.Size(492, 22)
+$small.Checked = $true
+$ask.Controls.Add($small)
 
 $local = New-Object System.Windows.Forms.RadioButton
 $local.Text = 'Install the models on this computer' + $(if ($lowRam) { "  (needs 16 GB of memory)" } else { '' })
-$local.Font = $bold; $local.Location = New-Object System.Drawing.Point(24, 194); $local.Size = New-Object System.Drawing.Size(512, 24)
+$local.Font = $bold; $local.Location = New-Object System.Drawing.Point(24, 226); $local.Size = New-Object System.Drawing.Size(512, 24)
 $local.Enabled = -not $lowRam
 $ask.Controls.Add($local)
-$null = Add-AskLabel "Everything runs on this computer, also in Offline mode, and no account is needed. About 7 GB to download; uses a lot of memory while searching." 44 220 492 44 $null $greyA
+$null = Add-AskLabel "Everything runs on this computer, also in Offline mode, and no account is needed. About 7 GB to download; uses a lot of memory while searching." 44 252 492 44 $null $greyA
 
 if ($lowRam -or $previous -eq 'cloudflare') { $api.Checked = $true } else { $local.Checked = $true }
+$small.Enabled = $api.Checked
+$api.Add_CheckedChanged({ $small.Enabled = $api.Checked })
 
 $ok = New-Object System.Windows.Forms.Button
-$ok.Text = 'Continue'; $ok.Location = New-Object System.Drawing.Point(436, 326); $ok.Size = New-Object System.Drawing.Size(100, 32)
+$ok.Text = 'Continue'; $ok.Location = New-Object System.Drawing.Point(436, 388); $ok.Size = New-Object System.Drawing.Size(100, 32)
 $ok.DialogResult = [System.Windows.Forms.DialogResult]::OK
 $ask.Controls.Add($ok); $ask.AcceptButton = $ok
 $cancel = New-Object System.Windows.Forms.Button
-$cancel.Text = 'Cancel'; $cancel.Location = New-Object System.Drawing.Point(326, 326); $cancel.Size = New-Object System.Drawing.Size(100, 32)
+$cancel.Text = 'Cancel'; $cancel.Location = New-Object System.Drawing.Point(326, 388); $cancel.Size = New-Object System.Drawing.Size(100, 32)
 $cancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 $ask.Controls.Add($cancel); $ask.CancelButton = $cancel
 $answer = $ask.ShowDialog()
 $ask.Dispose()
 if ($answer -ne [System.Windows.Forms.DialogResult]::OK) { exit 1 }
 $UseApi = $lowRam -or $api.Checked
+$SmallReranker = $UseApi -and $small.Checked
 $embeddings = if ($UseApi) { 'cloudflare' } else { 'local' }
-@{ embeddings = $embeddings; ram_gb = $ramGb; chosen_at = (Get-Date -Format s) } | ConvertTo-Json | Set-Content -Path $Choice -Encoding UTF8
+@{ embeddings = $embeddings; small_reranker = [bool]$SmallReranker; ram_gb = $ramGb; chosen_at = (Get-Date -Format s) } | ConvertTo-Json | Set-Content -Path $Choice -Encoding UTF8
 Add-Content -Path $Log -Value "memory $ramGb GB; search by meaning: $embeddings"
-$extras = if ($UseApi) { 'desktop' } else { 'local-models,desktop' }
-$downloadText = if ($UseApi) { 'The application and the law pack are downloaded once (about 2.5 GB). This can take from 10 minutes to an hour. You can keep using your computer.' } else { 'The law pack and the local models are downloaded once (about 7 GB). This can take from 15 minutes to a few hours. You can keep using your computer.' }
+$extras = if ($UseApi -and -not $SmallReranker) { 'desktop' } else { 'local-models,desktop' }
+$downloadText = if ($UseApi -and $SmallReranker) { 'The application, the law pack and a small model are downloaded once (about 3.5 GB). This can take from 15 minutes to a few hours. You can keep using your computer.' } elseif ($UseApi) { 'The application and the law pack are downloaded once (about 2.5 GB). This can take from 10 minutes to an hour. You can keep using your computer.' } else { 'The law pack and the local models are downloaded once (about 7 GB). This can take from 15 minutes to a few hours. You can keep using your computer.' }
 
 # ---- the window ------------------------------------------------------------------------------------------------------
 $form = New-Object System.Windows.Forms.Form
@@ -191,6 +199,8 @@ Invoke-Step 1 'Python and the application packages' $Uv "pip install --python `"
 Invoke-Step 2 'the law pack (signed, checked before it is installed)' $Py 'tools\install_pack.py --release pack_release.json' $Backend
 if (-not $UseApi) {
     Invoke-Step 3 'the local models (reranker and embedding model)' $Py '-m legalrag.fetch_models --pack-embedder' $Runtime
+} elseif ($SmallReranker) {
+    Invoke-Step 3 'the small model that sorts the results' $Py '-m legalrag.fetch_models --small-reranker' $Runtime
 }
 
 Set-Content -Path $Done -Value (Get-Date -Format s)

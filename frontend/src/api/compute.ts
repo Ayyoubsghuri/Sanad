@@ -12,6 +12,8 @@ export interface ComputeState {
   cloudflare_ready: boolean;
   offline: boolean;
   pack_has_bge_m3: boolean;
+  small_reranker_installed: boolean;
+  reranker: string;
 }
 export const getCompute = () => call<ComputeState>("/v1/compute");
 export const setCompute = (body: { source?: "local" | "cloudflare"; account?: string; token?: string }) =>

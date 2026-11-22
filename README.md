@@ -151,7 +151,7 @@ Both install for the current user only, without administrator rights, into `%LOC
 | 16 GB or more | **Install the models on this computer** or **Cloudflare Workers AI** |
 
 - **Models on this computer:** everything runs locally, also in Offline mode, no account needed. About 7 GB to download.
-- **Cloudflare Workers AI:** about 2.5 GB to download and light on memory. Sanad uses the same `bge-m3` model as the law
+- **Cloudflare Workers AI:** about 2.5 GB to download and light on memory, plus an optional small model (about 1 GB, ticked by default) that sorts the results by meaning on the computer. Sanad uses the same `bge-m3` model as the law
   pack's vectors, through your own free Cloudflare account: after the setup, open **API keys → Search by meaning** and
   enter the account ID and an API token with the Workers AI permission
   ([pricing and free allowance](https://developers.cloudflare.com/workers-ai/platform/pricing/)). Only the masked search

@@ -21,7 +21,7 @@ from .privacy.pseudonymiser import Pseudonymiser
 from .store.localkey import effective_public_key
 from .retrieval.embedders import CloudEmbedder, CloudflareEmbedder, Embedder, HashingEmbedder, OllamaEmbedder, SentenceTransformerEmbedder
 from .retrieval.engine import RetrievalEngine
-from .retrieval.rerankers import CloudReranker, CrossEncoderReranker, LexicalReranker, Reranker
+from .retrieval.rerankers import BlendedReranker, CloudReranker, CrossEncoderReranker, LexicalReranker, Reranker
 from .store.crypto import KeyStore
 from .store.lawpack import LawPack, PackError
 from .store.signing import PackTrust, verify_pack
@@ -48,6 +48,8 @@ class AppContext:
     today_fn: Callable[[], date] = date.today
     _local_embedder: Embedder | None = field(default=None, repr=False)
     _local_reranker: Reranker | None = field(default=None, repr=False)
+    _small_reranker: Reranker | None = field(default=None, repr=False)
+    _small_reranker_failed: bool = field(default=False, repr=False)
     reranker_error: str | None = field(default=None, repr=False)
     progress: dict = field(default_factory=dict, repr=False)  # live steps per query id (pipeline/progress.py)
 
@@ -153,12 +155,27 @@ class AppContext:
         d = s.resolved_embed_model_dir(e["model"])
         return SentenceTransformerEmbedder(e["embedder_id"], str(d) if (d / "config.json").exists() else e["model"])
 
+    def small_reranker(self) -> Reranker | None:
+        """The small multilingual reranker (installed by the setup with the Cloudflare option), blended with the lexical score."""
+        d = self.settings.small_reranker_dir()
+        if not (d / "config.json").exists() or self._small_reranker_failed:
+            return None
+        if self._small_reranker is None:
+            try:
+                self._small_reranker = BlendedReranker(CrossEncoderReranker(str(d), 512, False, 16))
+                self.reranker_error = None
+            except Exception as e:  # noqa: BLE001 - sentence-transformers missing or a damaged download: keyword ranking
+                self.reranker_error = f"{e.__class__.__name__}: {str(e)[:200]}"
+                self._small_reranker_failed = True   # not tried again on every question
+                return None
+        return self._small_reranker
+
     def reranker(self) -> Reranker | None:
         s = self.settings
         if self.mode == "cloud_assisted" and s.reranker_cloud_url and s.reranker_cloud_model:
             return CloudReranker(s.reranker_cloud_model, s.reranker_cloud_url, self.gateway, self._key(s.reranker_cloud_secret))
-        if self.embeddings_source() == "cloudflare":   # the local reranker model is not installed with this choice
-            return LexicalReranker()
+        if self.embeddings_source() == "cloudflare":   # the big reranker is not installed with this choice: the small one if it is
+            return self.small_reranker() or LexicalReranker()
         if self._local_reranker is None:
             if s.reranker_local_kind == "cross_encoder":
                 try:

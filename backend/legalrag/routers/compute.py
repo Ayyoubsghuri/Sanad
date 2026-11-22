@@ -53,6 +53,8 @@ def view(ctx: AppContext) -> dict:
         "local_models_installed": local_models_installed(ctx), "cloudflare_account": ctx.user_settings().get("cloudflare_account") or "",
         "cloudflare_token_saved": ctx.keys.has_secret("cloudflare_token"), "cloudflare_ready": ctx.cloudflare_ready(),
         "offline": ctx.mode == "offline", "pack_has_bge_m3": bool(ctx.pack_embedder_id()),
+        "small_reranker_installed": (ctx.settings.small_reranker_dir() / "config.json").exists(),
+        "reranker": getattr(ctx.reranker(), "name", "lexical"),
     }
 
 

@@ -54,3 +54,35 @@ def test_cloudflare_embeddings_choice_gateway_and_offline(tmp_path, pack_path, k
         assert cl.post("/v1/compute/test", headers=H).status_code == 409
     finally:
         c.close()
+
+
+def test_small_reranker_is_used_with_cloudflare_when_installed(tmp_path, pack_path, keys, monkeypatch):
+    from legalrag import state as S
+    from legalrag.retrieval.rerankers import BlendedReranker
+
+    class FakeCE:   # stands for the downloaded MiniLM cross-encoder
+        name = "mmarco-mMiniLMv2-L12-H384-v1"
+
+        def __init__(self, *a, **k):
+            pass
+
+        def score(self, query, passages, case_id=None):
+            return [0.9 if "مدة الاختبار" in p else 0.1 for p in passages]
+
+    s = Settings(data_dir=tmp_path / "d", lawpack_path=pack_path, lawpack_public_key_hex=keys[1], api_token="test-token", ner_enabled=False,
+                 query_rewrite=False, embeddings_source="cloudflare")
+    c = build_context(s)
+    try:
+        assert isinstance(c.reranker(), LexicalReranker)                     # not installed: keyword ranking
+        d = s.small_reranker_dir()
+        d.mkdir(parents=True)
+        (d / "config.json").write_text("{}")
+        monkeypatch.setattr(S, "CrossEncoderReranker", FakeCE)
+        r = c.reranker()
+        assert isinstance(r, BlendedReranker)
+        sc = r.score("ما هي مدة الاختبار؟", ["تحدد مدة الاختبار في ثلاثة أشهر", "يؤدى الأجر كل شهر"])
+        assert sc[0] > sc[1] and 0 <= min(sc) and max(sc) <= 1
+        v = TestClient(create_app(s, c)).get("/v1/compute", headers=H).json()
+        assert v["small_reranker_installed"] and v["reranker"].startswith("mmarco")
+    finally:
+        c.close()
