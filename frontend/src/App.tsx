@@ -34,6 +34,7 @@ import { LegalCalculatorsModal } from "./components/LegalCalculatorsModal";
 import { OperatingModeModal } from "./components/OperatingModeModal";
 import { BoUpdateModal } from "./components/BoUpdateModal";
 import { ApiKeysModal } from "./components/ApiKeysModal";
+import { getCompute } from "./api/compute";
 import { SituationNavigatorModal } from "./components/SituationNavigatorModal";
 import { ConcordanceWizardModal } from "./components/ConcordanceWizardModal";
 import { StatuteBrowserModal } from "./components/StatuteBrowserModal";
@@ -321,6 +322,12 @@ export function App() {
   const [operatingModeModalOpen, setOperatingModeModalOpen] = useState<boolean>(false);
   const [boUpdateModalOpen, setBoUpdateModalOpen] = useState<boolean>(false);
   const [apiKeysModalOpen, setApiKeysModalOpen] = useState<boolean>(false);
+  // search by meaning through Cloudflare chosen in the setup, but no account yet: a reminder above the chat
+  const [needsCloudflare, setNeedsCloudflare] = useState(false);
+  useEffect(() => {
+    if (IS_ANDROID) return;
+    getCompute().then((c) => setNeedsCloudflare(c.source === "cloudflare" && !c.cloudflare_ready && !c.offline)).catch(() => undefined);
+  }, [apiKeysModalOpen, settings.operatingMode]);
   const [calculatorsModalOpen, setCalculatorsModalOpen] = useState<boolean>(false);
   const [concordanceModalOpen, setConcordanceModalOpen] = useState<boolean>(false);
   const [situationsModalOpen, setSituationsModalOpen] = useState<boolean>(false);
@@ -1042,6 +1049,12 @@ export function App() {
         </header>
 
         {IS_ANDROID && <UpdateBanner />}
+        {needsCloudflare && (
+          <div className="mx-4 mt-3 rounded-xl border px-4 py-2.5 text-xs flex flex-wrap items-center gap-2" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-card)", color: "var(--text-heading)" }}>
+            <span className="flex-1 min-w-0">{tr("Search by meaning is off: add your Cloudflare account ID and API token. Until then Sanad searches by keywords.")}</span>
+            <button type="button" onClick={() => setApiKeysModalOpen(true)} className="px-3 py-1 rounded-lg text-xs font-medium cursor-pointer" style={{ backgroundColor: "var(--accent-primary)", color: "var(--accent-primary-fg)" }}>{tr("Add it")}</button>
+          </div>
+        )}
 
         {/* Home Screen vs Active Thread Conversation */}
         {!activeThread || activeThread.messages.length === 0 ? (

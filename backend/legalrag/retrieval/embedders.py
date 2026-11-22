@@ -112,3 +112,33 @@ class CloudEmbedder:
 
 def stable_checksum(text: str) -> str:
     return hashlib.sha256(normalize(text).encode("utf-8")).hexdigest()
+
+
+class CloudflareEmbedder:
+    """Search by meaning through Cloudflare Workers AI (@cf/baai/bge-m3), for computers that do not install the local models.
+    The law pack's vectors were made with bge-m3, so the question's vector comes from the same model. Only the (pseudonymised)
+    search text is sent, through the privacy gateway like every other outbound call; it is refused in Offline mode."""
+    location = "cloud"
+    MODEL = "@cf/baai/bge-m3"
+
+    def __init__(self, embedder_id: str, account_getter: Callable[[], str | None], token_getter: Callable[[], str | None], gateway: Gateway, dim: int = 1024):
+        self.embedder_id, self.account_getter, self.token_getter, self.gateway, self.dim = embedder_id, account_getter, token_getter, gateway, dim
+        self.model = self.MODEL
+
+    def url(self) -> str:
+        return f"https://api.cloudflare.com/client/v4/accounts/{self.account_getter()}/ai/run/{self.MODEL}"
+
+    def embed(self, texts: list[str], case_id: str | None = None) -> np.ndarray:
+        data = self.gateway.post_json(
+            kind="embed", provider="cloudflare", model=self.MODEL, url=self.url(),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.token_getter() or ''}"},
+            body={"text": texts}, user_fields=texts, case_id=case_id,
+        )
+        r = data.get("result") or {}
+        rows = r.get("data") or r.get("response")
+        if not rows:
+            raise ValueError("Cloudflare returned no vectors: " + str(data.get("errors") or data)[:200])
+        v = np.asarray(rows, dtype=np.float32)
+        if v.shape[1] != self.dim:
+            raise ValueError(f"Cloudflare returned {v.shape[1]} numbers per text, the law pack has {self.dim}")
+        return v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)

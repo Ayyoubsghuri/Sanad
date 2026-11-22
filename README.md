@@ -15,7 +15,7 @@ Arabic · French · English · Darija
 <a href="https://github.com/Ayyoubsghuri/Sanad/releases/latest"><img src="https://img.shields.io/github/v/release/Ayyoubsghuri/Sanad?label=latest%20version" alt="Latest version"></a>
 
 **Nothing else to install: no Python, no database server, no account.** Run the installer and Sanad sets itself up
-(the first start downloads the laws and the local models, about 7 GB).
+(the first start downloads the laws, about 2.5 GB, plus 4.5 GB of local models if you choose to install them).
 
 [Install on Windows](#install-on-windows) · [Law pack on Hugging Face](https://huggingface.co/datasets/Xdnh00p/sanad-lawpack) · [Run from source](#run-from-source) · [How it works](#how-it-works)
 
@@ -143,13 +143,29 @@ release notes for what the phone version does not do yet.
 Both install for the current user only, without administrator rights, into `%LOCALAPPDATA%\Programs\Sanad`, and add a
 **Sanad** shortcut with the Sanad logo to the Start menu and the desktop.
 
-**The first start downloads everything else** (about 7 GB, so keep the internet connection and the window open):
+**The first start asks how Sanad should search by meaning**, before anything is downloaded:
+
+| Your computer | Choice |
+|---|---|
+| Less than 16 GB of memory | **Cloudflare Workers AI** (the only option): no models are installed |
+| 16 GB or more | **Install the models on this computer** or **Cloudflare Workers AI** |
+
+- **Models on this computer:** everything runs locally, also in Offline mode, no account needed. About 7 GB to download.
+- **Cloudflare Workers AI:** about 2.5 GB to download and light on memory. Sanad uses the same `bge-m3` model as the law
+  pack's vectors, through your own free Cloudflare account: after the setup, open **API keys → Search by meaning** and
+  enter the account ID and an API token with the Workers AI permission
+  ([pricing and free allowance](https://developers.cloudflare.com/workers-ai/platform/pricing/)). Only the masked search
+  text is sent, and each call appears in the outbound log. In Offline mode Sanad searches by keywords only.
+
+**Sanad - repair setup** in the Start menu asks again, to switch later.
+
+**Then it downloads everything else** (keep the internet connection and the window open):
 
 1. A private Python 3.12 and the backend's packages, into `%LOCALAPPDATA%\Sanad`.
 2. The signed law pack (`current.db`, about 2.3 GB) from
    [`Xdnh00p/sanad-lawpack`](https://huggingface.co/datasets/Xdnh00p/sanad-lawpack). Its SHA-256 and the publisher's
    signature are checked before it is installed into `%USERPROFILE%\.moroccan-legal-rag\lawpack`.
-3. The local models, into `%USERPROFILE%\.moroccan-legal-rag\models`: the reranker `BAAI/bge-reranker-v2-m3` and the
+3. Only if you chose the local models: the models, into `%USERPROFILE%\.moroccan-legal-rag\models`: the reranker `BAAI/bge-reranker-v2-m3` and the
    embedding model the law pack was built with (`BAAI/bge-m3`).
 
 A setup window shows the progress of that first start; no console window opens. If the download is interrupted,
@@ -164,7 +180,7 @@ window; the bottom-right corner resizes it.
 To get answers written by a language model, open **API keys** in the app and add a key (Anthropic or any
 OpenAI-compatible endpoint). Without one, Sanad shows the cited articles only.
 
-Requirements: Windows 10 or 11 (64-bit) with the WebView2 runtime (part of Windows 11 and of current Windows 10), about 12 GB of free disk space, 8 GB of RAM (16 GB recommended). A GPU is
+Requirements: Windows 10 or 11 (64-bit) with the WebView2 runtime (part of Windows 11 and of current Windows 10), about 12 GB of free disk space (5 GB with Cloudflare), 8 GB of RAM (16 GB for the local models). A GPU is
 optional.
 
 ### Build the installers yourself

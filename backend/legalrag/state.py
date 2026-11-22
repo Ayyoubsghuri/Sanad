@@ -19,7 +19,7 @@ from .privacy.gateway import Gateway, OutboundGuard
 from .privacy.ner import NerDetector
 from .privacy.pseudonymiser import Pseudonymiser
 from .store.localkey import effective_public_key
-from .retrieval.embedders import CloudEmbedder, Embedder, HashingEmbedder, OllamaEmbedder, SentenceTransformerEmbedder
+from .retrieval.embedders import CloudEmbedder, CloudflareEmbedder, Embedder, HashingEmbedder, OllamaEmbedder, SentenceTransformerEmbedder
 from .retrieval.engine import RetrievalEngine
 from .retrieval.rerankers import CloudReranker, CrossEncoderReranker, LexicalReranker, Reranker
 from .store.crypto import KeyStore
@@ -97,9 +97,32 @@ class AppContext:
     def _key(self, name: str):
         return lambda: self.keys.get_secret(name)
 
+    def embeddings_source(self) -> str:
+        """"local" or "cloudflare": the app's setting, else the choice made in the setup."""
+        v = (self.user_settings().get("embeddings_source") if self.db else None) or self.settings.embeddings_source
+        return "cloudflare" if v == "cloudflare" else "local"
+
+    def pack_embedder_id(self) -> str | None:
+        """The id of the law pack's real (bge-m3) vectors."""
+        try:
+            real = [e for e in (self.pack.embedders().values() if self.pack else []) if not str(e["embedder_id"]).startswith("hash")]
+        except Exception:  # noqa: BLE001
+            return None
+        return real[0]["embedder_id"] if len(real) == 1 else None
+
+    def cloudflare_ready(self) -> bool:
+        return bool(self.user_settings().get("cloudflare_account") and self.keys.has_secret("cloudflare_token"))
+
     def embedder(self) -> Embedder | None:
         if self.embedder_override is not None:
             return self.embedder_override
+        if self.embeddings_source() == "cloudflare":
+            # no local models on this computer: the question's vector comes from Cloudflare (same bge-m3 model as the pack);
+            # Offline mode, or no account yet: keyword search only (the engine says so)
+            eid = self.pack_embedder_id()
+            if self.mode == "offline" or not eid or not self.cloudflare_ready():
+                return None
+            return CloudflareEmbedder(eid, lambda: self.user_settings().get("cloudflare_account"), self._key("cloudflare_token"), self.gateway)
         s = self.settings
         if self.mode == "cloud_assisted" and s.embedder_cloud_url and s.embedder_cloud_model:
             return CloudEmbedder(s.embedder_id, s.embedder_cloud_model, s.embedder_cloud_url, self.gateway, self._key(s.embedder_cloud_secret))
@@ -134,6 +157,8 @@ class AppContext:
         s = self.settings
         if self.mode == "cloud_assisted" and s.reranker_cloud_url and s.reranker_cloud_model:
             return CloudReranker(s.reranker_cloud_model, s.reranker_cloud_url, self.gateway, self._key(s.reranker_cloud_secret))
+        if self.embeddings_source() == "cloudflare":   # the local reranker model is not installed with this choice
+            return LexicalReranker()
         if self._local_reranker is None:
             if s.reranker_local_kind == "cross_encoder":
                 try:
@@ -239,6 +264,7 @@ def build_context(settings: Settings, transport: httpx.BaseTransport | None = No
     ctx_ref: dict[str, AppContext] = {}
     guard = OutboundGuard(db)
     gateway = Gateway(db, guard, lambda: ctx_ref["ctx"].mode, settings.cloud_timeout_s, transport)
+    gateway.embed_chosen = lambda: ctx_ref["ctx"].embeddings_source() == "cloudflare"
     ctx = AppContext(settings, keys, db, gateway, Pseudonymiser(db, ner=NerDetector(settings.ner_model, settings.ner_enabled, settings.ner_min_score, tuple(settings.ner_kinds))), token)
     ctx_ref["ctx"] = ctx
     ctx.load_pack()

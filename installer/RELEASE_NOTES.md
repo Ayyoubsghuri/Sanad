@@ -4,16 +4,16 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **Dismissal questions: the figures for your years of service.** "Dismissed after 8 years" now gets the severance in
-  hours of wage and the damages in months of wage, computed by code from the Labour Code articles in the law pack
-  (e.g. 5 × 96 + 3 × 144 hours; 8 × 1.5 = 12 months, within the cap), with the condition each depends on. Multiply by
-  your wage for the amounts.
-- **The decisive articles are searched too.** For a dismissal, Sanad also looks for the disciplinary procedure, who must
-  prove the reason for the dismissal, and the time limit to sue, even when your question does not mention them. When the
-  law makes the employer prove the reason, the answer now says so plainly instead of "the facts do not show it".
-- **Shorter plan.** "What you can do now" no longer repeats the answer: each step says what to do, where, with which
-  papers and by when.
-- **Fixed:** the Download menu of a document went off the edge of the panel in Arabic.
+- **Choose how Sanad searches by meaning before anything is downloaded.** The first start now checks the computer's
+  memory:
+  - **Less than 16 GB:** Sanad uses **Cloudflare Workers AI** for search by meaning and does not install the local
+    models (about 2.5 GB to download instead of 7 GB, and much lighter on memory).
+  - **16 GB or more:** you choose **Install the models on this computer** or **Cloudflare Workers AI**.
+- **Cloudflare account:** with Cloudflare, open **API keys → Search by meaning** and enter your account ID and an API
+  token (Workers AI permission); **Test** checks it. A reminder appears until it is set. It uses the same bge-m3 model as
+  the law pack's vectors, so no new law pack is needed. Only the masked search text is sent and every call is in the
+  outbound log; Offline mode searches by keywords only.
+- **Switch later** with **Sanad - repair setup** in the Start menu.
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 

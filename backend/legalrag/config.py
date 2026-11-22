@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # ---- server ---------------------------------------------------------------
     host: str = "127.0.0.1"
     port: int = 8765
+    # search by meaning: "local" (bge-m3 on this computer, installed by the setup) or "cloudflare" (Workers AI, no local models);
+    # the setup writes the choice made on first start, the app's settings can change it
+    embeddings_source: str = "local"
     api_token: str | None = None  # generated + persisted on first run when unset
     allowed_origins: list[str] = Field(
         default_factory=lambda: ["tauri://localhost", "http://tauri.localhost", "http://localhost:1420", "http://127.0.0.1:1420",

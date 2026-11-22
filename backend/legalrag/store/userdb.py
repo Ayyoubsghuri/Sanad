@@ -60,6 +60,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "benchmark": None,             # result of the first-launch benchmark
     "llm_providers": {},           # id -> {"kind": openai|anthropic|openai_compat, "label", "model", "base_url"}; the KEYS live in the keychain, never here
     "llm_active": None,            # id of the provider used to write answers (overrides the LEGALRAG_LLM_* environment values)
+    "embeddings_source": None,       # None = the choice made in the setup (Settings.embeddings_source): "local" or "cloudflare"
+    "cloudflare_account": None,      # Cloudflare account ID for Workers AI (not secret); the API token is in the keychain ("cloudflare_token")
     "next_steps_in_answers": True,    # "what you can do now" at the end of an answer about a personal situation
     "show_rulings_in_answers": True,  # similar Court of Cassation rulings under chat answers (when rulings.db is installed)
     "llm_checker": None, "llm_offline": None,           # id of a (different) provider that double-checks claims; None = the local lexical checker

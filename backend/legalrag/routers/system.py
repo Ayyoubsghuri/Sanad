@@ -19,7 +19,7 @@ from ..store.userdb import now
 public = APIRouter()
 router = APIRouter(prefix="/v1", dependencies=[Depends(require_token)])
 
-SECRET_NAMES = {"llm_main", "llm_claim_check", "embedder_cloud", "reranker_cloud"}
+SECRET_NAMES = {"llm_main", "llm_claim_check", "embedder_cloud", "reranker_cloud", "cloudflare_token"}
 
 
 @public.get("/health", tags=["system"])

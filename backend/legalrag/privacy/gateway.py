@@ -93,8 +93,14 @@ class Gateway:
     def mode(self) -> str:
         return self.mode_getter()
 
+    # set by the app context: True when the user chose search by meaning through Cloudflare (no local models); only then may
+    # Hybrid mode send the masked search text to an embedding service
+    embed_chosen = staticmethod(lambda: False)
+
     def allowed(self, kind: str) -> bool:
         m = self.mode
+        if kind == "embed" and m == "hybrid" and self.embed_chosen():
+            return True
         return kind in MODE_ALLOWS.get(m, set()) or kind.startswith(PREFIX_ALLOWS.get(m, ()))
 
     def post_json(

@@ -115,6 +115,16 @@ def main(argv: list[str] | None = None) -> int:
                 os.environ.setdefault("LEGALRAG_LAWPACK_PUBLIC_KEY_HEX", key)
         os.environ.setdefault("LEGALRAG_FRONTEND_DIR", str(app_dir / "frontend"))
 
+    # the choice made in the setup window: local models, or search by meaning through Cloudflare (no models installed)
+    choice = Path(os.environ.get("LOCALAPPDATA", "")) / "Sanad" / "compute.json"
+    if os.environ.get("LOCALAPPDATA") and choice.exists():
+        try:
+            src = json.loads(choice.read_text(encoding="utf-8-sig")).get("embeddings")
+            if src in ("local", "cloudflare"):
+                os.environ.setdefault("LEGALRAG_EMBEDDINGS_SOURCE", src)
+        except (OSError, ValueError):
+            pass
+
     from .config import Settings
 
     s = Settings()

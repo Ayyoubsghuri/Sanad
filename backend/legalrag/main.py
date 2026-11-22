@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from .config import Settings
 from .privacy.gateway import CloudUnavailable, ModeForbids, OutboundBlocked
-from .routers import bo, law, providers, query, system, tools, pro
+from .routers import bo, law, providers, query, system, tools, pro, compute
 from .state import AppContext, build_context
 
 log = logging.getLogger("legalrag")
@@ -54,6 +54,7 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
     app.include_router(bo.router)
     app.include_router(providers.router)
     app.include_router(pro.router)
+    app.include_router(compute.router)
 
     @app.exception_handler(OutboundBlocked)
     async def _blocked(_: Request, e: OutboundBlocked):

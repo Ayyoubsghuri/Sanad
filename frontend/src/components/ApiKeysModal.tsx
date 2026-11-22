@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { tr } from "../i18n";
+import { SearchByMeaningPanel } from "./SearchByMeaningPanel";
 import { AlertTriangle, Check, Eye, EyeOff, KeyRound, Loader2, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import {
   Provider,
@@ -203,6 +204,8 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               );
             })}
           </div>
+
+          <SearchByMeaningPanel />
 
           {/* add / edit */}
           <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--border-subtle)" }}>
