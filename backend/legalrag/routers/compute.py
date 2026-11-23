@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ..deps import get_ctx, require_token
+from ..model_install import InstallError, installer
 from ..state import AppContext
 
 router = APIRouter(prefix="/v1/compute", dependencies=[Depends(require_token)], tags=["settings"])
@@ -55,6 +56,7 @@ def view(ctx: AppContext) -> dict:
         "offline": ctx.mode == "offline", "pack_has_bge_m3": bool(ctx.pack_embedder_id()),
         "small_reranker_installed": (ctx.settings.small_reranker_dir() / "config.json").exists(),
         "reranker": getattr(ctx.reranker(), "name", "lexical"),
+        "install": installer(ctx).job,
     }
 
 
@@ -102,3 +104,27 @@ def test_compute(ctx: AppContext = Depends(get_ctx)) -> dict:
             msg = "Cloudflare refused the token: check that it has the 'Workers AI' permission and belongs to this account"
         return {"ok": False, "error": msg[:300]}
     return {"ok": True, "dimensions": int(v.shape[1])}
+
+
+class InstallIn(BaseModel):
+    what: str = Field(..., pattern="^(small|full)$")
+
+
+@router.post("/install")
+def install_models(body: InstallIn, ctx: AppContext = Depends(get_ctx)) -> dict:
+    """Download the small reranker, or the local models (16 GB of memory or more), from inside the app."""
+    ram = ram_gb()
+    try:
+        return installer(ctx).start(body.what, low_ram=ram is not None and ram < MIN_RAM_GB)
+    except InstallError as e:
+        raise HTTPException(409, str(e))
+
+
+@router.get("/install/job")
+def install_job(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return installer(ctx).job or {"state": "idle"}
+
+
+@router.post("/install/cancel")
+def install_cancel(ctx: AppContext = Depends(get_ctx)) -> dict:
+    return {"cancelled": installer(ctx).cancel()}

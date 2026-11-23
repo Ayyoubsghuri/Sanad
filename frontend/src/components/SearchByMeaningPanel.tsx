@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Check, Cloud, Cpu, ExternalLink, Loader2 } from "lucide-react";
 import { tr } from "../i18n";
-import { ComputeState, getCompute, setCompute, testCompute } from "../api/compute";
+import { ComputeState, InstallJob, cancelInstall, getCompute, installJob, installModels, setCompute, testCompute } from "../api/compute";
 
 const field = "w-full px-3 py-2 rounded-lg border text-sm outline-none";
 const fstyle = { backgroundColor: "var(--bg-canvas)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" } as const;
@@ -14,9 +14,22 @@ export function SearchByMeaningPanel({ onChanged }: { onChanged?: (s: ComputeSta
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const apply = (s: ComputeState) => { setSt(s); setAccount(s.cloudflare_account); onChanged?.(s); };
+  const [job, setJob] = useState<InstallJob | null>(null);
+  const apply = (s: ComputeState) => { setSt(s); setAccount(s.cloudflare_account); onChanged?.(s); if (s.install) setJob(s.install); };
   useEffect(() => { getCompute().then(apply).catch(() => undefined); }, []);
+  const installing = !!job && (job.state === "queued" || job.state === "running");
+  useEffect(() => {   // follow a model download until it ends
+    if (!installing) return;
+    const t = setInterval(() => {
+      installJob().then((j) => {
+        setJob(j);
+        if (j.state !== "running" && j.state !== "queued") getCompute().then(apply).catch(() => undefined);
+      }).catch(() => undefined);
+    }, 1500);
+    return () => clearInterval(t);
+  }, [installing]);
   if (!st) return null;
+  const install = (what: "small" | "full") => run("install", async () => setJob(await installModels(what)));
 
   const run = async (key: string, fn: () => Promise<void>) => {
     setBusy(key); setMsg(null);
@@ -53,7 +66,7 @@ export function SearchByMeaningPanel({ onChanged }: { onChanged?: (s: ComputeSta
           <div className="flex items-center gap-2 text-sm font-medium">{!cf ? <Check className="w-4 h-4" /> : <Cpu className="w-4 h-4" />}{tr("Models on this computer")}</div>
           <div className="text-[11px] mt-1" style={{ color: "var(--text-muted)" }}>
             {st.local_models_installed ? tr("Works offline; needs 16 GB of memory.")
-              : tr("Not installed. To install them, start «Sanad - repair setup» from the Start menu and choose «Install the models» (16 GB of memory needed).")}
+              : st.low_ram ? tr("Not available: they need 16 GB of memory.") : tr("Not installed yet: about 5 GB to download.")}
           </div>
         </button>
         <button type="button" disabled={busy !== null} onClick={() => choose("cloudflare")}
@@ -64,6 +77,26 @@ export function SearchByMeaningPanel({ onChanged }: { onChanged?: (s: ComputeSta
           </div>
         </button>
       </div>
+      {(installing || (job && job.state !== "done" && job.state !== "idle")) && (
+        <div className="rounded-lg border p-3 space-y-1.5 text-xs" style={{ borderColor: "var(--border-subtle)", color: "var(--text-heading)" }}>
+          <div className="flex items-center gap-2">
+            {installing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <span className="font-medium flex-1">
+              {installing ? tr(job?.step === "libraries" ? "Installing the libraries…" : "Downloading the model…")
+                : job?.state === "cancelled" ? tr("Stopped: click Install again to continue.") : tr("The download did not finish.")}
+            </span>
+            {installing && <button type="button" onClick={() => cancelInstall().then(() => installJob().then(setJob))} className="px-2 py-0.5 rounded border cursor-pointer" style={{ borderColor: "var(--border-strong)" }}>{tr("Stop")}</button>}
+          </div>
+          {job?.detail && <div className="font-code text-[10px] truncate" style={{ color: "var(--text-muted)" }} dir="ltr">{job.detail}</div>}
+          {job?.error && <div className="text-[11px]" style={{ color: "#c0392b" }}>{job.error}</div>}
+        </div>
+      )}
+      {!st.local_models_installed && !st.low_ram && !installing && (
+        <button type="button" onClick={() => install("full")} disabled={busy !== null || st.offline}
+          className="px-3 py-1.5 rounded-lg border text-xs cursor-pointer disabled:opacity-50" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>
+          {tr("Install the models on this computer (about 5 GB)")}
+        </button>
+      )}
       {cf && (
         <div className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -94,11 +127,15 @@ export function SearchByMeaningPanel({ onChanged }: { onChanged?: (s: ComputeSta
             </a>
           </div>
           {st.offline && <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{tr("Offline mode: nothing is sent to Cloudflare, Sanad searches by keywords.")}</p>}
-          <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-            {st.small_reranker_installed
-              ? tr("Sorting the results: a small model on this computer (works offline).")
-              : tr("Sorting the results: by keywords. For better sorting, start «Sanad - repair setup» and tick «Also install a small model» (about 1 GB).")}
-          </p>
+          <div className="flex flex-wrap items-center gap-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
+            <span>{st.small_reranker_installed ? tr("Sorting the results: a small model on this computer (works offline).") : tr("Sorting the results: by keywords.")}</span>
+            {!st.small_reranker_installed && !installing && (
+              <button type="button" onClick={() => install("small")} disabled={busy !== null || st.offline}
+                className="px-2.5 py-1 rounded-lg border cursor-pointer disabled:opacity-50" style={{ borderColor: "var(--border-strong)", color: "var(--text-heading)" }}>
+                {tr("Install the small model (about 1 GB)")}
+              </button>
+            )}
+          </div>
         </div>
       )}
       {msg && <p className="text-xs" style={{ color: msg.ok ? "var(--accent-primary)" : "#c0392b" }}>{msg.text}</p>}

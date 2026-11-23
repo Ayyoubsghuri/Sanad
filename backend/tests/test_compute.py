@@ -86,3 +86,38 @@ def test_small_reranker_is_used_with_cloudflare_when_installed(tmp_path, pack_pa
         assert v["small_reranker_installed"] and v["reranker"].startswith("mmarco")
     finally:
         c.close()
+
+
+def test_models_can_be_installed_from_the_app(tmp_path, pack_path, keys, monkeypatch):
+    import sys
+    import time
+
+    from legalrag import model_install as MI
+    from legalrag.routers import compute as CR
+
+    s = Settings(data_dir=tmp_path / "d", lawpack_path=pack_path, lawpack_public_key_hex=keys[1], api_token="test-token", ner_enabled=False,
+                 query_rewrite=False, embeddings_source="cloudflare")
+    c = build_context(s)
+    MI._INSTALLERS.clear()
+    target = s.small_reranker_dir()
+    # stand-ins for "uv pip install" and "python -m legalrag.fetch_models --small-reranker": print progress, create the model folder
+    fake = [("libraries", [sys.executable, "-c", "print('Resolved 12 packages')"]),
+            ("models", [sys.executable, "-c", f"import pathlib;p=pathlib.Path(r'{target}');p.mkdir(parents=True);(p/'config.json').write_text('{{}}');print('Downloaded.')"])]
+    monkeypatch.setattr(MI, "commands", lambda what: fake)
+    try:
+        cl = TestClient(create_app(s, c))
+        c.db.set_settings({"mode": "offline"})
+        assert cl.post("/v1/compute/install", headers=H, json={"what": "small"}).status_code == 409   # nothing downloaded offline
+        c.db.set_settings({"mode": "hybrid"})
+        monkeypatch.setattr(CR, "ram_gb", lambda: 8.0)
+        assert cl.post("/v1/compute/install", headers=H, json={"what": "full"}).status_code == 409    # big models need 16 GB
+        assert cl.post("/v1/compute/install", headers=H, json={"what": "small"}).status_code == 200
+        for _ in range(100):
+            j = cl.get("/v1/compute/install/job", headers=H).json()
+            if j["state"] in ("done", "error"):
+                break
+            time.sleep(0.1)
+        assert j["state"] == "done", j
+        assert cl.get("/v1/compute", headers=H).json()["small_reranker_installed"]
+    finally:
+        c.close()

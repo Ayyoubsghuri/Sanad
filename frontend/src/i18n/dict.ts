@@ -896,4 +896,13 @@ export const DICT: Record<string, [string, string, string]> = {
   "Sorting the results: by keywords. For better sorting, start «Sanad - repair setup» and tick «Also install a small model» (about 1 GB).": ["Sorting the results: by keywords. For better sorting, start «Sanad - repair setup» and tick «Also install a small model» (about 1 GB).", "Tri des résultats : par mots-clés. Pour un meilleur tri, lancez « Sanad - repair setup » et cochez « Also install a small model » (environ 1 Go).", "ترتيب النتائج: بالكلمات. لترتيب أفضل شغّل «Sanad - repair setup» وفعّل «Also install a small model» (نحو 1 جيغابايت)."],
   "Articles found by the search that the result does not rely on are not listed.": ["Articles found by the search that the result does not rely on are not listed.", "Les articles trouvés par la recherche sur lesquels le résultat ne s'appuie pas ne sont pas listés.", "المواد التي وجدها البحث ولم تُبنَ عليها النتيجة غير معروضة."],
   "{0} other articles set aside": ["{0} other articles set aside", "{0} autres articles écartés", "{0} مواد أخرى مستبعدة"],
+  "Not available: they need 16 GB of memory.": ["Not available: they need 16 GB of memory.", "Non disponibles : ils demandent 16 Go de mémoire.", "غير متاحة: تحتاج 16 جيغابايت من الذاكرة."],
+  "Not installed yet: about 5 GB to download.": ["Not installed yet: about 5 GB to download.", "Pas encore installés : environ 5 Go à télécharger.", "غير مثبتة بعد: نحو 5 جيغابايت للتنزيل."],
+  "Installing the libraries…": ["Installing the libraries…", "Installation des bibliothèques…", "تثبيت المكتبات…"],
+  "Downloading the model…": ["Downloading the model…", "Téléchargement du modèle…", "تنزيل النموذج…"],
+  "Stopped: click Install again to continue.": ["Stopped: click Install again to continue.", "Arrêté : cliquez de nouveau sur Installer pour reprendre.", "توقف: انقر على التثبيت مرة أخرى للمتابعة."],
+  "The download did not finish.": ["The download did not finish.", "Le téléchargement n'est pas terminé.", "لم يكتمل التنزيل."],
+  "Install the models on this computer (about 5 GB)": ["Install the models on this computer (about 5 GB)", "Installer les modèles sur cet ordinateur (environ 5 Go)", "تثبيت النماذج على هذا الحاسوب (نحو 5 جيغابايت)"],
+  "Sorting the results: by keywords.": ["Sorting the results: by keywords.", "Tri des résultats : par mots-clés.", "ترتيب النتائج: بالكلمات."],
+  "Install the small model (about 1 GB)": ["Install the small model (about 1 GB)", "Installer le petit modèle (environ 1 Go)", "تثبيت النموذج الصغير (نحو 1 جيغابايت)"],
 };

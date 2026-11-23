@@ -157,7 +157,7 @@ Both install for the current user only, without administrator rights, into `%LOC
   ([pricing and free allowance](https://developers.cloudflare.com/workers-ai/platform/pricing/)). Only the masked search
   text is sent, and each call appears in the outbound log. In Offline mode Sanad searches by keywords only.
 
-**Sanad - repair setup** in the Start menu asks again, to switch later.
+To switch later, open **API keys → Search by meaning** in the app: it downloads the small model or the local models (16 GB or more) with a progress bar. **Sanad - repair setup** in the Start menu also asks again.
 
 **Then it downloads everything else** (keep the internet connection and the window open):
 

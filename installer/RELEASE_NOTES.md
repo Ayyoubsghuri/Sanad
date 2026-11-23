@@ -4,14 +4,12 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **Professional Toolkit: the right articles, and only those.**
-  - **Each issue of the case is searched on its own**, in the words the law uses for it (for an unpaid car price:
-    the buyer's duty to pay the price, formal notice to the debtor, damages for late performance), not only with the
-    words of the story. Every issue gets its share of the articles.
-  - **Weak matches are dropped:** an article far below the best one for its own search (a word match, like the off-plan
-    property articles for a car sale) is no longer given to the model.
-  - **The source list shows only the articles the result relies on**; the header says how many other articles the
-    search found and set aside.
+- **Download the models from inside the app.** **API keys → Search by meaning** now has install buttons, with progress
+  and a Stop button (a stopped download continues the next time):
+  - **Install the small model (about 1 GB):** sorts the results by meaning; for every computer, also under 16 GB.
+  - **Install the models on this computer (about 5 GB):** search by meaning without Cloudflare, also in Offline mode;
+    only on computers with 16 GB of memory or more. Once installed, Sanad switches to them.
+  - No need to run "Sanad - repair setup" any more for this. Not available in Offline mode (nothing is downloaded).
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 

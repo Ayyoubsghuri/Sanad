@@ -114,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
             if key:
                 os.environ.setdefault("LEGALRAG_LAWPACK_PUBLIC_KEY_HEX", key)
         os.environ.setdefault("LEGALRAG_FRONTEND_DIR", str(app_dir / "frontend"))
+        os.environ.setdefault("LEGALRAG_APP_DIR", str(app_dir))   # the installed folder: bin/uv.exe and backend/ (model installs from the app)
 
     # the choice made in the setup window: local models, or search by meaning through Cloudflare (no models installed)
     choice = Path(os.environ.get("LOCALAPPDATA", "")) / "Sanad" / "compute.json"
