@@ -113,6 +113,7 @@ export interface ProResult {
   status: "sources_only" | "generated";
   output: ReportOutput | CourtroomOutput | null;
   unsupported_citations?: number;
+  articles_not_used?: number;
   notice: string;
 }
 export interface ProJob {

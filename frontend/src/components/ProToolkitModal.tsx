@@ -393,6 +393,11 @@ function ResultView({ result, tool, pick, focus, onCite, onExport }: {
           <span>{tr("Law in force on {0}", [result.as_of])}</span>
           <span>·</span>
           <span>{tr("{0} articles · {1} rulings", [result.articles.length, result.rulings.length])}</span>
+          {!!result.articles_not_used && (
+            <span title={tr("Articles found by the search that the result does not rely on are not listed.")}>
+              · {tr("{0} other articles set aside", [result.articles_not_used])}
+            </span>
+          )}
           {!!result.unsupported_citations && <span>· {tr("{0} invented citations removed", [result.unsupported_citations])}</span>}
           <div className="flex-1" />
           {onExport && result.output && (

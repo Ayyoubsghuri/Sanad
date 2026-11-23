@@ -370,3 +370,34 @@ def test_plan_uses_rulings_only_through_checked_references(ctx):
     assert s0["deadline"] == "90 يوما" and s0["sources"] == ["C1"] and [r["ruling_id"] for r in s0["rulings"]] == ["101"]
     assert res["steps"][1]["deadline"] == ""                     # filler is not shown as a time limit
     assert res["to_clarify"] == ["ما نوع العقد؟"]                  # an invented number is dropped
+
+
+def test_toolkit_searches_each_issue_and_lists_only_the_articles_it_uses(client, ctx):
+    make_rulings(ctx)
+    searched: list[str] = []
+    real = ctx.engine.retrieve
+    ctx.engine.retrieve = lambda rreq: (searched.append(rreq.query), real(rreq))[1]
+
+    def script(req: GenRequest):
+        if req.kind == "pro_plan":
+            return {"issues": ["أداء باقي الثمن", "التعويض عن التأخير"], "queries": ["التزام المشتري بأداء الثمن"], "chamber": "civil", "summary": "بيع"}
+        ids = [p["id"] for p in req.payload["passages"]]
+        if req.kind == "pro_lawyer_a":
+            return {"position": "p", "arguments": [{"title": "t", "argument": "a", "sources": [ids[0]], "strength": "strong"}]}
+        if req.kind == "pro_lawyer_b":
+            return {"position": "p", "rebuttals": [], "counter_arguments": []}
+        return {"issues": [{"issue": "i", "finding": "f", "favours": "A", "sources": [ids[0]]}], "verdict": "v", "chance_of_success": 60,
+                "confidence": "low", "chance_reasoning": "r", "risks": [], "recommendations": []}
+
+    ctx.llm_override = ScriptedProvider(script)
+    try:
+        p = client.post("/v1/pro/jobs", headers=H, json={"tool": "courtroom", "fields": {"facts": FACTS, "side": "claimant"}, "lang": "ar"}).json()
+        client.post(f"/v1/pro/jobs/{p['job_id']}/run", headers=H, json={})
+        j = wait(client, p["job_id"])
+    finally:
+        ctx.engine.retrieve = real
+    assert j["status"] == "done", j.get("error")
+    assert {"التزام المشتري بأداء الثمن", "أداء باقي الثمن", "التعويض عن التأخير"} <= set(searched)   # every issue is searched
+    r = j["result"]
+    assert [a["id"] for a in r["articles"]] == ["S1"]                    # only the article the result cites is listed
+    assert r.get("articles_not_used", 0) >= 0

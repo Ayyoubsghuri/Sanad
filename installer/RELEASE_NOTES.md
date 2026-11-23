@@ -4,11 +4,14 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **A small model to sort the results, for computers that use Cloudflare.** In the setup window, the Cloudflare option now
-  has **Also install a small model that sorts the results by meaning** (ticked by default, about 1 GB). It is a
-  multilingual model (mMiniLM, trained on 14 languages including Arabic) that runs on an ordinary laptop, offline too,
-  and puts the most relevant articles first; without it the results are sorted by keywords. **Sanad - repair setup**
-  adds or removes it later; **API keys → Search by meaning** shows which one is in use.
+- **Professional Toolkit: the right articles, and only those.**
+  - **Each issue of the case is searched on its own**, in the words the law uses for it (for an unpaid car price:
+    the buyer's duty to pay the price, formal notice to the debtor, damages for late performance), not only with the
+    words of the story. Every issue gets its share of the articles.
+  - **Weak matches are dropped:** an article far below the best one for its own search (a word match, like the off-plan
+    property articles for a car sale) is no longer given to the model.
+  - **The source list shows only the articles the result relies on**; the header says how many other articles the
+    search found and set aside.
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 
