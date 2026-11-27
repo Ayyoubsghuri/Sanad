@@ -21,6 +21,14 @@ class Settings(BaseSettings):
     # ---- server ---------------------------------------------------------------
     host: str = "127.0.0.1"
     port: int = 8765
+    # public mode: a shared server anyone can open (e.g. a Hugging Face Space). Nothing about a visitor is stored on the server
+    # (see store/userdb.py PublicUserDB); settings are fixed; only the routes a visitor needs are open; questions are limited.
+    public_mode: bool = False
+    public_per_hour: int = 20          # questions per visitor (IP address) per hour
+    public_per_day: int = 60           # and per day
+    public_api_keys: str = ""          # other websites: "site-name:key,other-site:key2" (POST /v1/public/ask with X-Api-Key)
+    public_api_per_day: int = 1000     # questions per website key per day
+    cloudflare_account: str | None = None   # Workers AI account ID (public mode: from the environment; the token: LEGALRAG_SECRET_CLOUDFLARE_TOKEN)
     # search by meaning: "local" (bge-m3 on this computer, installed by the setup) or "cloudflare" (Workers AI, no local models);
     # the setup writes the choice made on first start, the app's settings can change it
     embeddings_source: str = "local"

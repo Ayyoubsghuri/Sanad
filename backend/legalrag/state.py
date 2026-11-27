@@ -25,7 +25,7 @@ from .retrieval.rerankers import BlendedReranker, CloudReranker, CrossEncoderRer
 from .store.crypto import KeyStore
 from .store.lawpack import LawPack, PackError
 from .store.signing import PackTrust, verify_pack
-from .store.userdb import UserDB
+from .store.userdb import PublicUserDB, UserDB
 
 
 @dataclass
@@ -112,8 +112,11 @@ class AppContext:
             return None
         return real[0]["embedder_id"] if len(real) == 1 else None
 
+    def cloudflare_account(self) -> str | None:
+        return self.user_settings().get("cloudflare_account") or self.settings.cloudflare_account
+
     def cloudflare_ready(self) -> bool:
-        return bool(self.user_settings().get("cloudflare_account") and self.keys.has_secret("cloudflare_token"))
+        return bool(self.cloudflare_account() and self.keys.has_secret("cloudflare_token"))
 
     def embedder(self) -> Embedder | None:
         if self.embedder_override is not None:
@@ -124,7 +127,7 @@ class AppContext:
             eid = self.pack_embedder_id()
             if self.mode == "offline" or not eid or not self.cloudflare_ready():
                 return None
-            return CloudflareEmbedder(eid, lambda: self.user_settings().get("cloudflare_account"), self._key("cloudflare_token"), self.gateway)
+            return CloudflareEmbedder(eid, self.cloudflare_account, self._key("cloudflare_token"), self.gateway)
         s = self.settings
         if self.mode == "cloud_assisted" and s.embedder_cloud_url and s.embedder_cloud_model:
             return CloudEmbedder(s.embedder_id, s.embedder_cloud_model, s.embedder_cloud_url, self.gateway, self._key(s.embedder_cloud_secret))
@@ -268,7 +271,7 @@ class AppContext:
 def build_context(settings: Settings, transport: httpx.BaseTransport | None = None) -> AppContext:
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     keys = KeyStore(settings.data_dir)
-    db = UserDB(settings.data_dir / "user.db", keys)
+    db = PublicUserDB(keys) if settings.public_mode else UserDB(settings.data_dir / "user.db", keys)
     token = settings.api_token
     token_file = settings.data_dir / "api_token"
     if not token:

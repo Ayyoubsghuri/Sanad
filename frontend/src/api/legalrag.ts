@@ -6,12 +6,13 @@
 
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 
-// The built app is served by its own backend (Windows desktop window): it talks to that same address, whatever the port,
-// so a second backend started by hand on 8765 is never used by mistake. The dev server (npm run dev) and Android keep 8765.
+// The built app is served by its own backend (Windows desktop window, or a public server such as a Hugging Face Space): it
+// talks to that same address, so a second backend started by hand on 8765 is never used by mistake. The dev server
+// (npm run dev) and Android (https://sanad.local, answered inside the app) keep 8765.
 function defaultApi(): string {
   try {
     const l = window.location;
-    if (!env.DEV && l.protocol === "http:" && (l.hostname === "127.0.0.1" || l.hostname === "localhost")) return l.origin;
+    if (!env.DEV && (l.protocol === "http:" || l.protocol === "https:") && l.hostname !== "sanad.local") return l.origin;
   } catch {
     /* no window (tests) */
   }
@@ -256,6 +257,12 @@ export interface BackendStatus {
 
 // ---- endpoints ----------------------------------------------------------------------------------
 export const health = () => fetch(`${API_URL}/health`).then((r) => r.json());
+
+/** Public mode (a shared server): read once from /health. Settings, keys, updates, uploads and the toolkit are hidden. */
+export interface PublicInfo { public: boolean; limits?: { per_hour: number; per_day: number } }
+let publicInfo: Promise<PublicInfo> | null = null;
+export const getPublicInfo = (): Promise<PublicInfo> =>
+  (publicInfo ??= health().then((h) => ({ public: !!h.public, limits: h.limits })).catch(() => ({ public: false })));
 export const getStatus = () => call<BackendStatus>("/v1/status");
 
 /** An earlier message of the same chat; the backend uses it to understand follow-ups ("and the next article?"). */

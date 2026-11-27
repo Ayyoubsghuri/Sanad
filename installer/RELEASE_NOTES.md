@@ -4,12 +4,14 @@ Sanad answers questions on Moroccan law from the official texts, with the articl
 
 ### What's new
 
-- **Download the models from inside the app.** **API keys → Search by meaning** now has install buttons, with progress
-  and a Stop button (a stopped download continues the next time):
-  - **Install the small model (about 1 GB):** sorts the results by meaning; for every computer, also under 16 GB.
-  - **Install the models on this computer (about 5 GB):** search by meaning without Cloudflare, also in Offline mode;
-    only on computers with 16 GB of memory or more. Once installed, Sanad switches to them.
-  - No need to run "Sanad - repair setup" any more for this. Not available in Offline mode (nothing is downloaded).
+- **A public version you can host for free** (`deploy/huggingface/`): Sanad as a Hugging Face Space that anyone can open.
+  - **Nothing about visitors is stored on the server:** each question is answered in memory and forgotten (no history,
+    no logs of the questions, the name masking is wiped after each answer); conversations stay only in the visitor's
+    own browser.
+  - **Safe to share:** visitors can only ask and read the law; settings, keys, updates, uploads and the toolkit are
+    closed; questions are limited per visitor (20 per hour, 60 per day by default).
+  - **An API for other websites** (`POST /v1/public/ask`), one key and one daily limit per website.
+- The desktop app is unchanged.
 
 Earlier versions: see [CHANGELOG.md](https://github.com/Ayyoubsghuri/Sanad/blob/main/CHANGELOG.md).
 

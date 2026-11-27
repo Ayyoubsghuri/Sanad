@@ -905,4 +905,6 @@ export const DICT: Record<string, [string, string, string]> = {
   "Install the models on this computer (about 5 GB)": ["Install the models on this computer (about 5 GB)", "Installer les modèles sur cet ordinateur (environ 5 Go)", "تثبيت النماذج على هذا الحاسوب (نحو 5 جيغابايت)"],
   "Sorting the results: by keywords.": ["Sorting the results: by keywords.", "Tri des résultats : par mots-clés.", "ترتيب النتائج: بالكلمات."],
   "Install the small model (about 1 GB)": ["Install the small model (about 1 GB)", "Installer le petit modèle (environ 1 Go)", "تثبيت النموذج الصغير (نحو 1 جيغابايت)"],
+  "Public version: your questions are answered in the server's memory and never stored there; your conversations stay only in this browser.": ["Public version: your questions are answered in the server's memory and never stored there; your conversations stay only in this browser.", "Version publique : vos questions sont traitées dans la mémoire du serveur et n'y sont jamais enregistrées ; vos conversations restent uniquement dans ce navigateur.", "نسخة عمومية: تُعالج أسئلتك في ذاكرة الخادم ولا تُحفظ فيه أبدا؛ ومحادثاتك تبقى في هذا المتصفح فقط."],
+  "Limit: {0} questions per hour, {1} per day.": ["Limit: {0} questions per hour, {1} per day.", "Limite : {0} questions par heure, {1} par jour.", "الحد: {0} سؤالا في الساعة و{1} في اليوم."],
 };

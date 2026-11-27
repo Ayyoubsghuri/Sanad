@@ -12,10 +12,39 @@ from fastapi.responses import JSONResponse
 
 from .config import Settings
 from .privacy.gateway import CloudUnavailable, ModeForbids, OutboundBlocked
-from .routers import bo, law, providers, query, system, tools, pro, compute
+from .routers import bo, law, providers, query, system, tools, pro, compute, public_api
 from .state import AppContext, build_context
 
 log = logging.getLogger("legalrag")
+
+
+def _public_guard(app: FastAPI, settings: Settings) -> None:
+    """Public mode: only the visitor's routes, questions limited per visitor, security headers. Any website may call the
+    public API (it needs a key); no cookies are used, so allowing every origin exposes nothing."""
+    from . import public as P
+
+    limiter = P.Limiter()
+
+    @app.middleware("http")
+    async def guard(request: Request, call_next):
+        method, path = request.method, request.url.path
+        if method != "OPTIONS":
+            if not P.allowed(method, path):
+                return JSONResponse(status_code=403, content={"code": "public_mode", "message": "not available on the public server"})
+            if P.counted(method, path):
+                ip = P.client_ip(request.headers, request.client.host if request.client else None)
+                ok, wait = limiter.hit(ip, settings.public_per_hour, settings.public_per_day)
+                if not ok:
+                    return JSONResponse(status_code=429, headers={"Retry-After": str(wait)},
+                                        content={"code": "limit", "retry_after_s": wait,
+                                                 "message": f"question limit reached ({settings.public_per_hour} per hour, {settings.public_per_day} per day)"})
+        resp = await call_next(request)
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        resp.headers.setdefault("Cache-Control", "no-store") if path.startswith("/v1/") else None
+        return resp
+
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST", "PATCH"], allow_headers=["*"])
 
 
 def create_app(settings: Settings | None = None, ctx: AppContext | None = None) -> FastAPI:
@@ -36,15 +65,18 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
         lifespan=lifespan,
     )
     app.state.ctx = ctx  # also available before lifespan (tests using TestClient without a context manager)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)  # DNS-rebinding guard
-    # Any port on loopback is allowed (dev servers on 3000/5173/1420...). Still protected by the bearer token and the host check.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    if settings.public_mode:
+        _public_guard(app, settings)
+    else:
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)  # DNS-rebinding guard
+        # Any port on loopback is allowed (dev servers on 3000/5173/1420...). Still protected by the bearer token and the host check.
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.allowed_origins,
+            allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     app.include_router(system.public)
     app.include_router(system.router)
@@ -55,6 +87,7 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
     app.include_router(providers.router)
     app.include_router(pro.router)
     app.include_router(compute.router)
+    app.include_router(public_api.router)
 
     @app.exception_handler(OutboundBlocked)
     async def _blocked(_: Request, e: OutboundBlocked):
@@ -78,7 +111,10 @@ def create_app(settings: Settings | None = None, ctx: AppContext | None = None) 
 def run() -> None:
     s = Settings()
     ctx = build_context(s)
-    print(f"API token (give it to the desktop shell): {ctx.api_token}")
+    if s.public_mode:
+        print(f"PUBLIC MODE: nothing about visitors is stored; {s.public_per_hour}/hour and {s.public_per_day}/day per visitor")
+    else:
+        print(f"API token (give it to the desktop shell): {ctx.api_token}")
     uvicorn.run(create_app(s, ctx), host=s.host, port=s.port, log_level="info")
 
 

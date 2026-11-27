@@ -27,6 +27,7 @@ interface ComposerProps {
   isStreaming: boolean;
   attachments: AttachmentItem[];
   onAddAttachments: (items: AttachmentItem[]) => void;
+  allowAttachments?: boolean;   // false on a public server: files are not sent to it
   onRemoveAttachment: (id: string) => void;
   thinkingMode: boolean;
   onToggleThinking: () => void;
@@ -64,6 +65,7 @@ export const Composer: React.FC<ComposerProps> = ({
   isStreaming,
   attachments,
   onAddAttachments,
+  allowAttachments = true,
   onRemoveAttachment,
   thinkingMode,
   onToggleThinking,
@@ -309,7 +311,7 @@ export const Composer: React.FC<ComposerProps> = ({
           />
 
           {/* Claude-style Plus Attach Button */}
-          <button
+          {allowAttachments && <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             title={t("composer.attach")}
@@ -321,7 +323,7 @@ export const Composer: React.FC<ComposerProps> = ({
             }}
           >
             <Plus className="w-4 h-4" />
-          </button>
+          </button>}
 
           {/* Extended Thinking Button */}
           <button

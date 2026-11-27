@@ -24,7 +24,9 @@ SECRET_NAMES = {"llm_main", "llm_claim_check", "embedder_cloud", "reranker_cloud
 
 @public.get("/health", tags=["system"])
 def health(ctx: AppContext = Depends(get_ctx)) -> dict:
-    return {"status": "ok", "pack_loaded": ctx.pack is not None, "pack_usable": ctx.pack_usable(), "pack_error": ctx.pack_error}
+    return {"status": "ok", "pack_loaded": ctx.pack is not None, "pack_usable": ctx.pack_usable(), "pack_error": ctx.pack_error,
+            "public": ctx.settings.public_mode,
+            **({"limits": {"per_hour": ctx.settings.public_per_hour, "per_day": ctx.settings.public_per_day}} if ctx.settings.public_mode else {})}
 
 
 _LOOPBACK_ORIGIN = re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$")
@@ -36,6 +38,8 @@ def pair(request: Request, ctx: AppContext = Depends(get_ctx)) -> dict:
 
     Only answers requests whose Origin is the desktop shell / a loopback dev server. A web page from any other site is refused,
     and the custom header below forces a CORS preflight, which those sites also fail. Host is already pinned to loopback."""
+    if ctx.settings.public_mode:   # nothing to protect with a token on a shared server: the routes themselves are limited
+        return {"token": "public"}
     origin = request.headers.get("origin", "")
     allowed = origin in ctx.settings.allowed_origins or bool(_LOOPBACK_ORIGIN.match(origin))
     if not origin or not allowed or request.headers.get("x-legalrag-pair") != "1":
@@ -74,6 +78,8 @@ def get_settings(ctx: AppContext = Depends(get_ctx)) -> dict:
 
 @router.patch("/settings", tags=["settings"])
 def update_settings(body: SettingsUpdate, ctx: AppContext = Depends(get_ctx)) -> dict:
+    if ctx.settings.public_mode:   # visitors share the server: its settings are fixed
+        return ctx.user_settings()
     changes = body.model_dump(exclude_unset=True)
     if changes.get("mode") == "cloud_assisted":  # disabled in this version
         changes["mode"] = "hybrid"

@@ -265,3 +265,43 @@ class UserDB:
     def close(self) -> None:
         with self._lock:
             self._c.close()
+
+
+class PublicUserDB(UserDB):
+    """Public mode (a shared server, e.g. a Hugging Face Space): NOTHING about a visitor is written to disk or kept.
+
+    - the database lives in memory only (lost at every restart), never in a file;
+    - no traces, no coverage gaps (they would hold the question), no payload in the outbound log;
+    - each question's case (its pseudonym mapping) is deleted as soon as the answer is sent (QueryPipeline.run);
+    - settings cannot be changed by visitors (the routers refuse it); the server sets them once at start.
+    Conversations stay in the visitor's own browser."""
+
+    MAX_LOG = 500
+
+    def __init__(self, keys: KeyStore):
+        self.path = Path(":memory:")
+        self.keys = keys
+        self._lock = threading.RLock()
+        self._c = sqlite3.connect(":memory:", check_same_thread=False, isolation_level=None)
+        self._c.row_factory = sqlite3.Row
+        self._c.executescript(DDL)
+
+    def put_trace(self, trace: dict, case_id: str | None) -> str:
+        return uuid.uuid4().hex          # an id for the page, nothing kept
+
+    def purge_stale(self, minutes: int = 30) -> None:
+        """Questions prepared but never sent, or cancelled: their case (pseudonym mapping) is wiped after `minutes`."""
+        self.purge_expired()
+        cutoff = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat(timespec="seconds")
+        for r in self.query("SELECT case_id FROM legal_case WHERE created_at < ?", (cutoff,)):
+            self.delete_case(r["case_id"])
+
+    def log_gap(self, *a: Any, **k: Any) -> None:
+        return None
+
+    def log_outbound(self, **f: Any) -> int:
+        f["payload"] = None              # what was sent is not kept; only that a call happened, where, and how it went
+        f["case_id"] = None
+        n = super().log_outbound(**f)
+        self.execute("DELETE FROM outbound_log WHERE id <= ?", (n - self.MAX_LOG,))
+        return n

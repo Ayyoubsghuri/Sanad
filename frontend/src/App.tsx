@@ -35,6 +35,7 @@ import { OperatingModeModal } from "./components/OperatingModeModal";
 import { BoUpdateModal } from "./components/BoUpdateModal";
 import { ApiKeysModal } from "./components/ApiKeysModal";
 import { getCompute } from "./api/compute";
+import { getPublicInfo, PublicInfo } from "./api/legalrag";
 import { SituationNavigatorModal } from "./components/SituationNavigatorModal";
 import { ConcordanceWizardModal } from "./components/ConcordanceWizardModal";
 import { StatuteBrowserModal } from "./components/StatuteBrowserModal";
@@ -322,12 +323,16 @@ export function App() {
   const [operatingModeModalOpen, setOperatingModeModalOpen] = useState<boolean>(false);
   const [boUpdateModalOpen, setBoUpdateModalOpen] = useState<boolean>(false);
   const [apiKeysModalOpen, setApiKeysModalOpen] = useState<boolean>(false);
+  // public mode (a shared server): features that change the server or send files to it are hidden
+  const [pub, setPub] = useState<PublicInfo>({ public: false });
+  useEffect(() => { getPublicInfo().then(setPub); }, []);
+  const isPublic = pub.public;
   // search by meaning through Cloudflare chosen in the setup, but no account yet: a reminder above the chat
   const [needsCloudflare, setNeedsCloudflare] = useState(false);
   useEffect(() => {
-    if (IS_ANDROID) return;
+    if (IS_ANDROID || isPublic) return;
     getCompute().then((c) => setNeedsCloudflare(c.source === "cloudflare" && !c.cloudflare_ready && !c.offline)).catch(() => undefined);
-  }, [apiKeysModalOpen, settings.operatingMode]);
+  }, [apiKeysModalOpen, settings.operatingMode, isPublic]);
   const [calculatorsModalOpen, setCalculatorsModalOpen] = useState<boolean>(false);
   const [concordanceModalOpen, setConcordanceModalOpen] = useState<boolean>(false);
   const [situationsModalOpen, setSituationsModalOpen] = useState<boolean>(false);
@@ -964,9 +969,9 @@ export function App() {
             operatingMode={settings.operatingMode || "hybrid"}
             audienceMode={settings.audienceMode || "citizen"}
             asOfDate={settings.asOfDate || new Date().toISOString().slice(0, 10)}
-            onOpenOperatingMode={IS_ANDROID ? undefined : () => setOperatingModeModalOpen(true)}
-            onOpenBoUpdate={IS_ANDROID ? undefined : () => setBoUpdateModalOpen(true)}
-            onOpenApiKeys={IS_ANDROID ? openAndroidSetup : () => setApiKeysModalOpen(true)}
+            onOpenOperatingMode={IS_ANDROID || isPublic ? undefined : () => setOperatingModeModalOpen(true)}
+            onOpenBoUpdate={IS_ANDROID || isPublic ? undefined : () => setBoUpdateModalOpen(true)}
+            onOpenApiKeys={isPublic ? undefined : IS_ANDROID ? openAndroidSetup : () => setApiKeysModalOpen(true)}
             onToggleAudienceMode={() =>
               updateSettings({
                 audienceMode:
@@ -978,10 +983,10 @@ export function App() {
             onOpenCalculators={() => setCalculatorsModalOpen(true)}
             onOpenSituations={() => setSituationsModalOpen(true)}
             onOpenStatutes={() => setStatutesModalOpen(true)}
-            onOpenAuditTrace={() => setAuditTraceModalOpen(true)}
+            onOpenAuditTrace={isPublic ? undefined : () => setAuditTraceModalOpen(true)}
             onOpenConcordance={() => setConcordanceModalOpen(true)}
             onOpenConsultation={() => setConsultationPrepModalOpen(true)}
-            onOpenProToolkit={() => setProToolkitOpen(true)}
+            onOpenProToolkit={isPublic ? undefined : () => setProToolkitOpen(true)}
           />
         </div>
       )}
@@ -1049,6 +1054,14 @@ export function App() {
         </header>
 
         {IS_ANDROID && <UpdateBanner />}
+        {isPublic && (
+          <div className="mx-4 mt-3 rounded-xl border px-4 py-2 text-[11px] flex items-start gap-2" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-muted)" }}>
+            <span>
+              {tr("Public version: your questions are answered in the server's memory and never stored there; your conversations stay only in this browser.")}
+              {pub.limits ? " " + tr("Limit: {0} questions per hour, {1} per day.", [pub.limits.per_hour, pub.limits.per_day]) : ""}
+            </span>
+          </div>
+        )}
         {needsCloudflare && (
           <div className="mx-4 mt-3 rounded-xl border px-4 py-2.5 text-xs flex flex-wrap items-center gap-2" style={{ borderColor: "var(--border-strong)", backgroundColor: "var(--bg-card)", color: "var(--text-heading)" }}>
             <span className="flex-1 min-w-0">{tr("Search by meaning is off: add your Cloudflare account ID and API token. Until then Sanad searches by keywords.")}</span>
@@ -1094,6 +1107,7 @@ export function App() {
                 onStop={handleStopStreaming}
                 isStreaming={isStreaming}
                 attachments={attachments}
+                allowAttachments={!isPublic}
                 onAddAttachments={(items) =>
                   setAttachments((prev) => [...prev, ...items])
                 }
@@ -1590,7 +1604,8 @@ export function App() {
                   onStop={handleStopStreaming}
                   isStreaming={isStreaming}
                   attachments={attachments}
-                  onAddAttachments={(items) =>
+                  allowAttachments={!isPublic}
+                onAddAttachments={(items) =>
                     setAttachments((prev) => [...prev, ...items])
                   }
                   onRemoveAttachment={(id) =>

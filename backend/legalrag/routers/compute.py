@@ -95,7 +95,7 @@ def test_compute(ctx: AppContext = Depends(get_ctx)) -> dict:
         raise HTTPException(409, "add the Cloudflare account ID and API token first")
     from ..retrieval.embedders import CloudflareEmbedder
 
-    emb = CloudflareEmbedder(ctx.pack_embedder_id() or "bge-m3", lambda: ctx.user_settings().get("cloudflare_account"), ctx._key("cloudflare_token"), ctx.gateway)
+    emb = CloudflareEmbedder(ctx.pack_embedder_id() or "bge-m3", ctx.cloudflare_account, ctx._key("cloudflare_token"), ctx.gateway)
     try:
         v = emb.embed(["ما هي مدة فترة الاختبار في عقد الشغل؟"])
     except Exception as e:  # noqa: BLE001 - shown in the app

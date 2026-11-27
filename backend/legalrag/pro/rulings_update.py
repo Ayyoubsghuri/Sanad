@@ -168,3 +168,35 @@ def updater(ctx) -> RulingsUpdater:
     if u is None:
         u = _UPDATERS[id(ctx)] = RulingsUpdater(ctx)
     return u
+
+
+def main() -> int:
+    """python -m legalrag.pro.rulings_update : download and install the published rulings (servers, scripts)."""
+    import sys
+
+    from ..config import Settings
+    from ..state import build_context
+
+    ctx = build_context(Settings())
+    try:
+        up = RulingsUpdater(ctx)
+        info = up.check()
+        if info.get("error") or not info.get("update_available"):
+            print(info.get("error") or f"rulings up to date ({info.get('installed_version')})")
+            return 1 if info.get("error") else 0
+        up.start()
+        last = -1.0
+        while up.job and up.job["state"] in ("queued", "running"):
+            p = round(float(up.job.get("progress") or 0) * 100)
+            if p >= last + 10:
+                print(f"rulings: {p}%", flush=True)
+                last = p
+            time.sleep(1)
+        print(f"rulings: {up.job['state']} {up.job.get('error') or ''}".strip())
+        return 0 if up.job["state"] == "done" else 1
+    finally:
+        ctx.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

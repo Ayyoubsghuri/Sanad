@@ -89,7 +89,11 @@ class QueryPipeline:
         if not req.question and not req.strict:
             raise ValueError("give a question or a strict-mode input")
         us = ctx.user_settings()
-        case_id = db.create_case(case_id=req.case_id) if req.case_id else db.create_case()
+        if ctx.settings.public_mode:   # a shared server: every question gets its own new case; old unsent ones are wiped
+            db.purge_stale()
+            case_id = db.create_case()
+        else:
+            case_id = db.create_case(case_id=req.case_id) if req.case_id else db.create_case()
         keep_places = us["keep_places"] if req.keep_places is None else req.keep_places
         for t in req.extra_sensitive_terms:
             if req.remember_terms:
@@ -103,7 +107,8 @@ class QueryPipeline:
         raw_hist = [h.model_dump() for h in req.history]
         if req.new_topic:  # the user said this question has nothing to do with the chat: no follow-up reading, no earlier turns sent
             raw_hist = []
-        elif req.session_id:  # the server's memory of the whole chat; the browser's messages only seed an unknown chat
+        elif req.session_id and not ctx.settings.public_mode:  # the server's memory of the whole chat (never on a shared server:
+            # there the browser sends the earlier turns itself); the browser's messages only seed an unknown chat
             raw_hist = get_memory().context(req.session_id, raw_hist)
         hist = conv.clean_history(raw_hist)
         if req.mask:
@@ -169,6 +174,9 @@ class QueryPipeline:
         PG.begin(ctx.progress, query_id)
         out = self._answer(text, case_id, pend["options"], req, warnings, pend["confidence"])
         db.execute("DELETE FROM pending_query WHERE query_id=?", (query_id,))
+        if ctx.settings.public_mode:   # nothing is kept on a shared server: the pseudonym mapping goes with the answer
+            db.delete_case(case_id)
+            return out
         self._remember(pend["options"].get("session_id"), text, out, case_id, pend["options"].get("mask", True))
         return out
 
